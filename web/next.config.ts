@@ -18,6 +18,12 @@ const nextConfig: NextConfig = {
         source: "/api/baseline/:path*",
         destination: `${baselineApiUrl}/api/baseline/:path*`,
       },
+      {
+        // Readiness of the release API, for the web health check and the
+        // container health check. The API itself stays loopback-only.
+        source: "/healthz",
+        destination: `${baselineApiUrl}/healthz`,
+      },
     ];
   },
 };

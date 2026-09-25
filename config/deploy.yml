@@ -1,0 +1,44 @@
+# Kamal deployment for the Open Valley public service (tank #47 trial).
+#
+# This is a trial configuration. It binds the proxy to loopback only, so it
+# does not compete with the existing Coolify Traefik listeners on ports 80/443.
+# The public hostname stays with the current deployment until a reviewed cutover.
+#
+# The image is a single combined image (Dockerfile.release): the Next.js web
+# server plus the loopback-only public API.
+#
+# The registry is local (localhost:5555). Kamal starts a small registry on the
+# build machine and forwards its port over SSH. No registry password is used.
+
+service: openvalley
+image: openvalley
+
+servers:
+  web:
+    hosts:
+      - icculus
+
+ssh:
+  user: root
+
+builder:
+  arch: amd64
+  dockerfile: Dockerfile.release
+
+registry:
+  server: localhost:5555
+
+env:
+  clear:
+    OPENVALLEY_RUNTIME: public
+
+proxy:
+  app_port: 3000
+  healthcheck:
+    path: /healthz
+  run:
+    http_port: 18081
+    https_port: 18444
+    publish: true
+    bind_ips:
+      - 127.0.0.1

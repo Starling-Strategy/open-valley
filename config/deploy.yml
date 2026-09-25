@@ -33,8 +33,9 @@ env:
     OPENVALLEY_RUNTIME: public
 
 proxy:
+  app_port: 3000
   healthcheck:
-    path: /
+    path: /healthz
   run:
     http_port: 18081
     https_port: 18444

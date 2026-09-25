@@ -79,11 +79,21 @@ class DeploymentGuardrailTests(unittest.TestCase):
         self.assertIn("--host 127.0.0.1 --port 8998", supervisor)
         self.assertIn("next/dist/bin/next start -H 0.0.0.0 -p 3000", supervisor)
 
+    def test_combined_release_health_check_uses_release_readiness(self):
+        dockerfile = (ROOT / "Dockerfile.release").read_text(encoding="utf-8")
+        configuration = (ROOT / "web" / "next.config.ts").read_text(encoding="utf-8")
+
+        self.assertIn("http://127.0.0.1:3000/healthz", dockerfile)
+        self.assertIn('source: "/healthz"', configuration)
+        self.assertIn("${baselineApiUrl}/healthz", configuration)
+
     def test_kamal_config_uses_a_local_registry_and_private_proxy_ports(self):
         deploy = (ROOT / "config" / "deploy.yml").read_text(encoding="utf-8")
 
         self.assertIn("server: localhost:5555", deploy)
         self.assertIn("user: root", deploy)
+        self.assertIn("app_port: 3000", deploy)
+        self.assertIn("path: /healthz", deploy)
         self.assertIn("bind_ips:", deploy)
         self.assertIn("- 127.0.0.1", deploy)
         self.assertIn("http_port: 18081", deploy)

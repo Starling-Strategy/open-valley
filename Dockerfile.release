@@ -81,7 +81,7 @@ COPY --chown=openvalley:openvalley ops/supervisord.conf /app/ops/supervisord.con
 USER openvalley
 EXPOSE 3000
 
-HEALTHCHECK --interval=15s --timeout=5s --start-period=20s --retries=5 \
-    CMD python -c "from urllib.request import urlopen; urlopen('http://127.0.0.1:3000/', timeout=3).read()"
+HEALTHCHECK --interval=10s --timeout=5s --start-period=30s --retries=3 \
+    CMD python -c "from urllib.request import urlopen; urlopen('http://127.0.0.1:3000/healthz', timeout=3).read()"
 
 CMD ["supervisord", "-c", "/app/ops/supervisord.conf"]

@@ -34,6 +34,11 @@ scripts/token.json
 # Local secrets
 .local/
 
+# Kamal local state and secrets (tank #47)
+.kamal/secrets
+.kamal/apps/
+.kamal/proxy/
+
 # IDE
 .idea/
 .vscode/

@@ -63,6 +63,34 @@ class DeploymentGuardrailTests(unittest.TestCase):
         )
         self.assertNotIn("CA", "\n".join(diagnostics))
 
+    def test_combined_release_image_copies_only_public_inputs_and_exposes_one_port(self):
+        dockerfile = (ROOT / "Dockerfile.release").read_text(encoding="utf-8")
+
+        self.assertNotRegex(dockerfile, r"(?m)^COPY \. \.$")
+        self.assertIn("COPY src ./src", dockerfile)
+        self.assertIn("COPY releases ./releases", dockerfile)
+        self.assertNotIn("warren/outputs", dockerfile)
+        self.assertIn("EXPOSE 3000", dockerfile)
+        self.assertNotIn("EXPOSE 8998", dockerfile)
+
+    def test_combined_release_keeps_the_api_on_loopback(self):
+        supervisor = (ROOT / "ops" / "supervisord.conf").read_text(encoding="utf-8")
+
+        self.assertIn("--host 127.0.0.1 --port 8998", supervisor)
+        self.assertIn("next/dist/bin/next start -H 0.0.0.0 -p 3000", supervisor)
+
+    def test_kamal_config_uses_a_local_registry_and_private_proxy_ports(self):
+        deploy = (ROOT / "config" / "deploy.yml").read_text(encoding="utf-8")
+
+        self.assertIn("server: localhost:5555", deploy)
+        self.assertIn("user: root", deploy)
+        self.assertIn("bind_ips:", deploy)
+        self.assertIn("- 127.0.0.1", deploy)
+        self.assertIn("http_port: 18081", deploy)
+        self.assertIn("https_port: 18444", deploy)
+        self.assertNotIn("http_port: 80", deploy)
+        self.assertNotIn("https_port: 443", deploy)
+
     def test_compose_file_validates_when_docker_is_available(self):
         if not self._docker_compose_available():
             self.skipTest("Docker Compose is unavailable in this test environment")

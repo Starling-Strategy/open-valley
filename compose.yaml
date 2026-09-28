@@ -1,0 +1,41 @@
+# Private rebuild. OpenShip must also set exposed:false and publicEndpoints:[]
+# on both imported services; host port bindings do not control domain routes.
+# No database, private artifacts, credentials, or persistent mounts are needed.
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    environment:
+      OPENVALLEY_RUNTIME: public
+    healthcheck:
+      test: ["CMD", "python", "-c", "from urllib.request import urlopen; urlopen('http://127.0.0.1:8998/healthz', timeout=2).read()"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    mem_limit: 768m
+    cpus: 1
+    restart: unless-stopped
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+      args:
+        INTERNAL_BASELINE_API_URL: http://api:8998
+    environment:
+      INTERNAL_BASELINE_API_URL: http://api:8998
+    ports:
+      - "127.0.0.1:3100:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/healthz', {signal: AbortSignal.timeout(3000)}).then(r => {if (!r.ok) process.exit(1)}).catch(() => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    mem_limit: 512m
+    cpus: 1
+    restart: unless-stopped

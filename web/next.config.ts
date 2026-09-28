@@ -9,11 +9,16 @@ if (process.env[publicApiVariable]) {
 }
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   // This value is evaluated by the Next.js server only. Browser code continues
   // to request relative /api/baseline paths.
   async rewrites() {
     const baselineApiUrl = process.env.INTERNAL_BASELINE_API_URL || "http://localhost:8998";
     return [
+      {
+        source: "/healthz",
+        destination: `${baselineApiUrl}/healthz`,
+      },
       {
         source: "/api/baseline/:path*",
         destination: `${baselineApiUrl}/api/baseline/:path*`,

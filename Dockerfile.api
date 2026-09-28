@@ -1,22 +1,23 @@
 # syntax=docker/dockerfile:1
 
-FROM ghcr.io/astral-sh/uv:0.6-python3.12-bookworm-slim AS build
+FROM python:3.12.14-slim-bookworm@sha256:392307d22300de8b5986851a12d9176dfc0fc073e65bf6523ebd7dcbeb23564e AS build
+COPY --from=ghcr.io/astral-sh/uv:0.12.19@sha256:04d046b13e60d6bcec73cbc5e1cad25d680dea90c8573340950a0ac2d1aef424 /uv /bin/uv
 
 WORKDIR /app
 ENV UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy
 
 COPY pyproject.toml uv.lock ./
-RUN uv sync --frozen --no-dev --no-install-project
+RUN uv sync --locked --no-dev --no-install-project
 
 # The Dockerfile deliberately avoids COPY . . so raw worktree material can
 # never enter an image layer. The release reader has exactly its code and the
 # explicitly promoted public artifacts.
 COPY src ./src
 COPY releases ./releases
-RUN uv sync --frozen --no-dev --no-install-project
+RUN uv sync --locked --no-dev --no-install-project
 
-FROM python:3.12-slim
+FROM python:3.12.14-slim-bookworm@sha256:392307d22300de8b5986851a12d9176dfc0fc073e65bf6523ebd7dcbeb23564e
 
 WORKDIR /app
 ENV PATH="/app/.venv/bin:${PATH}" \
@@ -25,10 +26,12 @@ ENV PATH="/app/.venv/bin:${PATH}" \
     PYTHONDONTWRITEBYTECODE=1
 
 RUN groupadd --system openvalley && useradd --system --gid openvalley openvalley
-COPY --from=build --chown=openvalley:openvalley /app/.venv /app/.venv
-COPY --from=build --chown=openvalley:openvalley /app/src /app/src
-COPY --from=build --chown=openvalley:openvalley /app/releases /app/releases
+COPY --from=build /app/.venv /app/.venv
+COPY --from=build /app/src /app/src
+COPY --from=build /app/releases /app/releases
 
 USER openvalley
 EXPOSE 8998
+HEALTHCHECK --interval=10s --timeout=3s --start-period=10s --retries=5 \
+    CMD python -c "from urllib.request import urlopen; urlopen('http://127.0.0.1:8998/healthz', timeout=2).read()"
 CMD ["uvicorn", "src.warren_baseline.app:app", "--host", "0.0.0.0", "--port", "8998"]

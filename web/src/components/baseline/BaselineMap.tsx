@@ -110,6 +110,7 @@ export default function BaselineMap({
         const maplibregl = await import("maplibre-gl");
         await import("maplibre-gl/dist/maplibre-gl.css");
         if (destroyed || !container.current) return;
+        maplibregl.setWorkerUrl("/maplibre/maplibre-gl-worker.mjs");
         const map = new maplibregl.Map({
           container: container.current,
           style: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",

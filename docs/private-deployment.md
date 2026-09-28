@@ -59,7 +59,8 @@ state before retrying a start request.
 
 - Both images select non-root users. The API release files belong to root.
 - The API has no host port. Only the web service publishes a loopback port.
-- Both services require health checks and restart after an ordinary process exit.
+- Both services require health checks. Automatic restart is disabled during this
+  trial until application startup requires a successful network-policy check.
 - Web readiness depends on API release readiness. An API failure must fail web
   health, even while the static page still loads.
 - Check all public routes through the web service, including the 15 MB map file.
@@ -74,6 +75,46 @@ state before retrying a start request.
 
 Keep the public hostname on its existing approved release until the Homey trial
 passes its release, rollback, restart, access, and recovery checks.
+
+## Homey network boundary
+
+The first live container test reached Icculus's private PostgreSQL ports despite
+having no database credentials. Homey now applies a separate host firewall policy.
+The policy allows same-project traffic and established replies. It rejects new
+connections from the application subnet to the host or other networks.
+
+`ops/homey-openvalley.nft` records the IPv4-only Homey subnet. Before applying it,
+verify that `openship-personal-openvalley` uses `172.18.0.0/16`, contains only the
+two intended application containers, and has IPv6 disabled. This is a host-specific
+input. A replacement network or another host needs a newly verified subnet.
+
+Install the policy as `/etc/nftables.d/openship-openvalley.nft` and its unit as
+`/etc/systemd/system/openship-openvalley-boundary.service`. Check the policy with
+`nft --check --file` before enabling the unit. The unit loads before Docker during
+boot. Ordering does not require the policy load to succeed. The trial therefore
+uses `restart: "no"` and operator-verified starts. Never flush global nftables
+tables or change another application's policy.
+
+After applying, test both rejected private-database connections and successful web
+responses. Recheck the rules after host restart. The unit does not track network
+replacement automatically; deployment acceptance must verify the subnet again.
+Keep these two files in the host recovery set.
+
+Before each operator start, deployment, or rollback, verify the applied table,
+network subnet and membership. The operation remains incomplete until both saved
+OpenShip restart policies and effective Docker restart policies equal `no`.
+Correct any older value restored by a retained rollback before accepting the trial.
+Do not enable
+unattended operation until a project-scoped gate also covers controller starts.
+
+The live unhealthy-candidate test produced `partial_failure` and promoted the
+mixed deployment. OpenShip waits for an explicit keep/reject decision in this
+case. The operator restored the first known-good release from retained images.
+This proves explicit recovery, not atomic rejection or uninterrupted availability.
+
+To retire this boundary, stop the private application first. Then disable its unit
+and remove only the `inet openship_openvalley` table. Preserve the controller's
+firewall and Tailscale configuration.
 
 ## Version-review sources
 

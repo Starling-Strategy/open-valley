@@ -1,0 +1,17 @@
+# Homey: openship-personal-openvalley, verified 2026-09-28.
+# Verify Docker IPAM and all network members before applying.
+# Re-render the subnet before replacing this network or moving hosts.
+destroy table inet openship_openvalley
+table inet openship_openvalley {
+  chain forward {
+    type filter hook forward priority -10; policy accept;
+    ip saddr 172.18.0.0/16 ct state established,related accept
+    ip saddr 172.18.0.0/16 ip daddr 172.18.0.0/16 accept
+    ip saddr 172.18.0.0/16 counter reject with icmpx type admin-prohibited
+  }
+  chain input {
+    type filter hook input priority -10; policy accept;
+    ip saddr 172.18.0.0/16 ct state established,related accept
+    ip saddr 172.18.0.0/16 counter reject with icmpx type admin-prohibited
+  }
+}

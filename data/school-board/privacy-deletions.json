@@ -1,0 +1,512 @@
+{
+  "schema_version": 1,
+  "completed_at": "2026-10-03T22:48:28.350968+00:00",
+  "restored_public_files": [
+    "archive/huusd-board/records/files/2025-2026/2026-06-23 Board Agenda _Special Meeting_.txt",
+    "archive/huusd-board/records/files/2025-2026/2026-06-23-Board-Minutes.txt",
+    "archive/huusd-board/records/text/2025-2026/2026-06-23 Board Agenda _Special Meeting_.txt",
+    "archive/huusd-board/records/text/2025-2026/2026-06-23-Board-Minutes.txt",
+    "archive/huusd-board/research/meeting-pipeline/inventory/assets/16mTKxwFIQccgwoJOu7uAEXHj9NwNzRt8Xqopm19YDKk-05cadf434779.html",
+    "archive/huusd-board/research/meeting-pipeline/inventory/assets/1k9zXH8g14SrZ1OPNzrOqVAI_WOE1yAIQ7_SVFttwjL4-c1786e5c3c00.html",
+    "notion/pages/189dd11188af47e9ba07034e2f39dccd.md",
+    "notion/pages/3dec90edd27c8129b065d7e7f6171092.md",
+    "notion/raw/189dd11188af47e9ba07034e2f39dccd.json",
+    "notion/raw/3dec90edd27c8129b065d7e7f6171092.json",
+    "archive/huusd-board/records/files/2015-2016/2016-05-11 Exec Comm and Act 46 Study Comm Minutes plus public forum.pdf.pdf",
+    "archive/huusd-board/records/text/2015-2016/2016-05-11 Exec Comm and Act 46 Study Comm Minutes plus public forum.pdf.txt"
+  ],
+  "deleted_files": [
+    {
+      "original_path": "notion/pages/304c90edd27c80148e43cc3209ddf041.md",
+      "sha256": "4b4cc2245d5463f1789371a86bfb28e0ef182f6a0c936a995d2ccceb260d0632",
+      "bytes": 101007,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "notion/pages/304c90edd27c80d49d83e73db15b6213.md",
+      "sha256": "3e86dcaab9e618221de5f46a60e984975b139071fb53aa1b9149bc57c5c4ed64",
+      "bytes": 90749,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "notion/pages/3dec90edd27c8130809aec9cd789d33b.md",
+      "sha256": "c26752263345cbd250c5bf372c7d33461bace8ac81ce96d9ca84ee6498d04f4f",
+      "bytes": 223952,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "notion/pages/3dec90edd27c81cc8773ff891e847d91.md",
+      "sha256": "003dd5322573146f254780611ea9c8af0d58145a30a3a7f43d9fbc7cacc1ce4f",
+      "bytes": 100174,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "notion/pages/3e4c90edd27c807b9d9de40b5e69d6e5.md",
+      "sha256": "43fca2d7355bf891602a23b58f0ebbda1232803fb3a1bbd36fb9faa0bf86f1a0",
+      "bytes": 197012,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "notion/pages/3e4c90edd27c80a78a5cc7c222edbb17.md",
+      "sha256": "9d78f5f3b06f743039b7cba726041c89c12577e1d9fbf32baa8db18d3e27a024",
+      "bytes": 170598,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "notion/pages/3e4c90edd27c80fc81dcd4e72a33a3d9.md",
+      "sha256": "43889b4ca4fd1802aaf944f20f4d4059eb1d6e13fe26a7afba5fddf4d6f1123c",
+      "bytes": 195840,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "notion/pages/5fc339883e9f460ab551a10e29362ae1.md",
+      "sha256": "2df284c7cf06e20dfbc8a541119754afcd71f8fe74a5b1e7784728bc43b862e4",
+      "bytes": 98846,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "notion/raw/304c90edd27c80148e43cc3209ddf041.json",
+      "sha256": "f75b29dbe76940e0b684a2e65789168e011a77bf843dc4e552ac3e646336210e",
+      "bytes": 102893,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "notion/raw/304c90edd27c80d49d83e73db15b6213.json",
+      "sha256": "b5757d713f629f325f999e6af76efd21e9aa45913e5c70c43340ef2148e43402",
+      "bytes": 91949,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "notion/raw/3dec90edd27c8130809aec9cd789d33b.json",
+      "sha256": "542546aaf94ccef14887b29518c6dfd026d76a183218cb6026c007c8350b462d",
+      "bytes": 230497,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "notion/raw/3dec90edd27c81cc8773ff891e847d91.json",
+      "sha256": "2a647391f39bbc753e743c7af95767c1446a886743c91d92234b4762ad57b8d9",
+      "bytes": 102934,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "notion/raw/3e4c90edd27c807b9d9de40b5e69d6e5.json",
+      "sha256": "2b273aa7af63a391e5d89204553b2803812dfbaec08918ffab048a30b435eae8",
+      "bytes": 199753,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "notion/raw/3e4c90edd27c80a78a5cc7c222edbb17.json",
+      "sha256": "27f024d541d1de06a9fd4bb937c8d74002a05b22347664567884bf316a68f95b",
+      "bytes": 171517,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "notion/raw/3e4c90edd27c80fc81dcd4e72a33a3d9.json",
+      "sha256": "2a92c27b6e3c631af70ff5135890a1f77f6bf7ba00c7f61d8deed668dc5aec7f",
+      "bytes": 197643,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "notion/raw/5fc339883e9f460ab551a10e29362ae1.json",
+      "sha256": "8973bafa2e87ce74eb13808cdb6f232e0b0ac0caf727c0301e27a308631e7885",
+      "bytes": 100575,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "archive/huusd-board/records/corpus/huusd.db",
+      "sha256": "6e509eb8d5cb7977c2e49fd734791c61cfc68ddc20270a0144fd78f264f8393c",
+      "bytes": 19365888,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "archive/huusd-board/research/meeting-pipeline/build/evidence.sqlite",
+      "sha256": "da5d5fa768a58e356086da6281c823d6cad2dc20bfdc81e7737008760b5cdaad",
+      "bytes": 19570688,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "archive/huusd-board/research/meeting-pipeline/build/passages.jsonl",
+      "sha256": "0b7f91089246acbb3a778e1f3ba8e012f88fb98ae452e27a6240bfe25ad8fd5d",
+      "bytes": 7303575,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "archive/huusd-board/research/meeting-pipeline/semantic/embeddings-5ca1389421e3da41199ba438af32c435f351f000c8fb42fffd7134a2b979a378.npy",
+      "sha256": "63149dc84919202de72c35ec7424aa3673d07683b8d4f24c2c5b40c1ad3e48ed",
+      "bytes": 488576,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "archive/huusd-board/research/meeting-pipeline/semantic/embeddings-b260bcad22360be80f7aa17593720d1c2830f4e136ba9f81a2fdd7be491e5556.npy",
+      "sha256": "9dc00a41fc5dd50d6a7a6258fd8f6595067903c69fb9c87171ae41e52643fcab",
+      "bytes": 4744832,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "archive/huusd-board/research/meeting-pipeline/semantic/embeddings-b7ee9fc0c2c218d9b9ea9f3e37f590293e586ce3618a1dacdfe0ec554cfe555b.npy",
+      "sha256": "8bbbacc7ec22b31e11462a4fd9b33c5d886a79dc2f346ce425137af2867bf5a8",
+      "bytes": 6916736,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "archive/huusd-board/research/meeting-pipeline/semantic/meetings-hybrid-results.json",
+      "sha256": "041779c52c3dfeb5241958561b893157000da9a1139656504c9606b9ef0ae075",
+      "bytes": 978677,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "archive/huusd-board/research/meeting-pipeline/build/captions/mD3wfwxr_JI-d67611edba28.json",
+      "sha256": "fc1395ba41fd76d5b09fea84453b0b29e1aacfb7890e16ebe3f75237b137baf2",
+      "bytes": 2121250,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "archive/huusd-board/research/meeting-pipeline/build/captions/vmCOofF7s0c-b472a14cbebd.json",
+      "sha256": "eed8381fb9c30100a56890f6171865165eda9cdac8659e2a4d6a115f3fc28607",
+      "bytes": 2569508,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "archive/huusd-board/research/meeting-pipeline/recordings/captions/mD3wfwxr_JI/mD3wfwxr_JI.en-orig.vtt",
+      "sha256": "d67611edba2896dae4ab25c349096a54c1a12acf8bd58e501a1fcb6d1f6f36bb",
+      "bytes": 1438745,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "archive/huusd-board/research/meeting-pipeline/recordings/captions/vmCOofF7s0c/vmCOofF7s0c.en-orig.vtt",
+      "sha256": "b472a14cbebde9c9f74f156e94d9ea28a6716395d1154d92e48e61b0c1d60993",
+      "bytes": 1732950,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "supplements/historical/files/1BzeL35EMRqX9uxdlNRfJVqNq9QfgZU--.pdf",
+      "sha256": "5b613a90d5196124fb74802b009c5b22c3cec87db8b9db0a864dac7b5ae10ed2",
+      "bytes": 273323,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "supplements/historical/files/1aMuLg_sSnJpGsizq33UJSMJKVw2azd-8.pdf",
+      "sha256": "6cd5a23b6e250ab1b8c980883fd4288681668cf3b4797ac68f16bc65a6440dd1",
+      "bytes": 740052,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "supplements/historical/files/1b2Ahhlsj6QwDE9vdV7wQXNGmHmGH5I8s.pdf",
+      "sha256": "feabc9d186662c56feb7446288f2c2bcd7e67a112b97ded1489b64d39ebd6a2f",
+      "bytes": 42870,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "supplements/historical/files/1hOIzhXVWdYxfQyYoUvF_xwvNf9VzK6ge.pdf",
+      "sha256": "015775becb32c47d9341417c2123e51d54f1b1d0c48949ba7f1184b8b3507d75",
+      "bytes": 2035328,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "supplements/historical/files/1hqs22sTqsxskhYBfnef_u45AR4N6VDY0.pdf",
+      "sha256": "3cfa9374add6ff2483ad9e6a7848aca504f37df389f824c3cd4d1fd7edf8189a",
+      "bytes": 4154914,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "archive/huusd-board/meetings/2026-05-27-board.md",
+      "sha256": "308bdf1fe98cd9d144ebb97ec4087aece57719844fbbd173f94b36bbbb78c40b",
+      "bytes": 1949,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "archive/huusd-board/positions.md",
+      "sha256": "5ed79c44e717d064fc31b6ffc7f6188b6bdbb327ecbbb20bc9f104c398588057",
+      "bytes": 10397,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "archive/huusd-board/records/files/2017-2018/2017-10-11 Board Minutes _amended and approved_.pdf.pdf",
+      "sha256": "8cc38e7a4e2951bc85fb92f66684206648450f13018b9569a924d60e4e327852",
+      "bytes": 139292,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "archive/huusd-board/records/files/2017-2018/Board Minutes Attachment - Sullivan.pdf.pdf",
+      "sha256": "3983254b4a31f6ab9705bce358ffd494d932fe51f80c9f53bdb97fdba4ca944d",
+      "bytes": 33130,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "archive/huusd-board/records/text/2017-2018/2017-10-11 Board Minutes _amended and approved_.pdf.txt",
+      "sha256": "15a578db336bc71bd78f80e139fe9eb2ee4c383ff00f9050979da1c17c1dde11",
+      "bytes": 14813,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "archive/huusd-board/records/text/2017-2018/Board Minutes Attachment - Sullivan.pdf.txt",
+      "sha256": "61c57db1ab5d6aef4a44966633732dc724b08f7c8e759a8cd4be8ace7d719d44",
+      "bytes": 4390,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "archive/huusd-board/research/meeting-pipeline/build/captions/eigdvqIFzYk-207da5c30a53.json",
+      "sha256": "2095c68ce6a5132e75c715a95fdbc0c53e900387c8c86e907a462036a36a1b7e",
+      "bytes": 6243,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "archive/huusd-board/research/meeting-pipeline/recordings/captions/eigdvqIFzYk/eigdvqIFzYk.en-orig.vtt",
+      "sha256": "207da5c30a53dee9c8d4bd8f279e8d2fbe4df72e9b0531fc948c403ea9f2d6f2",
+      "bytes": 4536,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "notion/search/HUUSD-meeting-captures.json",
+      "sha256": "99ef6ed86e3adccd1c0b851ed2b2f606883d6a74b617b6120a8f526fae6f203b",
+      "bytes": 17677,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "notion/search/HUUSD-outreach-meeting.json",
+      "sha256": "52532bd4964644ef8e91d9b47afd29bff3d87f640c36bd10b6310841fb49d498",
+      "bytes": 16097,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "notion/search/HUUSD-transcript.json",
+      "sha256": "963f1bb5cc7f6a15a97d11c69610a86d6094e232fb6245a4e7ee13b536b94e91",
+      "bytes": 20458,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "notion/search/Harwood-board-meeting.json",
+      "sha256": "6ff112b0314dfaa936939527d93fe639797801e462d6f6c0e898a968ace004a3",
+      "bytes": 17755,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "notion/search/starling-HUSD.json",
+      "sha256": "4fc88556c036ddeb3f70fb8b46d16ca554e9b056184fcb9a3b7d0a4b7a02869e",
+      "bytes": 12420,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "notion/search/starling-Harwood.json",
+      "sha256": "0764207aa863ed6e16904aa2f570cd0e9c3488645a77e606e20a7a1df3685bec",
+      "bytes": 17660,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "supplements/historical/files/1-JKwL-zFodmNcR3EX5OTxdP_-XywvewD.pdf",
+      "sha256": "9ab6beb783b6db3a1095474867ed0eede22d206c410e28006b436a0ed89a38fa",
+      "bytes": 1049759,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "supplements/historical/files/1LW6U5b8bcH83bC3oDT94XehEkLGOT6ej.pdf",
+      "sha256": "840db7800715d2036fc9947543cd5ce9f89d0912ea8c2601aac89dd2008b90c1",
+      "bytes": 84006,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "supplements/historical/files/1ao_wKL_iyfu7viRG9waFrwCeByCXUfrE.pdf",
+      "sha256": "efc31ec6789362cfaa1e05ee26db70652912e8ae1c488fc78d34768695931fa4",
+      "bytes": 2112339,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "supplements/historical/files/1iYeM8SWCPmSKPQtZfmGBNeFVhvXx5OgB.pdf",
+      "sha256": "a2fc5532530f501d81cbe17664682d9a35e9aa5d4f027a29d070e3421ba0074c",
+      "bytes": 79443,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "supplements/historical/files/1jL4ZV-vH68LErr4tpfUcXJu_JA0Qa6Xh.pdf",
+      "sha256": "bfd22ab8bd87f9b7cd9fad3011dd94d2102a7358c78464903558bbbc6db77012",
+      "bytes": 81183,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "supplements/historical/files/1pIde3D4tINziVwCMK0AuDY1OSJc9jEFW.pdf",
+      "sha256": "9f62320e26a20e09b95ab750521c67db07210227aa5677c718c651ece633509d",
+      "bytes": 166801,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "supplements/historical/files/1-UF6YFYBXnVW9d3OVDv70fmUjCBeIUtQ.pdf",
+      "sha256": "9454827dac827485a642f8a8ae57d3dd830c332023e9dbf970996b712c556738",
+      "bytes": 5488112,
+      "disposition": "deleted"
+    },
+    {
+      "original_path": "supplements/historical/files/19yjsgtfc5T4rvDl7JvYmpCj7xeYKgISN.pdf",
+      "sha256": "bf1a15409527fe208c9f446c2e65c9b3d24dae129afec13168707c3593b356bc",
+      "bytes": 547046,
+      "disposition": "deleted"
+    }
+  ],
+  "private_review_files_deleted": 1410,
+  "private_review_directory_deleted": true,
+  "archive": {
+    "path": "/rocky/open-valley/huusd-board.zip",
+    "previous_sha256": "36ef59f81cc77230b2eee6667fa8db7710a21db09d9e7fb3f43a01d09ea5a854",
+    "sanitized_sha256": "e48d911814aac6f4738e233d88ccff6834516615cf31cde99ac2808ce1d7b0e5",
+    "removed_members": [
+      "huusd-board/records/corpus/huusd.db",
+      "__MACOSX/huusd-board/records/corpus/._huusd.db",
+      "huusd-board/research/meeting-pipeline/semantic/embeddings-5ca1389421e3da41199ba438af32c435f351f000c8fb42fffd7134a2b979a378.npy",
+      "__MACOSX/huusd-board/research/meeting-pipeline/semantic/._embeddings-5ca1389421e3da41199ba438af32c435f351f000c8fb42fffd7134a2b979a378.npy",
+      "huusd-board/research/meeting-pipeline/semantic/meetings-hybrid-results.json",
+      "__MACOSX/huusd-board/research/meeting-pipeline/semantic/._meetings-hybrid-results.json",
+      "huusd-board/research/meeting-pipeline/semantic/embeddings-b260bcad22360be80f7aa17593720d1c2830f4e136ba9f81a2fdd7be491e5556.npy",
+      "__MACOSX/huusd-board/research/meeting-pipeline/semantic/._embeddings-b260bcad22360be80f7aa17593720d1c2830f4e136ba9f81a2fdd7be491e5556.npy",
+      "huusd-board/research/meeting-pipeline/semantic/embeddings-b7ee9fc0c2c218d9b9ea9f3e37f590293e586ce3618a1dacdfe0ec554cfe555b.npy",
+      "__MACOSX/huusd-board/research/meeting-pipeline/semantic/._embeddings-b7ee9fc0c2c218d9b9ea9f3e37f590293e586ce3618a1dacdfe0ec554cfe555b.npy",
+      "huusd-board/research/meeting-pipeline/build/passages.jsonl",
+      "__MACOSX/huusd-board/research/meeting-pipeline/build/._passages.jsonl",
+      "huusd-board/research/meeting-pipeline/build/evidence.sqlite",
+      "__MACOSX/huusd-board/research/meeting-pipeline/build/._evidence.sqlite",
+      "huusd-board/research/meeting-pipeline/build/captions/mD3wfwxr_JI-d67611edba28.json",
+      "__MACOSX/huusd-board/research/meeting-pipeline/build/captions/._mD3wfwxr_JI-d67611edba28.json",
+      "huusd-board/research/meeting-pipeline/build/captions/vmCOofF7s0c-b472a14cbebd.json",
+      "__MACOSX/huusd-board/research/meeting-pipeline/build/captions/._vmCOofF7s0c-b472a14cbebd.json",
+      "huusd-board/research/meeting-pipeline/recordings/captions/vmCOofF7s0c/vmCOofF7s0c.en-orig.vtt",
+      "__MACOSX/huusd-board/research/meeting-pipeline/recordings/captions/vmCOofF7s0c/._vmCOofF7s0c.en-orig.vtt",
+      "huusd-board/research/meeting-pipeline/recordings/captions/mD3wfwxr_JI/mD3wfwxr_JI.en-orig.vtt",
+      "__MACOSX/huusd-board/research/meeting-pipeline/recordings/captions/mD3wfwxr_JI/._mD3wfwxr_JI.en-orig.vtt",
+      "huusd-board/positions.md",
+      "__MACOSX/huusd-board/._positions.md",
+      "huusd-board/meetings/2026-05-27-board.md",
+      "__MACOSX/huusd-board/meetings/._2026-05-27-board.md",
+      "huusd-board/records/files/2017-2018/Board Minutes Attachment - Sullivan.pdf.pdf",
+      "__MACOSX/huusd-board/records/files/2017-2018/._Board Minutes Attachment - Sullivan.pdf.pdf",
+      "huusd-board/records/files/2017-2018/2017-10-11 Board Minutes _amended and approved_.pdf.pdf",
+      "__MACOSX/huusd-board/records/files/2017-2018/._2017-10-11 Board Minutes _amended and approved_.pdf.pdf",
+      "huusd-board/records/text/2017-2018/2017-10-11 Board Minutes _amended and approved_.pdf.txt",
+      "__MACOSX/huusd-board/records/text/2017-2018/._2017-10-11 Board Minutes _amended and approved_.pdf.txt",
+      "huusd-board/records/text/2017-2018/Board Minutes Attachment - Sullivan.pdf.txt",
+      "__MACOSX/huusd-board/records/text/2017-2018/._Board Minutes Attachment - Sullivan.pdf.txt",
+      "huusd-board/research/meeting-pipeline/build/captions/eigdvqIFzYk-207da5c30a53.json",
+      "__MACOSX/huusd-board/research/meeting-pipeline/build/captions/._eigdvqIFzYk-207da5c30a53.json",
+      "huusd-board/research/meeting-pipeline/recordings/captions/eigdvqIFzYk/eigdvqIFzYk.en-orig.vtt",
+      "__MACOSX/huusd-board/research/meeting-pipeline/recordings/captions/eigdvqIFzYk/._eigdvqIFzYk.en-orig.vtt"
+    ],
+    "retained_member_hashes_verified": 4604,
+    "old_archive_copy_retained": false
+  },
+  "note": "Filesystem deletion within project folders; not a claim of forensic secure erasure or deletion from remote sources.",
+  "additional_reviews": [
+    {
+      "completed_at": "2026-10-03T22:14:10.678421+00:00",
+      "deleted_files": 20,
+      "source_ids": [
+        "1-JKwL-zFodmNcR3EX5OTxdP_-XywvewD",
+        "1LW6U5b8bcH83bC3oDT94XehEkLGOT6ej",
+        "1ao_wKL_iyfu7viRG9waFrwCeByCXUfrE",
+        "1dc53V0P2PF0_43N1Zcj0l0_VurtkX8qw",
+        "1ddwwSsFX3HlquuT98vEqbPr0TVd6cfA_",
+        "1iYeM8SWCPmSKPQtZfmGBNeFVhvXx5OgB",
+        "1jL4ZV-vH68LErr4tpfUcXJu_JA0Qa6Xh",
+        "1pIde3D4tINziVwCMK0AuDY1OSJc9jEFW",
+        "36dc90edd27c80029687dd34947b5ac4",
+        "youtube:eigdvqIFzYk"
+      ],
+      "archive": {
+        "previous_sha256": "6f7ebb6760a94d5fde4c8b6eab4c5d83fc5874fe6bc8d96ed31c56e87a8f0285",
+        "sanitized_sha256": "e48d911814aac6f4738e233d88ccff6834516615cf31cde99ac2808ce1d7b0e5",
+        "removed_members": [
+          "huusd-board/positions.md",
+          "__MACOSX/huusd-board/._positions.md",
+          "huusd-board/meetings/2026-05-27-board.md",
+          "__MACOSX/huusd-board/meetings/._2026-05-27-board.md",
+          "huusd-board/records/files/2017-2018/Board Minutes Attachment - Sullivan.pdf.pdf",
+          "__MACOSX/huusd-board/records/files/2017-2018/._Board Minutes Attachment - Sullivan.pdf.pdf",
+          "huusd-board/records/files/2017-2018/2017-10-11 Board Minutes _amended and approved_.pdf.pdf",
+          "__MACOSX/huusd-board/records/files/2017-2018/._2017-10-11 Board Minutes _amended and approved_.pdf.pdf",
+          "huusd-board/records/text/2017-2018/2017-10-11 Board Minutes _amended and approved_.pdf.txt",
+          "__MACOSX/huusd-board/records/text/2017-2018/._2017-10-11 Board Minutes _amended and approved_.pdf.txt",
+          "huusd-board/records/text/2017-2018/Board Minutes Attachment - Sullivan.pdf.txt",
+          "__MACOSX/huusd-board/records/text/2017-2018/._Board Minutes Attachment - Sullivan.pdf.txt",
+          "huusd-board/research/meeting-pipeline/build/captions/eigdvqIFzYk-207da5c30a53.json",
+          "__MACOSX/huusd-board/research/meeting-pipeline/build/captions/._eigdvqIFzYk-207da5c30a53.json",
+          "huusd-board/research/meeting-pipeline/recordings/captions/eigdvqIFzYk/eigdvqIFzYk.en-orig.vtt",
+          "__MACOSX/huusd-board/research/meeting-pipeline/recordings/captions/eigdvqIFzYk/._eigdvqIFzYk.en-orig.vtt"
+        ],
+        "retained_member_hashes_verified": 4604
+      }
+    },
+    {
+      "completed_at": "2026-10-03T22:36:45.891937+00:00",
+      "deleted_files": 1,
+      "source_ids": [
+        "1-JKwL-zFodmNcR3EX5OTxdP_-XywvewD",
+        "1-UF6YFYBXnVW9d3OVDv70fmUjCBeIUtQ",
+        "1BzeL35EMRqX9uxdlNRfJVqNq9QfgZU--",
+        "1LW6U5b8bcH83bC3oDT94XehEkLGOT6ej",
+        "1aMuLg_sSnJpGsizq33UJSMJKVw2azd-8",
+        "1ao_wKL_iyfu7viRG9waFrwCeByCXUfrE",
+        "1b2Ahhlsj6QwDE9vdV7wQXNGmHmGH5I8s",
+        "1dc53V0P2PF0_43N1Zcj0l0_VurtkX8qw",
+        "1ddwwSsFX3HlquuT98vEqbPr0TVd6cfA_",
+        "1hOIzhXVWdYxfQyYoUvF_xwvNf9VzK6ge",
+        "1hqs22sTqsxskhYBfnef_u45AR4N6VDY0",
+        "1iYeM8SWCPmSKPQtZfmGBNeFVhvXx5OgB",
+        "1jL4ZV-vH68LErr4tpfUcXJu_JA0Qa6Xh",
+        "1pIde3D4tINziVwCMK0AuDY1OSJc9jEFW",
+        "304c90edd27c80148e43cc3209ddf041",
+        "304c90edd27c80d49d83e73db15b6213",
+        "36dc90edd27c80029687dd34947b5ac4",
+        "3dec90edd27c8130809aec9cd789d33b",
+        "3dec90edd27c81cc8773ff891e847d91",
+        "3e4c90edd27c807b9d9de40b5e69d6e5",
+        "3e4c90edd27c80a78a5cc7c222edbb17",
+        "3e4c90edd27c80fc81dcd4e72a33a3d9",
+        "5fc339883e9f460ab551a10e29362ae1",
+        "youtube:eigdvqIFzYk",
+        "youtube:mD3wfwxr_JI",
+        "youtube:vmCOofF7s0c"
+      ],
+      "archive": {
+        "previous_sha256": "e48d911814aac6f4738e233d88ccff6834516615cf31cde99ac2808ce1d7b0e5",
+        "sanitized_sha256": "e48d911814aac6f4738e233d88ccff6834516615cf31cde99ac2808ce1d7b0e5",
+        "removed_members": [],
+        "retained_member_hashes_verified": 4604
+      }
+    },
+    {
+      "completed_at": "2026-10-03T22:48:28.350968+00:00",
+      "deleted_files": 1,
+      "source_ids": [
+        "1-JKwL-zFodmNcR3EX5OTxdP_-XywvewD",
+        "1-UF6YFYBXnVW9d3OVDv70fmUjCBeIUtQ",
+        "19yjsgtfc5T4rvDl7JvYmpCj7xeYKgISN",
+        "1BzeL35EMRqX9uxdlNRfJVqNq9QfgZU--",
+        "1LW6U5b8bcH83bC3oDT94XehEkLGOT6ej",
+        "1aMuLg_sSnJpGsizq33UJSMJKVw2azd-8",
+        "1ao_wKL_iyfu7viRG9waFrwCeByCXUfrE",
+        "1b2Ahhlsj6QwDE9vdV7wQXNGmHmGH5I8s",
+        "1dc53V0P2PF0_43N1Zcj0l0_VurtkX8qw",
+        "1ddwwSsFX3HlquuT98vEqbPr0TVd6cfA_",
+        "1hOIzhXVWdYxfQyYoUvF_xwvNf9VzK6ge",
+        "1hqs22sTqsxskhYBfnef_u45AR4N6VDY0",
+        "1iYeM8SWCPmSKPQtZfmGBNeFVhvXx5OgB",
+        "1jL4ZV-vH68LErr4tpfUcXJu_JA0Qa6Xh",
+        "1pIde3D4tINziVwCMK0AuDY1OSJc9jEFW",
+        "304c90edd27c80148e43cc3209ddf041",
+        "304c90edd27c80d49d83e73db15b6213",
+        "36dc90edd27c80029687dd34947b5ac4",
+        "3dec90edd27c8130809aec9cd789d33b",
+        "3dec90edd27c81cc8773ff891e847d91",
+        "3e4c90edd27c807b9d9de40b5e69d6e5",
+        "3e4c90edd27c80a78a5cc7c222edbb17",
+        "3e4c90edd27c80fc81dcd4e72a33a3d9",
+        "5fc339883e9f460ab551a10e29362ae1",
+        "youtube:eigdvqIFzYk",
+        "youtube:mD3wfwxr_JI",
+        "youtube:vmCOofF7s0c"
+      ],
+      "archive": {
+        "previous_sha256": "e48d911814aac6f4738e233d88ccff6834516615cf31cde99ac2808ce1d7b0e5",
+        "sanitized_sha256": "e48d911814aac6f4738e233d88ccff6834516615cf31cde99ac2808ce1d7b0e5",
+        "removed_members": [],
+        "retained_member_hashes_verified": 4604
+      }
+    }
+  ]
+}

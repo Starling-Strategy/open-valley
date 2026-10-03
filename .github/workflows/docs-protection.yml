@@ -67,7 +67,7 @@ jobs:
         
         for file in $MODIFIED_FILES; do
           if [[ "$file" != */schema.md && "$file" == *.md ]]; then
-            if grep -l "CREATE TABLE\|CREATE MATERIALIZED VIEW\|CREATE INDEX\|CREATE FUNCTION\|```sql" "$file" 2>/dev/null; then
+            if grep -l 'CREATE TABLE\|CREATE MATERIALIZED VIEW\|CREATE INDEX\|CREATE FUNCTION\|```sql' "$file" 2>/dev/null; then
               VIOLATIONS="$VIOLATIONS $file"
             fi
           fi
@@ -174,3 +174,16 @@ jobs:
         done
         
         echo "✅ Terminology check completed"
+
+  school-board-privacy:
+    runs-on: ubuntu-latest
+    name: School Board Privacy Regressions
+    permissions:
+      contents: read
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    - name: Test exclusion and deletion controls with synthetic data
+      run: python3 -m unittest discover -s scripts/school_board -p 'test_*.py' -v

@@ -54,6 +54,11 @@ public portion of the corresponding captions and retained.
 The native document pass screened 1,548 PDF, DOCX, XLSX, PPTX and supplemental HTML
 files (1,521 distinct contents) before this deletion batch. OCR of image-only pages
 is recorded separately in the shared collection's metadata-only locator report.
+The OCR review remains in progress; this report is not a completed scan clearance.
+An additional native pass with explicit caucus matching screened all 1,538 retained
+documents (1,511 distinct contents). Contextual review of all 14 remaining
+negotiation PDFs, covering 23 pages, found public exchanges and procedural
+closed-session references without additional prohibited discussion.
 A separate in-memory pass screened 23 images and the legacy XLS workbook without
 finding closed-session or negotiation keyword matches. Keyword screening and OCR
 do not establish that every remaining record is free of sensitive content. The

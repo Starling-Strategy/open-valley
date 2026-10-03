@@ -47,7 +47,8 @@ review. It is not evidence by itself that a public salary discussion or an agend
 contains closed-session material. OCR is imperfect and does not review audio.
 
 An output lock prevents simultaneous writers. Resume reuses unchanged completed
-records and retries errors or an interrupted final line.
+records only for the same analysis revision, and retries errors or an interrupted
+final line. Caucus wording is screened even without an executive-session label.
 
 ## Apply reviewed deletions
 

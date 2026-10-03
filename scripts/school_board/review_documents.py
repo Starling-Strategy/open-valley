@@ -16,12 +16,14 @@ import zipfile
 from xml.etree import ElementTree
 
 PATTERNS = {
-    "closed": r"executive\s+session|closed[-\s]+(?:session|door)",
+    "closed": r"executive\s+session|closed[-\s]+(?:session|door)|\bcaucus\b",
     "negotiations": r"negotiat\w*|collective\s+bargain\w*|bargaining",
     "confidential": r"confidential|privileg\w*|attorney.client",
     "salary": r"salar\w*|wage\w*|compensation|union",
     "retrospective": r"(?:discussed|said|stated|during|in|at)\s+(?:the\s+)?executive\s+session",
 }
+# Bump the version when extraction/OCR behavior changes beyond these patterns.
+ANALYSIS_ID = hashlib.sha256(json.dumps({"version": 1, "patterns": PATTERNS}, sort_keys=True).encode()).hexdigest()
 
 
 def ocr_page(page, executable):
@@ -39,7 +41,7 @@ def ocr_page(page, executable):
 
 def scan(job):
     path, root, aliases, digest, tesseract = job
-    row = {"path": str(path.relative_to(root)), "aliases": aliases, "sha256": digest,
+    row = {"path": str(path.relative_to(root)), "aliases": aliases, "sha256": digest, "analysis_id": ANALYSIS_ID,
            "pages": 0, "ocr_enabled": bool(tesseract), "ocr_pages": 0, "low_text_pages": [], "errors": [], "matches": []}
 
     def screen(text, page, method="native"):
@@ -116,7 +118,7 @@ def main():
     for digest, paths in groups.items():
         aliases = [str(p.relative_to(root)) for p in paths[1:]]
         old = previous.get(str(paths[0].relative_to(root)))
-        if old and old.get("sha256") == digest and (not args.tesseract or old.get("ocr_enabled") or not old.get("low_text_pages")):
+        if old and old.get("sha256") == digest and old.get("analysis_id") == ANALYSIS_ID and (not args.tesseract or old.get("ocr_enabled") or not old.get("low_text_pages")):
             retained.append({**old, "aliases": aliases})
         else:
             jobs.append((paths[0], root, aliases, digest, args.tesseract))

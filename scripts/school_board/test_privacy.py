@@ -13,6 +13,7 @@ import zipfile
 from delete_records import apply, local_path
 from verify_privacy import verify
 from privacy_rules import canonical_id, load_rules
+from review_documents import scan
 
 
 class PrivacyCleanupTest(unittest.TestCase):
@@ -96,6 +97,28 @@ class PrivacyCleanupTest(unittest.TestCase):
                 apply(self.root, {"source_ids": ["closed"]}, self.archive)
         self.assertTrue((self.root / "alias.txt").exists())
         self.assertEqual(load_rules(self.root / "reports/privacy-exclusions.json")["paths"], [])
+
+    def test_caucus_marker_is_screened_without_executive_session_phrase(self):
+        path = self.root / "synthetic.html"
+        path.write_text("<p>Caucus begins. Synthetic negotiation notes.</p>")
+        result = scan((path, self.root, [], hashlib.sha256(path.read_bytes()).hexdigest(), None))
+        self.assertEqual(result["matches"][0]["counts"]["closed"], 1)
+        self.assertTrue(path.exists())  # Screening never deletes or classifies automatically.
+
+    def test_resume_rechecks_records_from_an_older_analysis(self):
+        path = self.root / "supplements/test/source.html"
+        path.parent.mkdir(parents=True)
+        path.write_text("<p>Synthetic caucus marker.</p>")
+        output = self.root / "reports/scan.jsonl"
+        output.write_text(json.dumps({"path": "supplements/test/source.html", "errors": [], "matches": [],
+                                     "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+                                     "analysis_id": "older-patterns", "low_text_pages": []}) + "\n")
+        result = subprocess.run([sys.executable, str(Path(__file__).with_name("review_documents.py")),
+                                 "--root", str(self.root), "--output", str(output), "--workers", "1", "--resume"],
+                                capture_output=True)
+        self.assertEqual(result.returncode, 0, result.stderr.decode())
+        record = json.loads(output.read_text())
+        self.assertEqual(record["matches"][0]["counts"]["closed"], 1)
 
     def test_detects_reintroduced_bytes_and_dashed_id_search_excerpt(self):
         compact = "123456781234123412341234567890ab"

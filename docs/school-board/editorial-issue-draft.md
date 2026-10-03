@@ -5,10 +5,10 @@ Help residents understand HUUSD's school choices through simple, source-grounded
 ## Approach and files
 
 The approach is saved in:
-- `docs/school-board/2026-10-03-editorial-approach.html` — source-linked editorial brief, seven stories, visualization/video concepts and reporting gaps.
-- `docs/school-board/README.md` — entry point and source-collection context.
+- [Editorial approach](https://github.com/Starling-Strategy/open-valley/blob/a83128744cc45aaa206f2e7b59df4eaf794dbe40/docs/school-board/2026-10-03-editorial-approach.html) — source-linked editorial brief, seven stories, visualization/video concepts and reporting gaps. Download and open the HTML to view the formatted brief.
+- [README](https://github.com/Starling-Strategy/open-valley/blob/a83128744cc45aaa206f2e7b59df4eaf794dbe40/docs/school-board/README.md) — entry point and source-collection context.
 
-Local commit: `a831287` (`Document the HUUSD editorial and visualization approach`), branch `docs/huusd-editorial-approach`. Publication of the commit is currently blocked by GitHub write permissions; add permanent file links once pushed.
+Published commit: [`a831287`](https://github.com/Starling-Strategy/open-valley/commit/a83128744cc45aaa206f2e7b59df4eaf794dbe40) (`Document the HUUSD editorial and visualization approach`), branch `docs/huusd-editorial-approach`.
 
 ## Three connected starting points
 
@@ -50,3 +50,5 @@ Enrollment actuals versus forecasts; why budgets can rise while services are red
 Local archive: `/rocky/open-valley/school-board/` (not committed). The brief links public originals for scenario studies, enrollment, budgets, facilities, GIS and demographic data. Current schedules, service coverage, selected scenario definitions and comparable travel modeling still need reporting.
 
 Coordinate citations and structured metric definitions with the parallel document-chat workstream. This issue captures the editorial/visualization approach; the committed brief does not constitute completed reporting or a built application.
+
+Use the current generated source catalog and apply `school-board/reports/privacy-exclusions.json` when importing or rebuilding. Exclude executive-session discussions and confidential individual-student case material, including derived summaries. Official public procedural references in agendas and minutes may be used, but do not authorize including closed-session substance. Follow the repository's data-handling instructions.

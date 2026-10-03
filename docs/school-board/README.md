@@ -2,7 +2,7 @@
 
 Start with [the October 3, 2026 editorial approach](2026-10-03-editorial-approach.html). Download/open the self-contained HTML file in a browser to read its formatted version. GitHub shows its source.
 
-The [prepared GitHub issue](editorial-issue-draft.md) captures the proposed work and completion criteria. Its initial publication and the branch push were blocked by token permissions.
+Track this work in [GitHub issue #8](https://github.com/Starling-Strategy/open-valley/issues/8). The [saved issue text](editorial-issue-draft.md) captures the proposed work and completion criteria; the brief is published on branch `docs/huusd-editorial-approach`.
 
 The brief defines seven source-grounded story ideas and three connected starting points:
 

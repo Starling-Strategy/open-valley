@@ -2,6 +2,8 @@
 
 Start with [the October 3, 2026 editorial approach](2026-10-03-editorial-approach.html). Download/open the self-contained HTML file in a browser to read its formatted version. GitHub shows its source.
 
+The [prepared GitHub issue](editorial-issue-draft.md) captures the proposed work and completion criteria. Its initial publication and the branch push were blocked by token permissions.
+
 The brief defines seven source-grounded story ideas and three connected starting points:
 
 - **Core scenarios and district map:** today's observed baseline; retaining the present configuration; selected existing-campus reconfigurations; and the later consolidated Valley elementary concept with related campus moves. Site alternatives are variants within a configuration. This is a proposed editorial comparison set, not an adopted board shortlist.

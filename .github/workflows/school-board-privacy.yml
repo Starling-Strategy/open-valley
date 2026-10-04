@@ -1,0 +1,27 @@
+name: School Board Privacy
+
+on:
+  pull_request:
+    branches: [main, master]
+    paths:
+      - '.github/workflows/school-board-privacy.yml'
+      - 'scripts/school_board/**'
+      - 'data/school-board/**'
+      - 'docs/school-board/**'
+      - 'AGENTS.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  school-board-privacy:
+    runs-on: ubuntu-latest
+    name: School Board Privacy Regressions
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    - name: Test exclusion and deletion controls with synthetic data
+      run: python3 -m unittest discover -s scripts/school_board -p 'test_*.py' -v

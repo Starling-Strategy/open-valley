@@ -4,7 +4,7 @@ Purpose: Record the local privacy cleanup and its verification limits.
 Audience: Maintainers and reviewers.
 Status: reference
 Owner: Open Valley
-Last updated: 2026-10-03
+Last updated: 2026-10-04
 
 The local HUUSD collection is at `/rocky/open-valley/school-board`.
 This repository records the exclusion policy, reproducible tooling and minimal
@@ -36,7 +36,7 @@ The broader executive-session review deleted 22 more files:
 - substantive retrospective accounts of closed personnel and legal discussion;
 - a caption record with an uncertain return-to-public-session boundary;
 - a summary and derived notes without reliable open-session attribution;
-- six cached search responses containing excerpts from excluded records.
+- six cached search responses containing excerpts from excluded records;
 - two scanned packets containing further retrospective closed-session accounts.
 
 Across both reviews, 54 files and 38 input-ZIP members were removed. The exclusion manifest
@@ -52,9 +52,16 @@ in the initial cleanup. A September 9 garbled transcript tail was matched to a
 public portion of the corresponding captions and retained.
 
 The native document pass screened 1,548 PDF, DOCX, XLSX, PPTX and supplemental HTML
-files (1,521 distinct contents) before this deletion batch. OCR of image-only pages
-is recorded separately in the shared collection's metadata-only locator report.
-The OCR review remains in progress; this report is not a completed scan clearance.
+files (1,521 distinct contents) before this deletion batch. The completed OCR pass
+screened all 1,538 retained documents (1,511 distinct contents), OCR-processing
+13,817 low-native-text pages with no extraction errors. Every OCR candidate page
+was contextually reviewed; the final candidates required no further deletion.
+The metadata-only locator and decision reports remain in the shared collection.
+After OCR, 195 pages still yielded fewer than 40 text characters; successful
+execution does not establish that those pages were fully readable.
+The resumed OCR pass used the original screening revision. The later caucus
+pattern was applied in the additional native pass and focused negotiation review,
+not retroactively claimed for the completed OCR results.
 An additional native pass with explicit caucus matching screened all 1,538 retained
 documents (1,511 distinct contents). Contextual review of all 14 remaining
 negotiation PDFs, covering 23 pages, found public exchanges and procedural

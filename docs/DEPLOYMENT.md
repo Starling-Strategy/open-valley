@@ -91,9 +91,41 @@ Use existing approved provider authentication and runtime secret-consumption pat
 
 The runtime needs a restricted application identity, not a database-superuser connection string. Publisher access is separate. If no approved consumer can deliver those credentials privately, report that specific gap. Do not broaden provider grants or copy another runtime's auth store.
 
-**Current U7 blocker:** the verified runtime has no approved consumer for provisioning and delivering the new school runtime/publisher credentials from 1Password to PostgreSQL and Openship. The documented wrapper supports inventory only; its authorized inventory contains no Open Valley database item. Openship's stored-credential list is empty. No new role or password has been created. The smallest missing setup is a scoped, private credential-delivery consumer for these two application identities; secret values must not pass through chat or tool output.
+**Current U7 prerequisite:** the documented 1Password wrapper supports inventory only; its authorized inventory contains no Open Valley database item. Openship's stored-credential list is empty. The owner subsequently authorized a narrowly scoped private delivery integration for the school runtime and publisher identities. Implementation and live verification are pending; no new role or password has been created yet. Secret values must not pass through chat, command arguments, logs, or ad hoc files.
 
 The read-only database metadata check found only existing superuser login roles (`postgres`, `openvalley`, `openvalley_import`) and no `schools` schema. None is suitable for the web runtime. `archive_mode` is off, `wal_keep_size` is zero, and no replication slots exist; these facts do not complete the host/volume/backup retention inventory required before publication.
+
+### Existing-proxy ingress proof
+
+Managed deployments `dep_jDTIu4HJ4NQAOUsM` and `dep_zjrI8EAccHEO5aML`
+both reached `ready` with the smoke service bound only to
+`100.75.27.44:3400:3000`. The replacement container retained that binding. A
+temporary exact-host, exact-path Traefik file-provider route at
+`/__schools-smoke` returned HTTP 200 through the public HTTPS hostname before
+and after redeployment. The response retained `Cache-Control: private, no-store,
+max-age=0` and Cloudflare reported `DYNAMIC`. The original `/` stayed HTTP 200
+with its original title. The temporary route file was removed after verification.
+
+This proves the existing Traefik/TLS path can reach a stable managed host binding
+without another proxy or shared-network mutation. It does not prove Schools
+HTML/RSC cache behavior. The smoke container also reached PostgreSQL's Tailscale
+TCP port 5434; restricted-role authentication remains unverified.
+
+Host inventory found no files under `/data/coolify/backups`, no Open Valley backup
+timer, and only Compose plus a protected environment file in `/opt/openvalley-db`.
+The root filesystem is ext4. Timers exist for other applications; their backups
+were not altered. Off-host backups/snapshots and the database's current WAL copy
+handling still need an exclusion-compatible recovery decision before publication.
+
+### Standalone image definition
+
+`deploy/Dockerfile.web` uses Node 22 Debian for both build and runtime, runs as
+the Node user, and copies standalone output, static assets and retained MDX.
+Its Dockerfile-specific ignore file admits only the web source/build files and
+the reviewed public Warren assessment export. Build context excludes school
+inputs, catalogs, source archives, credentials and the legacy Python service.
+Local production compilation, typechecking and standalone startup passed. The
+image itself has not yet been built or deployed through Openship.
 
 ## Runbook completion during delivery
 

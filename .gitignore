@@ -55,6 +55,7 @@ data/str/
 
 # Tool artifacts
 .serena/
+.openchamber/
 
 # Logs
 *.log

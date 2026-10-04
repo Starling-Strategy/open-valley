@@ -19,7 +19,7 @@ These observations come from the October 4 working session; recheck them before 
 | Resource | Observed state |
 |---|---|
 | Openship workspace | `Starling's Network`, `org_c041dc79-0f1e-4e45-adc8-72bb1e9f58b1`; credential bound to this workspace |
-| Icculus registration | Server `312d5cee-f866-4668-a64d-704a3a403341`, `100.75.27.44`, SSH server-command execution working |
+| Icculus registration | Server `312d5cee-f866-4668-a64d-704a3a403341`, `100.75.27.44`; server commands and managed prebuilt deployment/restart/redeploy verified |
 | Database | Container `openvalley-postgres`; standalone Compose installation at `/opt/openvalley-db` on Icculus |
 | Database versions | PostgreSQL 16.4, PostGIS 3.4.3, pgvector 0.8.1 |
 | Databases observed | `openvalley`, `openvalley_private`, `postgres`; school target is `openvalley` |
@@ -29,11 +29,11 @@ These observations come from the October 4 working session; recheck them before 
 | Public hostname | `openvalley.maconphillips.com`; health and route ownership need rechecking before cutover |
 | Homey trial | Project `proj_6cnkr_0H2r4DKadG`, slug `personal-openvalley`; last observed ready with API/web containers running |
 
-The trial migration failed with `SSH transport requires one of privateKey, sshAgent, or password.` It rolled back without creating a destination deployment. Working server-command execution and a failed migration do **not** establish whether fresh managed deployment works. U7 tests that path first.
+The trial migration failed with `SSH transport requires one of privateKey, sshAgent, or password.` It rolled back without creating a destination deployment. The fresh project subsequently passed managed prebuilt deployment after the targeted controller repair below. The full standalone application, restricted-role database access, and public ingress still need U7 verification.
 
 ## Fresh deployment test — 2026-10-04
 
-The native fresh-deployment test is now confirmed blocked at SSH transport initialization:
+The initial native fresh-deployment test failed at SSH transport initialization:
 
 - New project: `Open Valley Schools`, `proj_w_FjnF13GEZj0lxD`, bound to Icculus.
 - Test deployment: `dep_i2VG78ex_PxupTsv`, status `failed` before container creation.
@@ -42,7 +42,37 @@ The native fresh-deployment test is now confirmed blocked at SSH transport initi
 
 The working controller-side OpenSSH probe authenticated to Icculus using SSH's `none` method. Icculus reports Tailscale SSH enabled. The Openship API container has no `SSH_AUTH_SOCK` and its SSH directory contains only `known_hosts`; the saved server registration has no stored key. Thus the command path works through the existing Tailscale identity, while the deployment transport rejects the credential-free SSH handshake before connection.
 
-No school container was created and no public route was changed. Managed delivery needs Openship transport support for this existing Tailscale SSH path, or an approved SSH identity delivered securely to its deployment transport. A command-only deployment would change the management contract and requires the owner's decision. Do not add a fake password or copy another runtime's private key to satisfy the transport check.
+That failed attempt created no school container and changed no public route.
+
+### Authorized repair and successful managed retry
+
+The owner authorized **Fix Openship** on October 4. The fault was in Openship revision `234d8a9d0bd571aff3fe3ce73a8408f226dcb4a0`:
+
+- `packages/platform/src/engine/lib/ssh-manager.ts:180–191` deliberately selects system OpenSSH for agent authentication even without an agent socket.
+- `packages/platform/src/engine/lib/deployment-runtime.ts:939–955` forwards `useSystemSsh` to Docker.
+- `packages/adapters/src/runtime/docker-transport.ts:214` rejected that valid configuration before its existing OpenSSH bridge could connect.
+
+The repair makes the explicit-credential check conditional on `!opts.useSystemSsh`. Authentication still occurs through OpenSSH and the server's existing Tailscale policy. No credential or provider grant was changed.
+
+[The pinned repair Dockerfile](../deploy/openship/Dockerfile) reproduces the one-file image change and refuses an unexpected original source hash. The upstream checkout's fix and six regression cases are committed locally as `cb35aa8a6ed5a54edb7decb39d0420103834f2ce` in `/tmp/opencode/openship-ssh-repair`; no upstream PR has been opened. The new system-OpenSSH test failed with the original error before the fix. Afterward, 40 focused transport/bridge/executor tests and the adapters TypeScript check passed. A separate reviewer inspected the diff and reported no actionable findings; the full review workflow could not complete because that review session lacked nested-agent tooling.
+
+| Repair/retry evidence | Observed result |
+|---|---|
+| Controller | Homey server `c242bf6e-1325-4762-a78d-1efe63eae75f`, container `openship-api-1` |
+| Repaired image | `local/openship-api:234d8a9-system-ssh`, ID `sha256:f9e77054e127176128e7227307029264dd6ba61f2a141d8f0c90c3c753ef908f` |
+| Source checksum after repair | `057a4f1471f5531d7524934fb047d65680fda4317b6898504fc9a2d36153c7e7`; matches the tested source |
+| Persistent image selection | API image in `/opt/openship/docker/homey.yml`; all other resolved Compose settings compared equal |
+| Host repair artifacts | `/opt/openship/repairs/tailscale-ssh-234d8a9/`; `result.json` reports `applied`, healthy |
+| Read-only Docker probe | Temporary repaired-image container reached Icculus through the existing controller network; Docker ping and version `29.2.1` passed |
+| First managed retry | `dep_GS2OvUU7-8kyU1fp`, status `ready`, one service successful |
+| Managed restart | Openship restart succeeded; Icculus reported a new start time and the restarted service returned HTTP 200 |
+| Second managed redeploy | `dep_ZUOxt98UzuMJtm_n`, status `ready`, replacement container `a71728dd7666` |
+| School smoke service | `openship-openvalley-schools-web`, network `openship-openvalley-schools`, `unless-stopped`, no published ports or public endpoint |
+| Other Homey containers | Container identities unchanged across API replacement; database, cache, edge, dashboard, and trial apps kept running |
+
+Both deployments warned that **host-port reservation cleanup was deferred** because Icculus has no Openship edge/OpenResty inventory. Icculus uses the existing Coolify/Traefik proxy. The unexposed smoke service works; this is not yet proof of external ingress integration. Do not install another proxy to silence the warning.
+
+For controller recovery, restore only the API image pin in `homey.yml` to `ghcr.io/oblien/openship-api@sha256:38bdc73b58a7c5a4d04d6f84b1acc654c9409c008ce1c9bbb600032c87bf540d`, then recreate only `api` using the existing Compose files and environment file. That restores the original SSH deployment limitation. Preserve the repaired pin until an upstream version containing the fix is verified; an ordinary image update can otherwise reintroduce it. The host apply script had an automatic unhealthy-start rollback; that path was not triggered or independently rehearsed.
 
 ## Deployment boundaries
 
@@ -60,6 +90,10 @@ A Compose invocation through server-exec must be described as command-deployed i
 Use existing approved provider authentication and runtime secret-consumption paths. Inspect metadata/presence when diagnosing access; keep secret values out of tool output, command arguments, logs, source control, and ad hoc files. The database's existing credential was consumed inside its own container for the read-only check.
 
 The runtime needs a restricted application identity, not a database-superuser connection string. Publisher access is separate. If no approved consumer can deliver those credentials privately, report that specific gap. Do not broaden provider grants or copy another runtime's auth store.
+
+**Current U7 blocker:** the verified runtime has no approved consumer for provisioning and delivering the new school runtime/publisher credentials from 1Password to PostgreSQL and Openship. The documented wrapper supports inventory only; its authorized inventory contains no Open Valley database item. Openship's stored-credential list is empty. No new role or password has been created. The smallest missing setup is a scoped, private credential-delivery consumer for these two application identities; secret values must not pass through chat or tool output.
+
+The read-only database metadata check found only existing superuser login roles (`postgres`, `openvalley`, `openvalley_import`) and no `schools` schema. None is suitable for the web runtime. `archive_mode` is off, `wal_keep_size` is zero, and no replication slots exist; these facts do not complete the host/volume/backup retention inventory required before publication.
 
 ## Runbook completion during delivery
 

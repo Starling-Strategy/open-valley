@@ -91,7 +91,7 @@ Use existing approved provider authentication and runtime secret-consumption pat
 
 The runtime needs a restricted application identity, not a database-superuser connection string. Publisher access is separate. If no approved consumer can deliver those credentials privately, report that specific gap. Do not broaden provider grants or copy another runtime's auth store.
 
-**Current U7 prerequisite:** the documented 1Password wrapper supports inventory only; its authorized inventory contains no Open Valley database item. Openship's stored-credential list is empty. The owner subsequently authorized a narrowly scoped private delivery integration for the school runtime and publisher identities. Implementation and live verification are pending; no new role or password has been created yet. Secret values must not pass through chat, command arguments, logs, or ad hoc files.
+**Current U7 prerequisite:** the owner authorized the narrowly scoped [private credential consumer](school-board/credentials.md) for the school runtime and publisher identities. Its 13 synthetic checks pass, including a real OS-pipe regression for 1Password's stdin handling. Live creation reaches the provider but the existing grant denies item creation. Neither of the two exact-title Database items exists, and no new role or runtime credential file has been provisioned. The owner chose **defer production credentials** and continue local application/database verification. Do not retry provisioning until the owner confirms setup is ready. No provider grant was changed. Secret values must not pass through chat, command arguments, logs, or ad hoc files.
 
 The read-only database metadata check found only existing superuser login roles (`postgres`, `openvalley`, `openvalley_import`) and no `schools` schema. None is suitable for the web runtime. `archive_mode` is off, `wal_keep_size` is zero, and no replication slots exist; these facts do not complete the host/volume/backup retention inventory required before publication.
 
@@ -114,8 +114,13 @@ TCP port 5434; restricted-role authentication remains unverified.
 Host inventory found no files under `/data/coolify/backups`, no Open Valley backup
 timer, and only Compose plus a protected environment file in `/opt/openvalley-db`.
 The root filesystem is ext4. Timers exist for other applications; their backups
-were not altered. Off-host backups/snapshots and the database's current WAL copy
-handling still need an exclusion-compatible recovery decision before publication.
+were not altered. The owner believes Hetzner backups may exist and authorized
+continuing the build while the inventory and exclusion-compatible recovery
+procedure are tracked in [issue #11](https://github.com/Starling-Strategy/open-valley/issues/11).
+Provider snapshots, off-host copies and physical WAL retention remain unverified;
+this follow-up timing does not waive deletion of affected controlled copies.
+Both Openship projects have no backup policies. The one root cron job did not
+reference Open Valley or a backup/dump/snapshot tool.
 
 ### Standalone image definition
 

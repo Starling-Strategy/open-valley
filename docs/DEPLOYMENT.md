@@ -31,6 +31,19 @@ These observations come from the October 4 working session; recheck them before 
 
 The trial migration failed with `SSH transport requires one of privateKey, sshAgent, or password.` It rolled back without creating a destination deployment. Working server-command execution and a failed migration do **not** establish whether fresh managed deployment works. U7 tests that path first.
 
+## Fresh deployment test — 2026-10-04
+
+The native fresh-deployment test is now confirmed blocked at SSH transport initialization:
+
+- New project: `Open Valley Schools`, `proj_w_FjnF13GEZj0lxD`, bound to Icculus.
+- Test deployment: `dep_i2VG78ex_PxupTsv`, status `failed` before container creation.
+- Payload: a prebuilt Node HTTP smoke service, with no public endpoint, data, or credentials.
+- Error: `SSH transport requires one of privateKey, sshAgent, or password.`
+
+The working controller-side OpenSSH probe authenticated to Icculus using SSH's `none` method. Icculus reports Tailscale SSH enabled. The Openship API container has no `SSH_AUTH_SOCK` and its SSH directory contains only `known_hosts`; the saved server registration has no stored key. Thus the command path works through the existing Tailscale identity, while the deployment transport rejects the credential-free SSH handshake before connection.
+
+No school container was created and no public route was changed. Managed delivery needs Openship transport support for this existing Tailscale SSH path, or an approved SSH identity delivered securely to its deployment transport. A command-only deployment would change the management contract and requires the owner's decision. Do not add a fake password or copy another runtime's private key to satisfy the transport check.
+
 ## Deployment boundaries
 
 1. Recheck permitted Openship workspaces before creating a project or deploying Compose. Pass the chosen `organizationId` as a top-level argument throughout the flow.

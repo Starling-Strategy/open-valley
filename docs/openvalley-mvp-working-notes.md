@@ -2,7 +2,7 @@
 
 Updated: 2026-10-04
 
-The [Homes and Schools MVP plan](plans/2026-10-04-0006-feat-huusd-schools-mvp-plan.md) now carries the current release scope, data approach, and implementation sequence. These notes preserve the earlier discussion. Continue reviewing the plan before creating and organizing GitHub issues.
+Superseded for execution by the [integrated Homes and Schools delivery plan](plans/2026-10-04-0006-feat-huusd-schools-mvp-plan.md). These notes preserve earlier discussion; the plan owns current scope, PostgreSQL publication, Icculus deployment, design, documentation, and release checks.
 
 ## Platform and scope
 

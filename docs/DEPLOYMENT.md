@@ -1,151 +1,63 @@
-# Deployment - Coolify on Icculus
+# Deployment
 
-Open Valley is deployed via [Coolify](https://coolify.io/) on the `icculus` server, accessible via Tailscale.
+Purpose: Record verified infrastructure and the path to the next release.
+Audience: Open Valley maintainers and delivery agents.
+Status: Infrastructure baseline; school-release runbook pending implementation.
+Owner: Open Valley
+Last updated: 2026-10-04
 
-## Architecture
+## Target
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    Coolify on Icculus                       │
-│                murmuration.starlingstrategy.com             │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  ┌──────────────┐      ┌──────────────────────────────┐    │
-│  │ openvalley-db│      │ openvalley-app (planned)     │    │
-│  │ PostgreSQL 16│◄────►│ FastAPI + Next.js            │    │
-│  │ + pgvector   │      │                              │    │
-│  │ + PostGIS    │      │ openvalley.maconphillips.com │    │
-│  │              │      └──────────────────────────────┘    │
-│  │ Port: 5433   │                                          │
-│  └──────────────┘                                          │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
-```
+Deploy the school release as a **fresh application on Icculus through Openship**, using the existing `openvalley` PostgreSQL database. The [integrated delivery plan](plans/2026-10-04-0006-feat-huusd-schools-mvp-plan.md) owns scope, sequencing, and release gates.
 
-## Current Status
+The proposed runtime is one Next.js service with server-only database reads. The legacy FastAPI/AI service is not required for school publication. This is intended architecture, not a claim that the new service is deployed.
 
-| Service | Status | Domain |
-|---------|--------|--------|
-| **openvalley-db** | Running | Internal (Tailscale) |
-| **openvalley-app** | Planned | openvalley.maconphillips.com |
+## Observed infrastructure
 
-## Database Connection
+These observations come from the October 4 working session; recheck them before making changes.
 
-### Via Tailscale (internal)
+| Resource | Observed state |
+|---|---|
+| Openship workspace | `Starling's Network`, `org_c041dc79-0f1e-4e45-adc8-72bb1e9f58b1`; credential bound to this workspace |
+| Icculus registration | Server `312d5cee-f866-4668-a64d-704a3a403341`, `100.75.27.44`, SSH server-command execution working |
+| Database | Container `openvalley-postgres`; standalone Compose installation at `/opt/openvalley-db` on Icculus |
+| Database versions | PostgreSQL 16.4, PostGIS 3.4.3, pgvector 0.8.1 |
+| Databases observed | `openvalley`, `openvalley_private`, `postgres`; school target is `openvalley` |
+| Network | Tailscale-only PostgreSQL port 5434 is canonical; 5433 is a transitional alias. Application-container networking remains to be proved. |
+| Database access | Authenticated read-only PostgreSQL TCP query succeeded inside the existing container through Openship. No new application role has been provisioned. |
+| Ingress | Existing Coolify/Traefik owns ports 80/443 and routes an older Open Valley web deployment. Other services share this host. |
+| Public hostname | `openvalley.maconphillips.com`; health and route ownership need rechecking before cutover |
+| Homey trial | Project `proj_6cnkr_0H2r4DKadG`, slug `personal-openvalley`; last observed ready with API/web containers running |
 
-```bash
-# Connection string
-postgresql://openvalley:<password>@icculus:5433/openvalley
+The trial migration failed with `SSH transport requires one of privateKey, sshAgent, or password.` It rolled back without creating a destination deployment. Working server-command execution and a failed migration do **not** establish whether fresh managed deployment works. U7 tests that path first.
 
-# Or via IP
-postgresql://openvalley:<password>@100.75.27.44:5433/openvalley
-```
+## Deployment boundaries
 
-### Environment Variables
+1. Recheck permitted Openship workspaces before creating a project or deploying Compose. Pass the chosen `organizationId` as a top-level argument throughout the flow.
+2. Create a fresh Icculus project; do not repeat the Homey project migration.
+3. Reuse the existing database and its persistent storage. Apply additive school-schema migrations and dedicated runtime/publisher identities.
+4. Integrate only the Open Valley route with the existing proxy. Do not install a competing proxy on ports 80/443.
+5. Verify restricted-role database access from the actual application container, managed restart/redeploy, public HTTPS, and the release's cache behavior.
+6. Cut over only after the integrated plan's checks pass, then stop superseded Open Valley application instances and disable their redeploy controllers.
 
-Set in Coolify for `openvalley-db`:
-- `POSTGRES_USER=openvalley`
-- `POSTGRES_PASSWORD=<see Coolify>`
-- `POSTGRES_DB=openvalley`
+A Compose invocation through server-exec must be described as command-deployed if it is not actually managed by an Openship project. That fallback requires a decision rather than a success claim.
 
-### Dockerfile (Database)
+## Credentials
 
-```dockerfile
-FROM pgvector/pgvector:pg16
-RUN apt-get update && apt-get install -y postgresql-16-postgis-3 && rm -rf /var/lib/apt/lists/*
-```
+Use existing approved provider authentication and runtime secret-consumption paths. Inspect metadata/presence when diagnosing access; keep secret values out of tool output, command arguments, logs, source control, and ad hoc files. The database's existing credential was consumed inside its own container for the read-only check.
 
-Custom Docker options: `--network-alias=openvalley-db -v openvalley_pgdata:/var/lib/postgresql/data`
+The runtime needs a restricted application identity, not a database-superuser connection string. Publisher access is separate. If no approved consumer can deliver those credentials privately, report that specific gap. Do not broaden provider grants or copy another runtime's auth store.
 
-## Coolify API Access
+## Runbook completion during delivery
 
-Base URL: `https://murmuration.starlingstrategy.com/api/v1`
+U7, U8, U9, and U10 replace this baseline with tested operational instructions:
 
-```bash
-# List all resources
-curl -H "Authorization: Bearer <token>" \
-  "https://murmuration.starlingstrategy.com/api/v1/resources"
+- Actual Openship project, image/build source, network, route, and restart/redeploy owner.
+- Supported environment-variable names and approved private credential delivery.
+- Schema bootstrap, publication, validation, and current-release inspection.
+- Liveness/readiness checks and public-route verification.
+- Immediate exclusion/withdrawal, resumable cleanup, and eligible recovery.
+- Existing backup/WAL inventory and handling of excluded content in controlled copies.
+- Application rollback and the final service inventory after cutover.
 
-# Get database environment variables
-curl -H "Authorization: Bearer <token>" \
-  "https://murmuration.starlingstrategy.com/api/v1/applications/m44kg8ww4k0wsgcg4gosgco8/envs"
-```
-
-API token stored separately (not in repo).
-
-## Migration Plan
-
-### Phase 1: Database (Complete)
-- [x] Create PostgreSQL container with pgvector + PostGIS
-- [x] Configure persistent storage (`openvalley_pgdata`)
-- [x] Import data from local database
-- [x] Verify data integrity (1,823 parcels, 618 STR listings, etc.)
-
-### Phase 2: Application (TODO)
-- [ ] Create `openvalley-app` service in Coolify
-- [ ] Configure build from GitHub repo
-- [ ] Set environment variables:
-  - `DATABASE_URL=postgresql://openvalley:<password>@openvalley-db:5432/openvalley`
-  - `ADMIN_TOKEN=<secure token>`
-  - `NODE_ENV=production`
-- [ ] Configure domain: `openvalley.maconphillips.com`
-- [ ] Set up SSL via Coolify/Traefik
-
-### Phase 3: DNS & Go-Live
-- [ ] Point `openvalley.maconphillips.com` to Coolify
-- [ ] Verify frontend loads
-- [ ] Test API endpoints
-- [ ] Deprecate local Docker setup
-
-## Local Development
-
-For local development, continue using `docker-compose.yml`:
-
-```bash
-docker compose up -d
-# Database at localhost:5432
-# API at localhost:8999
-# Frontend at localhost:3000
-```
-
-To connect to production database locally (for debugging):
-
-```bash
-PGPASSWORD='<password>' psql -h icculus -p 5433 -U openvalley -d openvalley
-```
-
-## Data Sync
-
-Currently data is imported via scripts run locally, then the database was copied to Coolify. Future options:
-
-1. **Run import scripts against Coolify DB directly** (preferred)
-   ```bash
-   DATABASE_URL=postgresql://openvalley:<password>@icculus:5433/openvalley \
-     uv run python scripts/import_parcels.py --import
-   ```
-
-2. **pg_dump/pg_restore** for full refreshes
-   ```bash
-   # Export from local
-   pg_dump -h localhost -U openvalley openvalley > backup.sql
-
-   # Import to Coolify
-   PGPASSWORD='<password>' psql -h icculus -p 5433 -U openvalley -d openvalley < backup.sql
-   ```
-
-## Troubleshooting
-
-### Can't connect to database
-1. Check Tailscale is connected: `tailscale status | grep icculus`
-2. Verify port is open: `nc -zv 100.75.27.44 5433`
-3. Check container is running via Coolify UI or API
-
-### Database container not starting
-Check logs in Coolify UI → openvalley-db → Logs
-
-### Need to rebuild database
-```bash
-# Via Coolify API
-curl -X POST -H "Authorization: Bearer <token>" \
-  "https://murmuration.starlingstrategy.com/api/v1/applications/m44kg8ww4k0wsgcg4gosgco8/restart"
-```
+Record observations in the dated release receipt; keep this document as the single operational runbook. Source-collection commands remain in the [school-board tool guide](../scripts/school_board/README.md).

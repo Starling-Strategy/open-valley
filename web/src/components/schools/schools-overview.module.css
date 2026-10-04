@@ -1,0 +1,116 @@
+.overview { max-width: 1200px; margin-inline: auto; color: var(--foreground, #173d32); }
+.overview a { text-decoration: underline; }
+.overview button, .overview summary { cursor: pointer; }
+.overview button { font: inherit; }
+.overview :is(button, summary, a):focus-visible { outline: 3px solid #8a4b10; outline-offset: 4px; }
+.eyebrow { margin-bottom: 20px; font-size: 0.875rem; font-weight: 600; line-height: 1.5; letter-spacing: 0.1em; text-transform: uppercase; color: var(--secondary-ink, #526057); }
+.currentSchools { padding-bottom: 72px; }
+.pathways { padding-block: 72px; }
+.programs { padding-top: 72px; }
+.sectionHeading { display: flex; align-items: end; justify-content: space-between; flex-wrap: wrap; gap: 24px 40px; }
+.rosterCount { font-size: 1rem; }
+.rosterCount strong { font: 2rem Georgia, serif; }
+.rosterCount > span { padding-inline: 10px; color: var(--secondary-ink, #526057); }
+.introduction { max-width: 66ch; margin-block: 24px 32px; }
+.introduction > p + p { margin-top: 16px; }
+.note { font-size: 0.875rem; line-height: 1.65; color: var(--secondary-ink, #526057); overflow-wrap: anywhere; }
+.selectionBar { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 24px; padding-block: 20px; border-block: 1px solid var(--rule, #a0a89d); margin-bottom: 32px; }
+.selectionBar > p { flex: 1 1 260px; }
+.overviewButton { min-height: 44px; border: 1px solid #173d32; padding: 9px 16px; background: transparent; color: inherit; }
+.overviewButton[aria-pressed="true"] { background: #173d32; color: #f7f3ea; }
+.detailsLink { display: inline-flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 44px; font-size: 0.875rem; font-weight: 600; }
+.directoryMap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 48px; align-items: start; }
+.directory, .mapColumn { min-width: 0; }
+.campusGroup + .campusGroup { margin-top: 28px; }
+.campusHeading { display: flex; gap: 12px; align-items: center; margin-bottom: 8px; font-size: 0.875rem; font-weight: 600; }
+.campusNumber { display: inline-grid; place-items: center; width: 32px; height: 32px; flex-shrink: 0; border: 1px solid #173d32; border-radius: 50%; line-height: 1; }
+.schoolEntry { border-bottom: 1px solid var(--rule, #a0a89d); }
+.schoolDetails > summary { padding: 14px 12px; list-style: none; border-left: 3px solid transparent; min-height: 44px; }
+.schoolDetails > summary::-webkit-details-marker { display: none; }
+.schoolDetails > summary:hover { background: #eeeade; }
+.schoolDetails[open] > summary { border-left-color: #173d32; background: #e8ede5; }
+.schoolName { display: block; font: 1.5rem/1.2 Georgia, "Times New Roman", serif; overflow-wrap: anywhere; }
+.schoolGrade { display: block; margin-top: 8px; font-size: 0.875rem; }
+.directoryCounts { display: grid; gap: 8px; margin-top: 16px; font-size: 0.875rem; line-height: 1.55; color: var(--secondary-ink, #526057); }
+.directoryCounts strong { font-size: 1.125rem; color: #173d32; font-weight: 600; }
+.summaryAction { display: flex; justify-content: space-between; gap: 16px; margin-top: 16px; font-size: 0.875rem; font-weight: 600; text-decoration: underline; text-underline-offset: 0.2em; }
+.directorySources { padding: 0 12px 16px 15px; }
+.sources { margin-top: 12px; padding: 0; list-style: none; font-size: 0.875rem; line-height: 1.6; color: var(--secondary-ink, #526057); overflow-wrap: anywhere; }
+.sources li + li { margin-top: 8px; }
+.sources a { color: #173d32; }
+.profile { padding: 24px 16px 32px; scroll-margin-top: 24px; }
+.profile > h3 { font-size: 1.5rem; margin-bottom: 16px; }
+.profile h4 { font: 600 1rem/1.5 var(--font-geist-sans, sans-serif); margin-bottom: 12px; }
+.profile > p + p { margin-top: 8px; }
+.location, .sharedCampus, .profileSection { margin-top: 28px; }
+.location p + p, .enrollmentFact p + p { margin-top: 8px; }
+.sharedCampus { border-left: 2px solid #526057; padding-left: 16px; }
+.groupButtons { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.groupButtons button { min-height: 44px; padding: 9px 12px; text-align: left; border: 1px solid #526057; background: transparent; color: #173d32; font-size: 0.875rem; line-height: 1.5; }
+.groupButtons button[aria-pressed="true"] { background: #173d32; color: #f7f3ea; border-color: #173d32; }
+.enrollmentPair { display: grid; gap: 28px; margin-top: 32px; }
+.enrollmentFact { border-top: 1px solid var(--rule, #a0a89d); padding-top: 20px; }
+.enrollmentFact h4 { font: 600 1rem/1.5 var(--font-geist-sans, sans-serif); }
+.enrollmentNumber { margin-top: 8px; font: 2.75rem/1.2 Georgia, serif; }
+.enrollmentNumber span { font: 0.875rem var(--font-geist-sans, sans-serif); }
+.unavailable { font-size: 1.125rem; font-weight: 600; }
+.countMeta { font-size: 0.875rem; }
+.nextSchools { list-style: none; padding: 0; margin-bottom: 12px; }
+.nextSchools button { min-height: 44px; color: inherit; background: none; text-decoration: underline; text-align: left; }
+.profileSection > p { margin-top: 12px; }
+.mapFigure { border: 1px solid var(--rule, #a0a89d); }
+.mapHeading { padding: 20px; border-bottom: 1px solid var(--rule, #a0a89d); }
+.mapHeading h3 { font-size: 1.65rem; }
+.mapHeading p { margin-top: 8px; }
+.mapStage { position: relative; height: 500px; isolation: isolate; background: #eeeade; }
+.mapCanvas { width: 100%; height: 100%; }
+.mapNotice { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; padding: 32px; background: #eeeade; font-size: 1rem; line-height: 1.6; }
+.mapNotice h3 { margin-bottom: 16px; }
+.mapNotice a { display: inline-flex; align-items: center; min-height: 44px; margin-top: 16px; }
+.mapMarker { width: 44px; height: 44px; border: 2px solid #173d32; border-radius: 50%; background: #f7f3ea; color: #173d32; font: 700 1rem/1 var(--font-geist-sans, sans-serif); cursor: pointer; box-shadow: 0 1px 5px #173d3240; }
+.mapMarker[aria-pressed="true"] { background: #173d32; color: #f7f3ea; outline: 3px solid #f7f3ea; outline-offset: 1px; }
+.mapMarker:focus-visible { outline: 3px solid #8a4b10; outline-offset: 4px; z-index: 2; }
+.mapStage :global(.maplibregl-ctrl-group) button { width: 44px; height: 44px; }
+.mapStage :global(.maplibregl-ctrl-attrib) { font-size: 0.875rem; color: #173d32; background: #f7f3ea; }
+.mapStage :global(.maplibregl-ctrl-attrib) a { color: #173d32; }
+.mapGroupChooser { padding: 20px; border-top: 1px solid var(--rule, #a0a89d); }
+.mapGroupChooser > p:first-child { font-weight: 600; font-size: 1rem; }
+.mapCaption { padding: 20px; border-top: 1px solid var(--rule, #a0a89d); font-size: 0.875rem; line-height: 1.65; color: var(--secondary-ink, #526057); }
+.mapCaption p + p { margin-top: 12px; }
+.mapSources { margin-top: 12px; }
+.mapSources summary { min-height: 44px; padding-block: 10px; color: #173d32; text-decoration: underline; }
+.pathways, .programs { border-top: 1px solid var(--rule, #a0a89d); }
+.sectionLede { max-width: 66ch; margin-block: 24px 32px; }
+.pathwayList { padding: 0; list-style: none; }
+.pathwayList > li { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); gap: 24px 56px; border-top: 1px solid var(--rule, #a0a89d); padding-block: 28px; }
+.pathwayRoute > p { margin-top: 12px; font-size: 0.875rem; }
+.pathwayRoute > .pathwayDestination { font-size: 1rem; font-weight: 600; }
+.programGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px 56px; }
+.programGrid > article { border-top: 1px solid var(--rule, #a0a89d); padding-top: 24px; }
+.programGrid p { margin-top: 16px; }
+.programCount { font-size: 0.875rem; }
+.srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+@media (max-width: 900px) {
+  .directoryMap { grid-template-columns: minmax(0, 1fr); gap: 40px; }
+  .pathwayList > li { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+}
+@media (max-width: 600px) {
+  .currentSchools { padding-bottom: 48px; }
+  .pathways { padding-block: 48px; }
+  .programs { padding-top: 48px; }
+  .programGrid { grid-template-columns: minmax(0, 1fr); gap: 32px; }
+  .mapStage { height: 440px; }
+  .mapHeading, .mapCaption, .mapGroupChooser { padding: 16px; }
+  .mapNotice { padding: 24px; }
+  .profile { padding-inline: 12px; }
+  .sectionHeading { display: block; }
+  .rosterCount { margin-top: 20px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .overview *, .overview *::before, .overview *::after { scroll-behavior: auto; transition: none; animation: none; }
+}
+@media (forced-colors: active) {
+  .overview :is(button, summary, a):focus-visible { outline-color: Highlight; }
+  .schoolDetails[open] > summary { border-color: Highlight; }
+  .mapMarker[aria-pressed="true"], .groupButtons button[aria-pressed="true"], .overviewButton[aria-pressed="true"] { border: 3px solid Highlight; }
+}

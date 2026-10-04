@@ -1,201 +1,98 @@
-# 🚀 Open Valley - Startup Guide
+# Local development
 
-## Quick Start (One Command!)
+Purpose: Run and verify the public Open Valley application.
+Audience: Contributors.
+Status: canonical
+Owner: Open Valley
+Last updated: 2026-10-04
 
-### macOS / Linux:
+## Start the application
+
+Use Node.js 22 and npm. From the repository root:
+
 ```bash
+npm ci --include=dev --prefix web
 ./start-dev.sh
 ```
 
-This single command will:
-1. ✅ Start the PostgreSQL database (Docker)
-2. ✅ Open a new Terminal tab for the Python FastAPI backend
-3. ✅ Open another Terminal tab for the Next.js frontend
-4. ✅ Show you where to access the app
+Open **http://127.0.0.1:3000**. Press **Ctrl+C** in that terminal to stop it.
+`PORT=3100 ./start-dev.sh` selects a different port. The launcher runs only the
+Next.js application; it does not start or stop PostgreSQL.
 
-Then open your browser to: **http://localhost:3000**
+Homes, articles, and the retained public assessment search work without a
+database. Schools requires an eligible publication in PostgreSQL; without one,
+it shows an availability notice. The application has no bundled school-data
+fallback and does not need the legacy FastAPI or AI services.
 
----
+## School data and database setup
 
-## What the Script Does
+Use PostgreSQL 16 and Python 3.11+ for publication tooling. Follow the
+[publication guide](docs/school-board/publication.md) for migrations, synthetic
+fixtures, publication, withdrawal, and integration tests. Run synthetic examples
+against a disposable local database, not Icculus.
 
-The `start-dev.sh` script automates the full startup sequence:
+If PostgreSQL is not already running locally, Docker can provide a disposable
+instance bound to loopback port 55432:
 
-```
-1. Check if Docker is running
-2. Start PostgreSQL database (docker compose up -d)
-3. Open Terminal tab #1: API backend (uvicorn on port 8000)
-4. Open Terminal tab #2: Frontend (Next.js on port 3000)
-```
-
-You'll end up with 3 services running:
-- **🗄️ Database**: PostgreSQL on `localhost:5432`
-- **🔗 API**: FastAPI on `localhost:8000`
-- **🌐 Frontend**: Next.js on `localhost:3000`
-
----
-
-## Manual Startup (If Script Doesn't Work)
-
-If the script doesn't work for your setup, run these in **3 separate terminals**:
-
-### Terminal 1: Database
 ```bash
-docker compose up -d
+docker compose -f deploy/compose.local.yml up -d --wait
 ```
 
-### Terminal 2: Python API Backend
+This development-only service uses trust authentication and memory-backed
+storage. Its contents disappear when the container stops. Stop only this
+instance with `docker compose -f deploy/compose.local.yml down`.
+
+The web runtime accepts one of these server-only inputs:
+
+| Variable | Meaning |
+|---|---|
+| `SCHOOLS_DATABASE_URL_FILE` | Read-only credential file supplied by the deployment system. |
+| `SCHOOLS_DATABASE_URL` | Connection string supplied privately to a local process. |
+
+Use the restricted `schools_runtime` identity. Publisher and administrator
+access belong to separate commands, never the web process. Production delivery
+is described in the [credential guide](docs/school-board/credentials.md).
+
+The school map uses OpenStreetMap tiles with visible attribution. It needs no
+MapTiler key. The school list and profiles remain usable when the map fails.
+
+## Checks
+
 ```bash
-cd api
-uv sync
-uv run uvicorn src.main:app --reload --port 8000
+python3 -B -m unittest discover -s scripts/school_board -p 'test_*.py' -v
+node --test scripts/school_board/test_credentials.mjs
+npm run test:unit --prefix web
+npm run lint --prefix web
+npm run build --prefix web
 ```
 
-### Terminal 3: Next.js Frontend
+Database integration checks and their synthetic setup are in the publication
+guide. Browser checks run against an already running application with an active
+test publication:
+
 ```bash
 cd web
-npm install
-npm run dev
+npx playwright install --with-deps chromium
+PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 npm run test:browser
 ```
 
-Then visit: **http://localhost:3000**
+After a production build, `node --test scripts/school_board/test_serving.mjs`
+runs the browser suite against a temporary synthetic publication and then checks
+withdrawal through HTML, RSC, JSON, browser focus, and back navigation. It starts
+its own standalone server on port 3182 and removes its database and fixtures
+afterward. CI runs the same checks inside the allowlisted Docker image.
 
----
+The managed coding runtime stores browser downloads and local PostgreSQL tooling
+under `/rocky/open-valley/cache/` and `/rocky/open-valley/tmp/`. These caches are
+not repository dependencies or backups. A normal workstation or CI runner uses
+its own PostgreSQL and Playwright installation.
 
-## Stopping Services
+## Evidence and deployment
 
-### With Docker (stops database only):
-```bash
-docker compose down
-```
+- [School-board index](docs/school-board/README.md): reviewed sources and coverage.
+- [Collection tools](scripts/school_board/README.md): validate publication candidates.
+- [AGENTS.md](AGENTS.md): mandatory data-handling policy.
+- [Deployment](docs/DEPLOYMENT.md): observed Icculus state and remaining gates.
 
-### Or use the helper script:
-```bash
-./stop-dev.sh
-```
-
-### Stop API & Frontend:
-Press `Ctrl+C` in those terminal tabs.
-
----
-
-## Accessing Your App
-
-| Service | URL | Purpose |
-|---------|-----|---------|
-| **Frontend** | http://localhost:3000 | Chat interface with visualizations |
-| **API** | http://localhost:8000 | FastAPI server |
-| **API Docs** | http://localhost:8000/docs | Interactive API documentation |
-| **Database** | localhost:5432 | PostgreSQL (openvalley/openvalley) |
-
----
-
-## Database Connection
-
-Connect via psql:
-```bash
-docker compose exec db psql -U openvalley -d openvalley
-```
-
-Connection string:
-```
-postgresql://openvalley:openvalley@localhost:5432/openvalley
-```
-
----
-
-## Environment Setup
-
-Create `api/.env` with your credentials:
-```
-DATABASE_URL=postgresql://openvalley:openvalley@localhost:5432/openvalley
-PYDANTIC_AI_GATEWAY_API_KEY=your-gateway-key
-OPENAI_API_KEY=your-openai-key
-LOGFIRE_TOKEN=optional
-```
-
----
-
-## Troubleshooting
-
-### Docker not running
-- Make sure Docker Desktop is open
-- The script will tell you if Docker isn't available
-
-### Ports already in use
-- Database port 5432: Change in `docker-compose.yml`
-- API port 8000: Change `--port 8000` in the start script
-- Frontend port 3000: Next.js will prompt to use 3001 if 3000 is taken
-
-### Database connection errors
-- Wait a few seconds after starting Docker for the database to initialize
-- Check logs: `docker compose logs -f db`
-
-### Dependencies not installing
-- API: Make sure you have `uv` installed (`pip install uv`)
-- Frontend: Make sure you have Node.js 18+ installed
-
----
-
-## File Structure
-
-```
-open-valley/
-├── start-dev.sh          ← Run this to start everything
-├── stop-dev.sh           ← Run this to stop everything
-├── docker-compose.yml    ← Database configuration
-├── api/                  ← Python FastAPI backend
-│   └── src/
-│       ├── main.py       ← FastAPI app
-│       ├── agent.py      ← Pydantic AI agent
-│       └── models.py     ← Database models
-└── web/                  ← Next.js frontend
-    └── src/
-        ├── app/
-        └── components/
-```
-
----
-
-## Common Commands
-
-```bash
-# View database logs
-docker compose logs -f db
-
-# Connect to database
-docker compose exec db psql -U openvalley -d openvalley
-
-# Stop everything
-docker compose down
-
-# Remove database volume (reset data)
-docker compose down -v
-
-# Restart from scratch
-docker compose down -v && docker compose up -d
-```
-
----
-
-## Architecture Overview
-
-```
-Frontend (Next.js, port 3000)
-    ↓ (HTTP requests)
-Backend API (FastAPI, port 8000)
-    ↓ (SQL queries)
-Database (PostgreSQL, port 5432)
-```
-
-The frontend talks to the API, which talks to the database. The AI agent runs in the API and has tools to query property data and community posts.
-
----
-
-## Need Help?
-
-- Check `CLAUDE.md` for the full project documentation
-- Check individual `README.md` files in `api/` and `web/` directories
-- View API docs at http://localhost:8000/docs once the API is running
-
-Happy coding! 🎉
+The legacy root `Dockerfile` and `docker-compose.yml` describe the earlier
+housing/AI stack. The public web image uses `deploy/Dockerfile.web`.

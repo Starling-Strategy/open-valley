@@ -19,11 +19,24 @@ execution: code
 
 **Authority:** Project data-handling rules govern all collection and publication. The Product Contract governs user-facing behavior; the Planning Contract governs implementation within those limits. This plan supersedes the working notes for this release.
 
-**Execution boundary:** This revision is planning work. Once execution is authorized, the agent owns evidence preparation, design, implementation, verification, documentation, and deployment through the Definition of Done. The current planning pass does not deploy services or publish unverified data.
+**Execution boundary:** Execution is authorized. The agent owns evidence preparation, implementation, verification and documentation through the gates below. **October 4 owner decision:** production database credentials are deferred after the existing 1Password grant denied item creation. Continue to a fully built and locally verified school application; production role setup, live school publication, public cutover and retirement remain pending until the owner confirms credential setup. Do not retry provisioning meanwhile. This changes the current delivery checkpoint, not the long-term release goal. (session-settled: user-approved delivery boundary.)
 
 **Stop conditions:** Stop publication of affected figures if their source, population definition, or historical comparability cannot be established. Stop affected ingestion if exclusion checks fail. Record a precise gap rather than inventing a value or restoring excluded material.
 
 **Delivery ownership:** The implementing agent owns integration and release. Use bounded specialist work for research and independent review; keep schema, shared UI, and deployment decisions with one integrator. Routine design choices, source reconciliation, tests, and repairs do not require owner approval. Escalation boundaries are defined under Autonomous Delivery.
+
+### October 4 implementation checkpoint
+
+The [verification receipt](../school-board/mvp-verification.md) records the
+completed local application and review corrections. U1–U6 are implemented and
+locally verified. U8's publication, withdrawal and restricted reader are verified
+against PostgreSQL 16, including browser serving. U10's contributor and publication
+guides describe the supported workflow. U9's local code/editorial review is complete.
+
+U7 proved managed Icculus deployment and temporary HTTPS ingress with an earlier
+shell image. Production credentials, live school publication, public cutover and
+retirement remain the deferred portions of U7–U10. The full Definition of Done
+below remains the production release gate.
 
 ---
 

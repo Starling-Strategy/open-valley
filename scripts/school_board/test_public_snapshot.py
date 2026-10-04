@@ -161,6 +161,47 @@ class PublicSnapshotTest(unittest.TestCase):
         self.register['schools'][0]['current_enrollment_ref']['entity_id'] = 'unknown'
         self.assert_rejected('enrollment ref')
 
+    def test_school_enrollment_refs_can_be_null_independently_or_together(self):
+        school = self.register['schools'][0]
+        fields = ('current_enrollment_ref', 'latest_attending_enrollment_ref')
+        original = {field: school[field] for field in fields}
+        for null_fields in ((fields[0],), (fields[1],), fields):
+            with self.subTest(null_fields=null_fields):
+                expected = {field: None if field in null_fields else original[field] for field in fields}
+                school.update(expected)
+                self.build()
+                published = self.payload()['schools'][0]
+                self.assertEqual({field: published[field] for field in fields}, expected)
+                self.assertEqual(len(self.payload()['enrollment']), 2)
+
+    def test_nonnull_school_enrollment_ref_is_validated_when_other_ref_is_null(self):
+        school = self.register['schools'][0]
+        fields = ('current_enrollment_ref', 'latest_attending_enrollment_ref')
+        original = school['current_enrollment_ref']
+        for field in fields:
+            for ref, message in ((original | {'school_year': '2024-25'}, 'unknown or ambiguous enrollment ref'),
+                                 (original | {'entity_id': 'huusd'}, 'enrollment ref points to another entity'),
+                                 ({}, 'missing fields'), (False, 'invalid type')):
+                with self.subTest(field=field, ref=ref):
+                    school.update({key: None for key in fields})
+                    school[field] = ref
+                    self.assert_rejected(message)
+
+    def test_nonnull_school_enrollment_ref_rejects_ambiguity_and_grade_mismatch(self):
+        school = self.register['schools'][0]
+        fields = ('current_enrollment_ref', 'latest_attending_enrollment_ref')
+        original = school['current_enrollment_ref']
+        for field in fields:
+            with self.subTest(field=field):
+                school.update({key: None for key in fields})
+                school[field] = original
+                self.rows.append(self.row('school', None, reference_date=''))
+                self.assert_rejected('unknown or ambiguous enrollment ref')
+                self.rows.pop()
+                school['grade_configurations'][0]['grade_scope'] = 'K-6'
+                self.assert_rejected('enrollment ref disagrees with dated grade configuration')
+                school['grade_configurations'][0]['grade_scope'] = 'K-12'
+
     def test_missing_suppressed_and_not_applicable_remain_null_never_zero(self):
         for state in ('missing', 'suppressed', 'not_applicable'):
             with self.subTest(state=state):

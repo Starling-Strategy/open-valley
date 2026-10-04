@@ -38,31 +38,31 @@ OFFICIAL_HOSTS = {
 # count_basis remains a separate key even when reported/derived values reconcile.
 SERIES = {
     'attending-october': ('attending_excludes_early_college', True,
-        'October 1 K–12 attending headcounts; tuition/choice in and dual enrollment included; fully offsite Early College excluded. Defined from 2021–22; older primary-basis years are gaps. Not certified final.'),
+        'October 1 counts of students attending grades K–12. Includes students entering through tuition or school choice and students in dual enrollment; excludes fully offsite Early College students. This definition is established from 2021–22 onward; earlier years have no verified count under this definition. Final certification has not been established.'),
     'wwsu-2016': ('wwsu_reported_all_enrollment', False,
         '2016–17 predecessor WWSU enrollment, excluding PK; Early College treatment unstated. Separate historical segment.'),
     'district-2017': ('district_2017_all_attending_12plus', False,
-        '2017–18 district all-attending column; K–12+ excludes PK. Meaning of 12+ and Early College treatment unresolved.'),
+        'The 2017–18 district all-attending column covers K–12+ and excludes PK. The meaning of 12+ and the treatment of Early College remain unresolved.'),
     'district-2017-pk-inclusive': ('district_2017_pk_inclusive', False,
         '2017–18 printed district total includes PK despite its K–12 label; separate from K–12+.'),
     'nesdec-2018-history': ('nesdec_2018_supplied_enrollment', False,
         '2018–19 school-supplied historical counts; exact count date and Early College treatment unverified. Not projections.'),
     'district-retrospective-2019-2020': ('district_2021_reported_history', False,
-        '2019–20 and 2020–21 October counts reprinted in 2021; contemporary inclusion rules unverified. Separate historical points.'),
+        'October counts for 2019–20 and 2020–21, reprinted in 2021. The rules for who was included at the time have not been verified, so these are shown as separate historical points.'),
     'district-headline-ec-inclusive': ('reported_including_early_college', True,
-        'District retrospective headline K–12 counts including Early College, separate from attending counts.'),
+        'The district headline totals report earlier K–12 enrollment and include Early College. They are separate from attending counts.'),
     'nesdec-2026-history': ('nesdec_2026_as_supplied_history', False,
-        'History as supplied to NESDEC; inconsistent Early College inclusion. 2023–24 is seven above the district headline, unexplained. Show a table or disconnected points, never a common trend line.'),
+        'Historical counts as supplied to NESDEC do not consistently include Early College. The 2023–24 count is seven above the district headline total, with no explanation for the difference. These counts are shown in a table or as separate points because they cannot form a consistent trend line.'),
     'nesdec-2026-pk-history': ('nesdec_2026_supplied_pk', False,
-        'Consultant-supplied public/private PK history, not public-campus attendance; unresolved historical edition differences.'),
+        'Historical public and private PK counts supplied by the consultant. These are not counts of students attending public campuses. Differences between historical editions remain unresolved.'),
     'public-pk-october': ('attending_public_pk', False,
-        'Public-school PK attendance, separate from K–12 and district-funded public/private PK.'),
+        'Counts of students attending public-school PK, kept separate from K–12 enrollment and district-funded public and private PK.'),
     'september-2026-preliminary': ('preliminary_reported_enrollment', False,
-        'September 2026 preliminary K–12 snapshot; exact count day and Early College treatment unverified. Baseline changes are not supported.'),
+        'A preliminary September 2026 snapshot of K–12 enrollment. The exact count day and treatment of Early College have not been verified. The available information does not support calculating changes from a baseline.'),
     'nesdec-2026-k12': ('nesdec_2026_projected_enrollment', True,
-        'Separate NESDEC January 9, 2026 v2 forecast; 2025–26 base 1,591 includes Early College, unlike attending 1,578. Never connect to attending history.'),
+        'The separate NESDEC January 9, 2026 v2 forecast uses a 2025–26 base of 1,591 that includes Early College. The attending count of 1,578 excludes Early College. These populations differ, so the forecast is shown separately from attending history rather than joined to it.'),
     'nesdec-2026-pk': ('nesdec_2026_projected_pk', True,
-        'Separate NESDEC January 9, 2026 v2 public/private PK forecast; base 196, not public-campus attendance 127. No school allocation.'),
+        'The separate NESDEC January 9, 2026 v2 forecast covers public and private PK. Its base is 196, rather than the public-campus attendance count of 127. It does not allocate students to individual schools.'),
 }
 INTERNAL_REGISTER_NOTE = ('These are reviewed candidate inputs. Catalog additions, host validation and the publication lifecycle are required before runtime use. No app or database release is implied by this file.')
 # These exact U2 edition annotations belong only to publisher metadata, not citations.
@@ -411,6 +411,8 @@ def lookup_ref(ref, rows, label):
 def validate_enrollment_refs(register, rows):
     for school in register['schools']:
         for field in ('current_enrollment_ref', 'latest_attending_enrollment_ref'):
+            if school[field] is None:
+                continue
             row = lookup_ref(school[field], rows, school['school_id'] + ' enrollment ref')
             require(row['entity_id'] == school['school_id'], field, 'enrollment ref points to another entity')
             for config in school['grade_configurations']:

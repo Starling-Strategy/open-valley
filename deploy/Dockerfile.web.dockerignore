@@ -8,6 +8,8 @@
 !web/tsconfig.json
 !web/postcss.config.mjs
 !web/mdx-components.tsx
+!web/scripts/
+!web/scripts/prepare-map.mjs
 !web/src/
 !web/src/**
 !web/public/

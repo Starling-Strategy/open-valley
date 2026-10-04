@@ -2,7 +2,7 @@
 
 Purpose: Record verified infrastructure and the path to the next release.
 Audience: Open Valley maintainers and delivery agents.
-Status: Infrastructure baseline; school-release runbook pending implementation.
+Status: canonical; local application verified, production school cutover pending.
 Owner: Open Valley
 Last updated: 2026-10-04
 
@@ -10,7 +10,7 @@ Last updated: 2026-10-04
 
 Deploy the school release as a **fresh application on Icculus through Openship**, using the existing `openvalley` PostgreSQL database. The [integrated delivery plan](plans/2026-10-04-0006-feat-huusd-schools-mvp-plan.md) owns scope, sequencing, and release gates.
 
-The proposed runtime is one Next.js service with server-only database reads. The legacy FastAPI/AI service is not required for school publication. This is intended architecture, not a claim that the new service is deployed.
+The runtime is one Next.js service with server-only database reads. The legacy FastAPI/AI service is not required for school publication. The full school experience is implemented and locally verified; the [verification receipt](school-board/mvp-verification.md) records its checks. Production credentials remain deferred by the owner, and Icculus still runs the earlier internal shell preview.
 
 ## Observed infrastructure
 
@@ -23,13 +23,13 @@ These observations come from the October 4 working session; recheck them before 
 | Database | Container `openvalley-postgres`; standalone Compose installation at `/opt/openvalley-db` on Icculus |
 | Database versions | PostgreSQL 16.4, PostGIS 3.4.3, pgvector 0.8.1 |
 | Databases observed | `openvalley`, `openvalley_private`, `postgres`; school target is `openvalley` |
-| Network | Tailscale-only PostgreSQL port 5434 is canonical; 5433 is a transitional alias. Application-container networking remains to be proved. |
+| Network | Tailscale-only PostgreSQL port 5434 is canonical; 5433 is a transitional alias. Application-container TCP reachability is proved; restricted-role authentication remains pending. |
 | Database access | Authenticated read-only PostgreSQL TCP query succeeded inside the existing container through Openship. No new application role has been provisioned. |
 | Ingress | Existing Coolify/Traefik owns ports 80/443 and routes an older Open Valley web deployment. Other services share this host. |
 | Public hostname | `openvalley.maconphillips.com`; health and route ownership need rechecking before cutover |
 | Homey trial | Project `proj_6cnkr_0H2r4DKadG`, slug `personal-openvalley`; last observed ready with API/web containers running |
 
-The trial migration failed with `SSH transport requires one of privateKey, sshAgent, or password.` It rolled back without creating a destination deployment. The fresh project subsequently passed managed prebuilt deployment after the targeted controller repair below. The full standalone application, restricted-role database access, and public ingress still need U7 verification.
+The trial migration failed with `SSH transport requires one of privateKey, sshAgent, or password.` It rolled back without creating a destination deployment. The fresh project subsequently passed managed standalone deployment and exact-path public ingress checks after the targeted controller repair below. Restricted-role database access and the full school's public HTML/RSC behavior remain unverified.
 
 ## Fresh deployment test — 2026-10-04
 
@@ -54,7 +54,7 @@ The owner authorized **Fix Openship** on October 4. The fault was in Openship re
 
 The repair makes the explicit-credential check conditional on `!opts.useSystemSsh`. Authentication still occurs through OpenSSH and the server's existing Tailscale policy. No credential or provider grant was changed.
 
-[The pinned repair Dockerfile](../deploy/openship/Dockerfile) reproduces the one-file image change and refuses an unexpected original source hash. The upstream checkout's fix and six regression cases are committed locally as `cb35aa8a6ed5a54edb7decb39d0420103834f2ce` in `/tmp/opencode/openship-ssh-repair`; no upstream PR has been opened. The new system-OpenSSH test failed with the original error before the fix. Afterward, 40 focused transport/bridge/executor tests and the adapters TypeScript check passed. A separate reviewer inspected the diff and reported no actionable findings; the full review workflow could not complete because that review session lacked nested-agent tooling.
+[The pinned repair Dockerfile](../deploy/openship/Dockerfile) reproduces the one-file image change and refuses an unexpected original source hash. The upstream checkout's fix and six regression cases are committed locally as `cb35aa8a6ed5a54edb7decb39d0420103834f2ce` in `/tmp/opencode/openship-ssh-repair`. The new system-OpenSSH test failed with the original error before the fix. Afterward, 40 focused transport/bridge/executor tests and the adapters TypeScript check passed. An independent review of that exact commit, callers, SSH bridge and authentication paths found no actionable defects; its static review did not rerun the live checks. Upstream handoff remains blocked: the GitHub identity has read-only access to `oblien/openship`, and its token denied fork creation with HTTP 403. No upstream PR exists; no provider grant was changed.
 
 | Repair/retry evidence | Observed result |
 |---|---|
@@ -145,15 +145,40 @@ container. The service now uses its Docker healthcheck plus observed endpoint
 checks; Openship's incompatible loopback HTTP gate is disabled. This is a known
 probe limitation, not a claim that database readiness has passed.
 
-The next image must use the subsequently updated frontend dependencies:
+The updated internal image uses the patched frontend dependencies:
 Next.js and its MDX/ESLint packages 16.3.8, MapLibre 6.12.0, and next-mdx-remote
 6.0.0. Compatibility build/typechecks pass and `npm audit --omit=dev` reports
-zero findings after the supported YAML dependency updates. The older internal
-preview has no public route and must be replaced before cutover.
+zero findings after the supported YAML dependency updates. Image
+`local/openvalley-web:4bef97c`, digest
+`sha256:f2702f365d31076d5d91d99cb340773c2a9f7a4eac0887219d7fbb12d746fb3a`,
+replaced the older internal preview through managed deployment
+`dep_M_phvJZMZrJPZCDo` (`ready`). It has no public route. This remains a shell
+preview; the database-backed school experience is being verified locally while
+production credentials are deferred.
 
-## Runbook completion during delivery
+## Applying the completed school application
 
-U7, U8, U9, and U10 replace this baseline with tested operational instructions:
+[`deploy/compose.icculus.yml`](../deploy/compose.icculus.yml) records the intended
+service configuration for the existing managed project. It names the protected
+read-only credential mount and makes the container healthcheck require an
+eligible release. It has not been applied with production credentials.
+
+Build `deploy/Dockerfile.web` from a recorded, committed repository revision.
+Its context contains `web/`, the reviewed Warren assessment export, and the
+Dockerfile plus its ignore file. Record the resulting image digest. Update the
+existing Openship `web` service and invoke a managed deployment; a host-side
+image build alone is not a managed deployment receipt.
+
+After credential setup resumes, follow the [publication guide](school-board/publication.md)
+for additive migration, effective-grant checks, and activation. Check
+`/api/health` for process liveness and `/api/ready` for database-backed readiness.
+Do not route public traffic while readiness is unavailable. The existing Traefik
+file-provider path to `http://100.75.27.44:3400` is already proven; only the
+Open Valley hostname should be changed at cutover.
+
+## Remaining production verification
+
+When credential setup resumes, complete the production portions of U7–U10 and record:
 
 - Actual Openship project, image/build source, network, route, and restart/redeploy owner.
 - Supported environment-variable names and approved private credential delivery.

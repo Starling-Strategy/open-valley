@@ -98,7 +98,7 @@ test('creates exactly two vault identities, reads them back, delivers privately 
 });
 
 function realPipeFixture(t, mode = 'success') {
-  const directory = mkdtempSync('/tmp/opencode/schools-pipe-test-');
+  const directory = mkdtempSync(join(process.env.RUNNER_TEMP || '/tmp/opencode', 'schools-pipe-test-'));
   t.after(() => rmSync(directory, { recursive: true, force: true }));
   const fakeOp = join(directory, 'fake-op');
   // Only static fixture source is on disk. Envelopes and templates remain in process/pipe memory.

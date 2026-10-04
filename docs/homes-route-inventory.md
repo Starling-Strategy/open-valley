@@ -176,6 +176,13 @@ incomplete.
 
 ## Host integration checks, October 4
 
+The subsequent import-graph audit confirmed that the admin UI, chat artifact
+components, dashboard widgets, and legacy map components had no callers in the
+retained public routes. They were removed from the public web source tree; their
+earlier implementations remain in Git history. Restoring the transfer map still
+requires its verified dataset and a new restricted public adapter. Private route
+denials remain explicit in the public proxy.
+
 The host removed the unused CopilotKit packages, declared `remark-gfm`, and ran
 the production build with development dependencies explicitly installed. Next.js
 compiled and typechecked successfully without AI credentials or font downloads.

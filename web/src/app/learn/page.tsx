@@ -2,7 +2,6 @@ import Link from "next/link";
 import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
-import SiteLayout from "@/components/SiteLayout";
 
 interface PostMeta {
   slug: string;
@@ -55,55 +54,54 @@ export default async function LearnPage() {
   const posts = await getPosts();
 
   return (
-    <SiteLayout>
-      <div className="bg-gray-50 min-h-screen">
-        <div className="max-w-4xl mx-auto px-4 py-12">
-          <header className="mb-12">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+      <div className="site-container">
+          <header className="editorial-hero">
+            <p className="eyebrow"><Link href="/homes">Homes</Link> · Research</p>
+            <h1>
               Research &amp; Articles
             </h1>
-            <p className="text-xl text-gray-600">
+            <p className="lede">
               Deep dives into Warren&apos;s housing data, Vermont policy, and our methodology.
             </p>
+            <p className="note reading-copy">Retained articles from the original housing research. Dates and historical findings belong to each article; these are not live housing counts.</p>
           </header>
 
           {posts.length === 0 ? (
-            <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-              <p className="text-gray-500 mb-4">No posts yet. Check back soon!</p>
+            <div className="availability">
+              <p>The research articles are currently unavailable. You can still consult the <Link href="/data">public data sources</Link>.</p>
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="article-list">
               {posts.map((post) => (
                 <article
                   key={post.slug}
-                  className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow"
                 >
                   <Link href={`/learn/${post.slug}`}>
-                    <h2 className="text-2xl font-semibold text-gray-900 hover:text-emerald-600 mb-2">
+                    <h2>
                       {post.title}
                     </h2>
                   </Link>
                   {post.description && (
-                    <p className="text-gray-600 mb-3">{post.description}</p>
+                    <p>{post.description}</p>
                   )}
-                  <div className="flex items-center gap-4 text-sm text-gray-500">
+                  <div className="note flex flex-wrap items-center gap-x-4">
                     {post.date && (
                       <time dateTime={post.date}>
                         {new Date(post.date).toLocaleDateString("en-US", {
                           year: "numeric",
                           month: "long",
                           day: "numeric",
+                          timeZone: "UTC",
                         })}
                       </time>
                     )}
                     {post.author && <span>By {post.author}</span>}
                   </div>
                   {post.tags && post.tags.length > 0 && (
-                    <div className="flex gap-2 mt-3">
+                    <div className="note flex flex-wrap gap-x-4 mt-3">
                       {post.tags.map((tag) => (
                         <span
                           key={tag}
-                          className="px-2 py-1 bg-emerald-50 text-emerald-700 text-xs rounded"
                         >
                           {tag}
                         </span>
@@ -114,8 +112,6 @@ export default async function LearnPage() {
               ))}
             </div>
           )}
-        </div>
       </div>
-    </SiteLayout>
   );
 }

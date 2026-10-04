@@ -1,19 +1,19 @@
 import type { NextConfig } from "next";
 import createMDX from "@next/mdx";
+import path from "node:path";
 
 const nextConfig: NextConfig = {
   // Support MDX files as pages
   pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
-
-  // Proxy API requests to FastAPI backend in production
-  async rewrites() {
-    const apiUrl = process.env.INTERNAL_API_URL || "http://localhost:8999";
-    return [
-      {
-        source: "/api/:path*",
-        destination: `${apiUrl}/:path*`,
-      },
-    ];
+  output: "standalone",
+  outputFileTracingRoot: path.join(process.cwd(), ".."),
+  outputFileTracingIncludes: {
+    "/learn": ["./src/content/posts/*.mdx"],
+    "/learn/*": ["./src/content/posts/*.mdx"],
+    "/explore": ["../warren/outputs/warren_properties.json"],
+  },
+  outputFileTracingExcludes: {
+    "/*": ["../data/school-board/**/*"],
   },
 };
 

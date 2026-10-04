@@ -2,13 +2,20 @@
 
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
-import type { Artifact } from "@/app/explore/page";
 import ChartArtifact from "./artifacts/ChartArtifact";
 import TableArtifact from "./artifacts/TableArtifact";
 import StatsArtifact from "./artifacts/StatsArtifact";
 import PropertyCard from "./artifacts/PropertyCard";
 import PropertyBreakdown from "./artifacts/PropertyBreakdown";
 import DwellingBreakdown from "./artifacts/DwellingBreakdown";
+
+interface Artifact {
+  id: string;
+  type: "map" | "pie_chart" | "bar_chart" | "table" | "stats" | "property_card" | "property_breakdown" | "dwelling_breakdown" | "dwelling_map";
+  title: string;
+  data: unknown;
+  timestamp: number;
+}
 
 // Dynamic import for MapArtifact to avoid SSR issues with Leaflet
 const MapArtifact = dynamic(() => import("./artifacts/MapArtifact"), {

@@ -4,7 +4,10 @@ import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
 import { MDXRemote } from "next-mdx-remote/rsc";
-import SiteLayout from "@/components/SiteLayout";
+import remarkGfm from "remark-gfm";
+
+// Only the retained public articles are routable.
+export const dynamicParams = false;
 
 interface PostPageProps {
   params: Promise<{
@@ -60,51 +63,53 @@ export default async function PostPage({ params }: PostPageProps) {
   }
 
   return (
-    <SiteLayout>
-      <div className="bg-gray-50 min-h-screen">
-        <article className="max-w-3xl mx-auto px-4 py-12">
-          <nav className="mb-8">
-            <Link href="/learn" className="text-emerald-600 hover:text-emerald-700">
+      <div className="site-container">
+        <article>
+          <header className="editorial-hero reading-copy">
+          <nav aria-label="Article navigation">
+            <Link href="/learn" className="text-link">
               &larr; Back to Articles
             </Link>
           </nav>
 
-          <header className="mb-8">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">{post.meta.title}</h1>
+            <p className="eyebrow mt-8">Homes · Earlier research</p>
+            <h1>{post.meta.title}</h1>
             {post.meta.description && (
-              <p className="text-xl text-gray-600 mb-4">{post.meta.description}</p>
+              <p className="lede">{post.meta.description}</p>
             )}
-            <div className="flex items-center gap-4 text-sm text-gray-500">
+            <div className="note flex flex-wrap items-center gap-x-4 mt-6">
               {post.meta.date && (
                 <time dateTime={post.meta.date}>
                   {new Date(post.meta.date).toLocaleDateString("en-US", {
                     year: "numeric",
                     month: "long",
                     day: "numeric",
+                    timeZone: "UTC",
                   })}
                 </time>
               )}
               {post.meta.author && <span>By {post.meta.author}</span>}
             </div>
             {post.meta.tags && post.meta.tags.length > 0 && (
-              <div className="flex gap-2 mt-4">
+              <div className="note flex flex-wrap gap-x-4 mt-4">
                 {post.meta.tags.map((tag: string) => (
                   <span
                     key={tag}
-                    className="px-2 py-1 bg-emerald-50 text-emerald-700 text-xs rounded"
                   >
                     {tag}
                   </span>
                 ))}
               </div>
             )}
+            <p className="note">Retained as originally written. Figures and policy descriptions reflect the article&apos;s date and have not been updated for this release.</p>
           </header>
 
-          <div className="prose prose-lg prose-emerald max-w-none prose-headings:text-gray-900 prose-p:text-gray-700 prose-strong:text-gray-900 prose-li:text-gray-700">
-            <MDXRemote source={post.content} />
+          <div className="prose article-content">
+            <MDXRemote source={post.content} options={{ mdxOptions: { remarkPlugins: [remarkGfm] } }} components={{
+              table: (props) => <div className="table-scroll" role="region" aria-label="Article table, scroll horizontally for all columns" tabIndex={0}><table {...props} /></div>,
+            }} />
           </div>
         </article>
       </div>
-    </SiteLayout>
   );
 }

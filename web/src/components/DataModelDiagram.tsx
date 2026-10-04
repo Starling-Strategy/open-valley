@@ -2,20 +2,6 @@
 
 import { useState } from "react";
 
-interface EntityCounts {
-  parcels: number;
-  dwellings: number;
-  people: number;
-  organizations: number;
-  property_ownerships: number;
-  str_listings: number;
-  str_linked_dwellings: number;
-}
-
-interface DataModelDiagramProps {
-  counts: EntityCounts;
-}
-
 type EntityKey =
   | "parcel"
   | "dwelling"
@@ -66,10 +52,9 @@ const entityDescriptions: Record<EntityKey, EntityInfo> = {
     title: "Person",
     description: "An individual property owner parsed from Grand List records.",
     details: [
-      "Parsed from owner names like 'PHILLIPS III ROBERT M & EMILY'",
+      "Parsed from the owner field in property-tax records",
       "Can own multiple properties through PropertyOwnership",
       "May be Warren resident (is_warren_resident flag)",
-      "Linked to Front Porch Forum profiles if matched",
     ],
     color: "text-purple-700",
     bgColor: "bg-purple-50",
@@ -95,7 +80,7 @@ const entityDescriptions: Record<EntityKey, EntityInfo> = {
       "STR listings are separate data, not a dwelling classification",
       "Any dwelling can have STR listings, even FULL_TIME_RESIDENCE",
       "A homeowner renting 2 weeks/year still has use=FULL_TIME_RESIDENCE",
-      "Only 15 dwellings have validated STR links (name-matched to owners)",
+      "A listing-to-dwelling match requires separate verification",
     ],
     color: "text-rose-700",
     bgColor: "bg-rose-50",
@@ -118,13 +103,11 @@ const entityDescriptions: Record<EntityKey, EntityInfo> = {
 
 function EntityNode({
   entityKey,
-  count,
   label,
   isSelected,
   onClick,
 }: {
   entityKey: EntityKey;
-  count: number;
   label: string;
   isSelected: boolean;
   onClick: () => void;
@@ -134,40 +117,21 @@ function EntityNode({
   return (
     <button
       onClick={onClick}
+      aria-pressed={isSelected}
       className={`
-        relative px-4 py-3 rounded-lg border-2 transition-all duration-200
-        ${isSelected ? `${info.bgColor} ${info.borderColor} ring-2 ring-offset-2 ring-${info.color.split("-")[1]}-400` : "bg-white border-gray-200 hover:border-gray-300"}
-        ${isSelected ? "shadow-md" : "hover:shadow-sm"}
+        relative px-4 py-3 border border-[#526057]
+        ${isSelected ? `${info.bgColor} ring-2 ring-offset-2 ring-[#173d32]` : "bg-transparent"}
         cursor-pointer text-left w-full
       `}
     >
       <div className={`font-semibold ${isSelected ? info.color : "text-gray-900"}`}>
         {label}
       </div>
-      <div className="text-2xl font-bold text-gray-900">
-        {count.toLocaleString()}
-      </div>
     </button>
   );
 }
 
-function RelationshipArrow({
-  from,
-  to,
-  label,
-}: {
-  from: string;
-  to: string;
-  label: string;
-}) {
-  return (
-    <div className="flex items-center justify-center text-gray-400 text-sm">
-      <span className="text-xs bg-gray-100 px-2 py-0.5 rounded">{label}</span>
-    </div>
-  );
-}
-
-export default function DataModelDiagram({ counts }: DataModelDiagramProps) {
+export default function DataModelDiagram() {
   const [selectedEntity, setSelectedEntity] = useState<EntityKey | null>(null);
 
   const handleEntityClick = (entity: EntityKey) => {
@@ -179,7 +143,7 @@ export default function DataModelDiagram({ counts }: DataModelDiagramProps) {
     : null;
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6">
+    <div className="my-6 border border-gray-400 p-5">
       <h3 className="text-lg font-semibold text-gray-900 mb-4">
         Data Model
       </h3>
@@ -193,7 +157,6 @@ export default function DataModelDiagram({ counts }: DataModelDiagramProps) {
         <div className="md:col-start-2">
           <EntityNode
             entityKey="parcel"
-            count={counts.parcels}
             label="Parcels"
             isSelected={selectedEntity === "parcel"}
             onClick={() => handleEntityClick("parcel")}
@@ -206,7 +169,7 @@ export default function DataModelDiagram({ counts }: DataModelDiagramProps) {
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
             </svg>
-            <span className="text-xs bg-gray-100 px-2 py-0.5 rounded mt-1">1:N</span>
+            <span className="text-sm text-gray-600 px-2 py-0.5 mt-1">1:N</span>
           </div>
         </div>
 
@@ -214,7 +177,6 @@ export default function DataModelDiagram({ counts }: DataModelDiagramProps) {
         <div className="md:col-start-2">
           <EntityNode
             entityKey="dwelling"
-            count={counts.dwellings}
             label="Dwellings"
             isSelected={selectedEntity === "dwelling"}
             onClick={() => handleEntityClick("dwelling")}
@@ -231,7 +193,6 @@ export default function DataModelDiagram({ counts }: DataModelDiagramProps) {
           <div className="flex-1">
             <EntityNode
               entityKey="str"
-              count={counts.str_listings}
               label="STR Listings"
               isSelected={selectedEntity === "str"}
               onClick={() => handleEntityClick("str")}
@@ -245,7 +206,7 @@ export default function DataModelDiagram({ counts }: DataModelDiagramProps) {
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
             </svg>
-            <span className="text-xs bg-gray-100 px-2 py-0.5 rounded mt-1">via</span>
+            <span className="text-sm text-gray-600 px-2 py-0.5 mt-1">via</span>
           </div>
         </div>
 
@@ -253,7 +214,6 @@ export default function DataModelDiagram({ counts }: DataModelDiagramProps) {
         <div className="md:col-start-2">
           <EntityNode
             entityKey="ownership"
-            count={counts.property_ownerships}
             label="Property Ownerships"
             isSelected={selectedEntity === "ownership"}
             onClick={() => handleEntityClick("ownership")}
@@ -266,7 +226,7 @@ export default function DataModelDiagram({ counts }: DataModelDiagramProps) {
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
             </svg>
-            <span className="text-xs bg-gray-100 px-2 py-0.5 rounded mt-1">N:M</span>
+            <span className="text-sm text-gray-600 px-2 py-0.5 mt-1">N:M</span>
           </div>
         </div>
 
@@ -274,7 +234,6 @@ export default function DataModelDiagram({ counts }: DataModelDiagramProps) {
         <div>
           <EntityNode
             entityKey="person"
-            count={counts.people}
             label="People"
             isSelected={selectedEntity === "person"}
             onClick={() => handleEntityClick("person")}
@@ -286,7 +245,6 @@ export default function DataModelDiagram({ counts }: DataModelDiagramProps) {
         <div>
           <EntityNode
             entityKey="organization"
-            count={counts.organizations}
             label="Organizations"
             isSelected={selectedEntity === "organization"}
             onClick={() => handleEntityClick("organization")}

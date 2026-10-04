@@ -67,7 +67,7 @@ jobs:
         
         for file in $MODIFIED_FILES; do
           if [[ "$file" != */schema.md && "$file" == *.md ]]; then
-            if grep -l "CREATE TABLE\|CREATE MATERIALIZED VIEW\|CREATE INDEX\|CREATE FUNCTION\|```sql" "$file" 2>/dev/null; then
+            if grep -l 'CREATE TABLE\|CREATE MATERIALIZED VIEW\|CREATE INDEX\|CREATE FUNCTION\|```sql' "$file" 2>/dev/null; then
               VIOLATIONS="$VIOLATIONS $file"
             fi
           fi

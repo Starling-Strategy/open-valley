@@ -125,7 +125,26 @@ Its Dockerfile-specific ignore file admits only the web source/build files and
 the reviewed public Warren assessment export. Build context excludes school
 inputs, catalogs, source archives, credentials and the legacy Python service.
 Local production compilation, typechecking and standalone startup passed. The
-image itself has not yet been built or deployed through Openship.
+image `local/openvalley-web:5fe4be5` was built on Icculus from the committed
+allowlisted source archive and deployed as a prebuilt image through Openship
+(`dep_fgGsqWs0IEdsGnWZ`, `ready`). Docker reports it healthy, running as `node`
+from `/app/web`. Live root, article and assessment-search requests returned 200;
+the private admin alias returned 404. The container includes MDX and the selected
+assessment export, with neither school inputs nor the legacy Python API present.
+This internal preview still lacks the school application and database read path.
+
+The explicit Openship HTTP readiness gate initially failed because its remote
+probe used `127.0.0.1:3400` although the managed binding is intentionally
+`100.75.27.44:3400`. That attempt (`dep_F_y27Q_iuL6IEqVt`) removed its failed
+container. The service now uses its Docker healthcheck plus observed endpoint
+checks; Openship's incompatible loopback HTTP gate is disabled. This is a known
+probe limitation, not a claim that database readiness has passed.
+
+The next image must use the subsequently updated frontend dependencies:
+Next.js and its MDX/ESLint packages 16.3.8, MapLibre 6.12.0, and next-mdx-remote
+6.0.0. Compatibility build/typechecks pass and `npm audit --omit=dev` reports
+zero findings after the supported YAML dependency updates. The older internal
+preview has no public route and must be replaced before cutover.
 
 ## Runbook completion during delivery
 

@@ -41,7 +41,6 @@ export default function MapArtifact({ data, isDwellingMap = false }: MapArtifact
     // Dynamic import of Leaflet to avoid SSR issues
     import("leaflet").then((L) => {
       // Import CSS dynamically too
-      // @ts-expect-error - CSS module has no types
       import("leaflet/dist/leaflet.css");
 
       const mapData = data as MapData;

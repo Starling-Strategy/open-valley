@@ -264,7 +264,6 @@ export default function AnimatedTransitionsMap() {
     const initMap = async () => {
       try {
         const maplibregl = await import("maplibre-gl");
-        // @ts-expect-error - CSS module has no types
         await import("maplibre-gl/dist/maplibre-gl.css");
 
         const MAPTILER_KEY = process.env.NEXT_PUBLIC_MAPTILER_KEY;

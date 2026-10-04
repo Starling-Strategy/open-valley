@@ -1,12 +1,14 @@
 # HUUSD enrollment source coverage
 
-Purpose: U1 evidence inventory for the [Schools MVP plan](../plans/2026-10-04-0006-feat-huusd-schools-mvp-plan.md).
+Purpose: U1 source inventory and U2 numerical review for the [Schools MVP plan](../plans/2026-10-04-0006-feat-huusd-schools-mvp-plan.md).
 Audience: Open Valley contributors and delivery agents.
-Status: Source discovery; not a publication-approved numerical series.
+Status: Reviewed candidate inputs; catalog integration and U3 validation remain required before publication.
 Owner: Open Valley
 Last updated: 2026-10-04
 
 Evidence checked: **2026-10-04**. Target: **2016–17 through 2025–26**, with a separate 2026–27 update.
+
+**U2 result:** The four candidate files now contain all eight K–12 school reporting groups for each target year, five years of defined October attending counts, current grade detail, separate PK, and a distinct published forecast. Every retained numerical cell or derived-value contributor was checked against a rendered original PDF table. The [U2 receipt below](#u2-candidate-dataset-and-numerical-review) supersedes the remaining-work statements in the original U1 inventory. No continuous ten-year attending definition was established; older segments and consultant history are explicitly separate.
 
 ## Result and selected count basis
 
@@ -84,7 +86,7 @@ SHA-256 values refer to the reviewed source bytes, not extracted tables. These p
 | School year / target date | School/grade candidate | District candidate / precise gap |
 |---|---|---|
 | **2016–17 / 2016-10-01** | E16 pp. 1–3, 2016 column; all seven named schools. | E16 p. 3 independently printed K–12 total. Predecessor WWSU geography; distinguish its next-year estimate. Early College treatment not explicit. |
-| **2017–18 / 2017-10-01** | E17 Appendix 4 pp. 8–9, **all students attending** column. E18 historical sheets provide another edition. | E17 p. 9 K–12 total; do not substitute neighboring AOE census or ADM columns. Resolve `12+` scope and differences between reporting systems. |
+| **2017–18 / 2017-10-01** | E17 Appendix 4 pp. 8–9, **all students attending** column. E18 historical sheets provide another edition. | U2 correction: E17 p. 9's printed “K to Grade 12” total includes PK; derive K–12+ from grade/school contributors, not that mislabeled total. Do not substitute neighboring AOE census or ADM columns. `12+` scope remains unresolved. |
 | **2018–19 / 2018-10-01 intended** | E18 historical sheets pp. 3/10/17/24/31/38/44, row 2018–19. | N26 p. 4 district history. **Gap:** standalone contemporary annual attending report, exact count date, Early College and tuition/choice treatment not established from E18 history alone. No school sum approved yet. |
 | **2019–20 / 2019-10-01** | E21 p. 1 retrospective 2019 table, all seven schools and grades. | E21 p. 1 district total; N26 history. **Gap:** contemporary 2019 attending definitions/table, especially fully off-site high-school students. |
 | **2020–21 / 2020-10-01** | E21 p. 1 and E22 p. 1 retrospective 2020 tables. | Their district totals are candidates. **Gap:** contemporary 2020 attending definitions/table; pandemic homeschool/returning-student status and Early College comparability. E22's headline footnote cannot be silently applied backward to a differently defined E21 table. |
@@ -147,3 +149,129 @@ U2 should retain source-reported district totals independently of calculated sch
 - Original public records were inspected for titles, dates, page/table labels, and definitions. Public retrieval and selected archived-byte matches were checked. This inventory does **not** claim visual per-cell checks, full-series extraction, completed district reconciliation, or final-status certification.
 - Remaining affected-series gaps: contemporary 2018–2020 attending definitions/original reports; Early College/`12+` treatment in older records and consultant history; AOE year-label/duplicate/collection semantics; forecast-to-attending comparability; September 2026 baseline; October 2026 annual publication.
 - Next numerical work is U2: visual original-table checks, reconciled observations, reviewed source editions and public lineage, and precise unavailable/suppressed states. No automated tests or application/build checks were added or run for this research inventory.
+
+## U2 candidate dataset and numerical review
+
+### Deliverables and meaning
+
+Checked on **2026-10-04**, from shared checkout baseline `5ea0481`:
+
+- `data/school-board/public/schools.json`: seven campuses, eight K–12 reporting groups, current three PK hubs, HCLC and flexible-pathway qualifications; sourced current grades/addresses/pathways; separate annual-attending and September-preliminary enrollment references.
+- `data/school-board/public/enrollment.csv`: **178 rows** — 172 reported or derived numeric values, five explicit primary-basis gaps, one preserved suppressed state. There are 90 district/school annual totals across the ten target years, with distinct historical definitions, and **43 current-year K–12 grade rows**. Other rows retain PK, consultant history, headline reconciliation and the preliminary update separately.
+- `data/school-board/public/projections.csv`: **20 forecast rows**, ten K–12 and ten PK, all from the January 9, 2026 NESDEC version 2 edition. No vintages are spliced.
+- `data/school-board/public/sources.json`: **25 reviewed source editions**, with public originals, hashes and locators. `public_eligible` records suitability of the cited aggregate/directory material; it is not catalog integration, numerical comparability, or release activation.
+
+`status=observed` means the source reports an actual count but final certification was not established. Do **not** turn it into “certified final.” September rows are `preliminary`; forecasts are `projection`. For forecast rows, `value_state=observed` only means the numeric cell is present in the published table; the separate `status` and `count_basis=projected_headcount` identify its forecast meaning. A blank value is missing or suppressed, never zero. The Waitsfield 2025 PK zero is explicitly printed in the source.
+
+Reference dates are blank where not established: the 2018 consultant history, N26 historical/forecast rows, and September 2026 snapshot day. September 9 is the presentation date, not a verified count day. Annual report headings establish October reference dates but do not independently establish publication day, so those sources have `published_at=null`.
+
+### Series and comparability breaks
+
+| Series | Coverage and supported interpretation |
+|---|---|
+| `attending-october` | Primary: October 1 unweighted K–12 attending headcounts, including tuition/choice in and dual enrollment, excluding fully offsite Early College. E22–E25 explicitly include technical-school participation. Defined 2021–22 through 2025–26; district gaps for 2016–17 through 2020–21. A school's absent primary-basis year has the same gap, not an older-series substitute. |
+| `wwsu-2016` | 2016–17 predecessor WWSU all-enrollment counts, including resident, choice, tuition and exchange; Early College treatment unstated. School/grade totals exclude PK. |
+| `district-2017` | 2017–18 district “All Students Attending” column; high school and district retain `12+`. Elementary K totals and Harwood components are derived from explicit grade rows. No assumption that `12+` equals current 12. |
+| `district-2017-pk-inclusive` | Printed 1,947 retained as PK–12+, separately from derived K–12+ 1,721. The source's K-to-12 label is misleading; PK contributes 226. |
+| `nesdec-2018-history` | 2018–19 school-supplied historical counts in the December 2018 sheets; exact reference date and Early College treatment unresolved. These are historical rows, not projected later years. |
+| `district-retrospective-2019-2020` | The 2019 and 2020 October counts reprinted on E21 p. 1. Contemporary inclusion rules remain unverified, so this is not attached to the defined attending series. |
+| `district-headline-ec-inclusive` | E25's 2023–25 headline K–12 totals including Early College. Separate reconciliation series. |
+| `nesdec-2026-history` | All ten target years from N26, **as supplied to NESDEC**. It is not a verified consistently EC-inclusive series: 2021 matches the attending count, whereas 2022/2024/2025 match inclusive headlines. The 2023 edition also differs. Use a labeled table/points with breaks, not an uninterrupted comparable trend. |
+| `public-pk-october` | 2025 public-school PK attendance, separate from K–12 and district-funded public/private PK. |
+| `nesdec-2026-pk-history` | Ten-year consultant PK history, not public-campus attendance. Unresolved historical edition differences are retained in row notes. |
+| `september-2026-preliminary` | Eight school groups plus district, September 2026, excluding PK; Early College treatment unverified. Only the preliminary column was imported. No baseline changes/percentages were retained. |
+
+**Display decision for the integrator:** the ten-year table can show sourced counts with the explicit segments above. The evidence does not support one continuous ten-year line on the primary attending basis, or an uninterrupted “including Early College” line from N26. Do not silently relabel either. If the intended R6 experience requires a single comparable pre-pandemic-to-current line, that remains an evidence/scope decision. The recent five-year attending comparison is supported. Enrollment alone supplies no cause, quality judgment or closure recommendation.
+
+### Reconciliation receipt
+
+Order is Fayston / Moretown / Waitsfield / Warren / Brookside / CBMS / HUMS / HUHS. These are non-overlapping K-grade reporting groups; PK and combined Harwood totals are not addends.
+
+| Year | School values | School sum | District check | Result |
+|---|---|---:|---:|---|
+| 2016–17 | 86 / 103 / 111 / 140 / 381 / 278 / 152 / 518 | 1,769 | E16 1,769 | Match; split Harwood derived from grades. |
+| 2017–18 | 81 / 106 / 112 / 135 / 369 / 274 / 143 / 501 | 1,721 | Derived K–12+ 1,721; printed PK-inclusive 1,947 | 1,721 + PK 226 = 1,947. N26 independently reports 1,721. |
+| 2018–19 | 82 / 114 / 117 / 128 / 342 / 285 / 135 / 479 | 1,682 | Derived 1,682; N26 independently 1,682 | Match; does not prove date/basis equivalence. |
+| 2019–20 | 60 / 121 / 117 / 128 / 339 / 304 / 119 / 480 | 1,668 | E21 1,668 | Match. |
+| 2020–21 | 59 / 106 / 130 / 115 / 320 / 288 / 107 / 461 | 1,586 | E21 1,586 | Match. |
+| 2021–22 | 72 / 117 / 128 / 117 / 311 / 295 / 99 / 480 | 1,619 | E21 attending 1,619 | Match. |
+| 2022–23 | 74 / 121 / 137 / 115 / 311 / 289 / 98 / 462 | 1,607 | E22 attending 1,607 | Match. |
+| 2023–24 | 89 / 121 / 134 / 108 / 309 / 273 / 109 / 454 | 1,597 | E23 attending 1,597 | Match. |
+| 2024–25 | 98 / 121 / 130 / 108 / 303 / 264 / 125 / 452 | 1,601 | E24 attending 1,601 | Match. |
+| 2025–26 | 91 / 137 / 118 / 93 / 285 / 263 / 133 / 458 | 1,578 | E25 attending 1,578 | Match; all 43 retained grade cells sum to their eight school totals. |
+
+Every derived row identifies its contributors and their same-source table/grade locators in `notes`; its `source_id` supplies the original-byte lineage. The 2017/2018 district rows name all eight contributing school values. Do not treat a derived total as an independent source total. No inferred suppressed value is present.
+
+Other reconciliations and conflicts:
+
+- **Current PK:** E25 public-school totals 53 + 23 + 33 + 0 + 18 = **127**. The same page reports PK3 private 38 and PK4 private 31; 127 + 38 + 31 = district public/private **196**. N26's base PK is 196, not 127. These cells/footnotes were visually checked; the private components are reconciliation evidence rather than separate publication rows.
+- **Early College:** headline minus attending is 12 in 2022, 8 in 2023, 12 in 2024 and 13 in 2025, matching each year's printed Early College count. In 2021 the headline and attending totals are both 1,619 despite 13 Early College students being shown as excluded in the attending table. E22's blanket historical footnote must not be applied backward to manufacture an inclusive 2021 total.
+- **2023 consultant edition:** N26 K–12 **1,612** versus E25's retrospective headline **1,605**, and E23 attending **1,597**. The seven-student residual beyond Early College is unexplained. N26 does not supersede the district's attendance table.
+- **PK editions:** N26 gives 211 for 2020 and 219 for 2021; E21 p. 1 gives 205 and 218. No correction was guessed.
+- **September 2026:** the eight preliminary school values sum to the printed **1,554**. The comparison subtitle says June 30 while the baseline column says October 2025. Its HUHS baseline 471 is inclusive, unlike annual attending 458. Retain only the preliminary values in a distinct series; do not repeat the claimed change.
+- **2025 source arithmetic outside the selected column:** HUHS active-resident total is printed 457 while its displayed grade cells sum to 456. The selected attending grade cells sum to the printed 458 and the district attending reconciliation passes. No active-resident series was imported or repaired.
+
+### Forecast review
+
+N26 version 2 is dated **2026-01-09**, authored by **New England School Development Council**, with base **2025–26** and horizon **2026–27 through 2035–36**. Its K–12 base **1,591** agrees with the district EC-inclusive headline, not primary attending **1,578**. Accordingly the forecast is separate and never connected to the attending line.
+
+The checked K–12 forecast cells are **1,581; 1,557; 1,570; 1,550; 1,534; 1,517; 1,506; 1,497; 1,489; 1,481**. Separate PK cells are **196; 196; 196; 197; 197; 197; 197; 198; 198; 198**. These are directly printed values, not custom estimates. The model uses modified cohort-component/survival ratios and district-specific births, migration and retention; future births use a recent five-year average. The report assumes consistency of supplied enrollment, describes greater reliability in years 1–3, and recommends annual updates. It supplies no PK-specific formula or current school-level allocation. No confidence bands, older forecast splice, or school forecasts were invented.
+
+### Original-image review receipt
+
+The existing research installation of **PyMuPDF 1.28.2** rendered the source PDF pages at **1.8× scale**. Each cited table was then opened as an image using the image-read tool. Text extraction was used for navigation, not as numerical approval. All published candidate values, and all arithmetic contributors for derived values, were read from those original images. `p` always means one-based physical page; E25 and N26 printed numbering differ as noted in the source register.
+
+| Source | Images checked for retained numbers | Definition/edition checks |
+|---|---|---|
+| E16 | pp. 1–3, 2016 column only; school totals and Harwood grade contributors | p. 1 inclusion note; p. 3 K–12/PK separation; blue 2017 estimate excluded |
+| E17 | pp. 8–9, district October column; grade contributors, CBMS/Harwood totals and printed district total | Headers, `12+`, PK rows and neighboring AOE column distinguished |
+| E18 | pp. 3/10/17/24/31/38/44, 2018–19 historical rows and Harwood grade-combination table | pp. 1–2 methodology; December 5 sheets and revised December 12 Harwood sheet |
+| E21 | p. 1, 2019/2020 tables; pp. 5–6, 2021 attendance school totals and summary | pp. 4 and 6 definitions/footnotes; p. 1 PK conflict cells |
+| E22 | pp. 5–6, 2022 attendance totals and summary; p. 1 inclusive headline | pp. 1/4/6 definition and footnote review |
+| E23 | pp. 6–7, 2023 attendance totals and summary | pp. 5/7 definitions/footnotes |
+| E24 | pp. 6–7, 2024 attendance totals and summary | pp. 5/7 definitions/footnotes |
+| E25 | p. 2, 2023–25 headline totals; p. 3 PK totals/components; pp. 7–8 all retained attendance grade cells and totals | p. 6 definitions; p. 8 footnotes and selected-column arithmetic |
+| N26 | p. 4, target-year K–12/PK totals and `<10` state; p. 6 base and all 20 forecast cells | pp. 3/14 assumptions; p. 4 suppression; p. 6 table/legend and January 9 version 2 heading |
+| S26 | p. 6, eight preliminary values and district total | pp. 1/2/6: publication date, preliminary status, excluded PK, conflicting baseline labels |
+
+Temporary reviewed evidence is under **`/rocky/open-valley/tmp/u2-20261004/`**: rendered pages, four newly acquired official report PDFs, official directory HTML/selected state feature responses, and `numerical-review.json`. The Rocky mount/storage check passed before writing. Source IDs and original hashes were screened against the canonical exclusions before use; inherited PDFs were read from existing catalog paths and their byte hashes matched. No generated catalog or exclusion manifest was edited. Directory coordinates were checked against the original state JSON geometry rather than a PDF: all seven match U1's rounded points.
+
+**Warren resolution:** the official E911 feature **ESITEID 271835**, updated July 26, 2023, reports **293 SCHOOL RD** and geometry **44.1164365763475, −72.85273123017281**. This agrees with the current school footer and rounds to the existing PS320 marker **44.11644, −72.85273**. The school-layer 273 is an older address attribute; the marker was not moved. The reviewed source register includes the exact single-feature query and response hash.
+
+### Bounded definition search and remaining gaps
+
+U2 rechecked the current generated catalog's enrollment-titled 2018–2020 entries, the official HUUSD enrollment page's actual HTML links, E16/E17 original count headers, E18 methodology and school sheets, E21/E22 historical footnotes, and current AOE DC06 instructions. The official enrollment index currently begins at 2021 for October reports. Three web searches scoped to HUUSD and 2018/2019/2020 enrollment supplied no usable contemporary official definition; off-domain/irrelevant search results were not used as evidence. No new crawler or collection-wide scan was run.
+
+[AOE DC06 instructions](https://datacollection.education.vermont.gov/collections/slds-vertical-reporting/DC6/) confirm that one collection supplies both October headcount and ADM, and may cover alternative programs, transported CTE, and home-study participation. That does not settle the U1 workbook's year labels, duplicate meaning, adult/ungraded or Early College treatment. No AOE number was imported as a supposedly comparable cross-check.
+
+Unresolved evidence gaps are the older attending definition/`12+` scope, exact 2018 reference date, N26 historical consistency and 2023 residual, PK historical edition differences, final certification, September snapshot day/basis and conflicting baseline, October 2026 annual report, HCLC counting/location, and current PK headcounts. These do not justify dropping schools or substituting zero.
+
+### Catalog integration
+
+U2 used a **3,020-record** catalog snapshot, SHA-256 `f52f8242556cbbeece0ca3b38c0a26606cfdb82294a6a6bcfaac3e4c947295f9`. The host imported the 19 reviewed editions below into `supplements/schools-public-20261004/` and rebuilt the generated catalog on **2026-10-04 at 14:35 UTC**, producing **3,039 records**. Canonical exclusions remain SHA-256 `3728d4265341093b495b11345883e4876d0b9ead9620da323fd6aed6f65f4478`. `privacy_rules.load_rules` and `canonical_id` screened the imported IDs, hashes and target paths under the collection cleanup lock. The six reused editions also passed byte-hash and exclusion checks.
+
+**Nineteen additions are now cataloged**, using the exact public URLs and hashes in `sources.json`:
+
+- E21 `1ZgT8xG9VWAbQ-rN-P93EMe9As8ttnamP` → temporary `E21.pdf`.
+- E22 `1BQ-9Jn6QiTg8K_o8rXTF-bTgoSk8HJSR` → `E22.pdf`.
+- E23 `1hurfiw4WmHLdq8brBVCWXLj4n8tjPiCF` → `E23.pdf`.
+- N26 `1yKJ2X008tCXI1tnHPcLV1MhPQh9wMZBh` → `N26.pdf`.
+- Thirteen official directory/page editions: `huusd-schools`, `huusd-about`, `brookside-about`, `crossett-home`, `fayston-home`, `moretown-home`, `waitsfield-home`, `warren-home`, `harwood-about`, `huusd-prek`, `huusd-choice`, `harwood-pathways`, `harwood-hclc`; each temporary file is `<source_id>.html`.
+- Two selected state feature responses: `vcgi-schools.json` and `vcgi-warren-e911.json`, with matching stable source IDs.
+
+The supplemental receipt supplies these additions to the existing catalog builder. The six existing report identities/editions for E16/E17/E18/E24/E25/S26 were reused. S26's reviewed PDF-rendering hash and original-PPTX hash are both recorded; both already exist under one catalog source identity. Publication lineage must preserve the original-source dependency as well as the selected rendering.
+
+After rebuilding, collection verification passed with **3,952 local files checked**, and known-exclusion verification passed with **5,896 files and 4,969 archive members checked**. The host independently reproduced the ten school-total reconciliations and spot-checked E17 p. 9, E25 p. 8 and N26 p. 6 as images. This establishes source integration and extraction checks, not publication approval; U3 validation remains required.
+
+### U2 verification and handoff
+
+The read-only Python reconciliation compared the CSV with the manual original-image ledger, checked all ten school sums, all 43 retained grade cells against school totals, public PK, headline figures, all N26 historical/forecast totals, and September preliminary reconciliation. It also checked JSON/CSV readability, row uniqueness, referenced source IDs, school enrollment references, known exclusions and reused catalog byte hashes. **All passed.** This is focused extraction/reconciliation evidence, not U3's canonical validator and not a new automated test suite.
+
+| Candidate | SHA-256 at U2 handoff |
+|---|---|
+| `enrollment.csv` | `c82cee775f32d5ad07015afd24bcc4ae604c5f5cb422ffa509d3ed1bea0a604e` |
+| `projections.csv` | `3ca0495d52fa7b6408ab784d19d76d52d2b027b49db0f938d504fd913c1541db` |
+| `schools.json` | `442b4a0e15a4b69fbac88a8a60f6ec432f6471a69b069a0c546984024c266131` |
+| `sources.json` | `cda0990addfcfb14953ec3f4aeb97fdeecb915df971a883004a7a15122e82755` |
+
+No application behavior changed; no tests were added or run because U2 is manual evidence preparation. No installs, builds, full suites, Git/index writes, provider/DB changes or subagents were used. Host owns catalog additions, schema integration, U3 validation and publication. Considered and not built: a forced continuous ten-year line, inferred suppressed values, unsupported September differences, custom/school-level forecasts, AOE aggregation before definitions resolve, and an archive crawler/validator. Grade-by-grade detail is retained for the latest annual report; older grade contributors needed for totals are captured in lineage, rather than presented as an additional full grade-history product.

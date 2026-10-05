@@ -1,0 +1,14 @@
+.hero { padding-bottom: 3rem; }
+.hero :global(.availability) { margin-top: 2rem; }
+.dateline { color: var(--secondary-ink); font-size: .875rem; margin-top: 1.75rem; }
+.contents { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); gap: 1rem; padding: 1rem 0; }
+.contents a { display: flex; align-items: center; gap: .65rem; min-height: 44px; font-size: .9rem; text-decoration: none; }
+.contents a:hover { text-decoration: underline; }
+.contents span { color: var(--secondary-ink); font-size: .75rem; }
+.chapter { scroll-margin-top: 1.5rem; padding-block: 3rem; }
+.chapter + .chapter { border-top: 1px solid var(--rule); }
+.perspective { max-width: 52rem; margin-block: 3rem; padding-left: 1.5rem; border-left: 3px solid var(--forecast); }
+.perspective h2 { margin-block: .8rem 1.25rem; }
+.perspective p { margin-bottom: 1rem; }
+@media (max-width: 780px) { .contents { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 420px) { .contents { grid-template-columns: 1fr; gap: 0; } .chapter { padding-block: 2rem; } }

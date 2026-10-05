@@ -1,0 +1,16 @@
+name: openvalley-local-schools
+services:
+  db:
+    image: postgres:16-bookworm
+    environment:
+      POSTGRES_DB: openvalley_synthetic
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "127.0.0.1:55432:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d openvalley_synthetic"]
+      interval: 2s
+      timeout: 3s
+      retries: 15

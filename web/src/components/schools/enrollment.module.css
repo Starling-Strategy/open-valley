@@ -1,0 +1,140 @@
+.section {
+  --paper: #f7f3ea;
+  --ink: #173d32;
+  --muted: #526057;
+  --ochre: #8a4b10;
+  --rule: #a1aaa1;
+  width: 100%;
+  max-width: 1200px;
+  min-width: 0;
+  margin: 0 auto;
+  padding: 72px 0;
+  border-top: 1px solid var(--rule);
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-size: 1.125rem;
+  line-height: 1.65;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.section *, .section *::before, .section *::after { box-sizing: border-box; }
+.section h2, .section h3, .section h4 { color: inherit; font-family: Georgia, "Times New Roman", serif; font-weight: 400; line-height: 1.2; text-wrap: balance; }
+.section h2 { margin: 0 0 24px; font-size: clamp(2rem, 4vw, 3rem); }
+.section h3 { margin: 0 0 16px; font-size: clamp(1.45rem, 3vw, 2rem); }
+.section h4 { margin: 0 0 12px; font-size: 1.25rem; }
+.section p { margin: 0 0 16px; }
+.section a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+.section a:hover { text-decoration-thickness: 2px; }
+.section :is(a, select, summary, [tabindex]):focus-visible { outline: 3px solid var(--ochre); outline-offset: 4px; }
+.section ul { padding-left: 24px; margin: 12px 0; }
+.section li + li { margin-top: 10px; }
+.sectionHeader { max-width: 66ch; margin-bottom: 32px; }
+.eyebrow { color: var(--muted); font-size: 0.875rem; font-weight: 650; letter-spacing: .1em; text-transform: uppercase; }
+.controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; max-width: 900px; margin-bottom: 16px; }
+.controls label { display: block; margin-bottom: 6px; font-size: 1rem; font-weight: 650; }
+.controls select { display: block; width: 100%; min-height: 48px; padding: 10px 32px 10px 12px; border: 1px solid var(--muted); border-radius: 0; background: var(--paper); color: var(--ink); font: inherit; font-size: 1rem; text-overflow: ellipsis; }
+.meta, .cellNote, .citation, .rowNotes { font-size: 0.875rem; line-height: 1.6; }
+.meta, .cellNote { color: var(--muted); }
+.selectionSummary { margin: 32px 0 20px; }
+.selectionSummary p { color: var(--muted); }
+.takeaway { max-width: 66ch; margin: 24px 0 32px; padding-left: 20px; border-left: 3px solid var(--ink); }
+.takeawayCounts { font: 1.5rem/1.5 Georgia, "Times New Roman", serif; }
+.takeawayCounts strong { font-weight: 600; }
+.endpointSources { font-size: 0.875rem; line-height: 1.6; }
+.disclosureCoverage { display: block; font-size: 0.875rem; font-weight: 400; color: var(--muted); }
+.readingNote { max-width: 66ch; padding: 0 0 0 20px; margin: 24px 0 36px; border-left: 2px solid var(--rule); }
+.seriesPanels { min-width: 0; }
+.figure { min-width: 0; margin: 0 0 36px; padding: 24px 0 0; border-top: 1px solid var(--rule); }
+.figureTitle { text-transform: none; }
+.definition { max-width: 76ch; }
+.chartScroll, .tableScroll { max-width: 100%; min-width: 0; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-color: var(--muted) var(--paper); }
+.chartScroll { margin: 20px 0 12px; }
+.chart { display: block; width: 100%; min-width: 50rem; height: auto; overflow: visible; }
+.mobilePlot { display: none; }
+.singlePlot { max-width: 30rem; margin-block: 20px; }
+.countRows { margin: 0; padding: 0; list-style: none; }
+.countRows > li { padding: 9px 0; border-top: 1px solid var(--rule); }
+.countRows > li + li { margin-top: 0; }
+.countRowHeading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 16px; font-size: 0.875rem; }
+.countRowHeading strong { font-size: 1rem; font-weight: 650; }
+.countRows > li[data-status="projection"] strong { color: var(--ochre); }
+.countTrack { position: relative; height: 12px; margin: 5px 6px 0; }
+.countTrack::before { position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: var(--muted); content: ""; }
+.recordedDot, .preliminaryDot, .forecastDot { position: absolute; top: 50%; transform: translate(-50%, -50%); }
+.recordedDot { width: 9px; height: 9px; border-radius: 50%; background: var(--ink); }
+.preliminaryDot { width: 9px; height: 9px; border: 2px solid var(--ink); background: var(--paper); transform: translate(-50%, -50%) rotate(45deg); }
+.forecastDot { width: 0; height: 0; border: 6px solid transparent; border-top: 0; border-bottom: 10px solid var(--ochre); }
+.countStatus { display: block; font-size: 0.875rem; line-height: 1.5; color: var(--muted); }
+.axisLabel { fill: var(--muted); font-size: 14px; }
+.gridLine { stroke: var(--rule); stroke-width: 1; }
+.recordedLine, .preliminaryLine, .forecastLine { fill: none; stroke-width: 2; }
+.recordedLine, .preliminaryLine { stroke: var(--ink); }
+.preliminaryLine { stroke-dasharray: 2 5; }
+.forecastLine { stroke: var(--ochre); stroke-dasharray: 8 5; }
+.recordedPoint { fill: var(--ink); stroke: var(--paper); stroke-width: 1; }
+.preliminaryPoint { fill: var(--paper); stroke: var(--ink); stroke-width: 2; }
+.forecastPoint { fill: var(--ochre); }
+.pointLabel, .forecastLabel { font-size: 14px; font-weight: 650; }
+.pointLabel { fill: var(--ink); }
+.forecastLabel { fill: var(--ochre); }
+.rowNotes { max-width: 90ch; }
+.citationDetails { margin: 12px 0; font-size: 0.875rem; }
+.citationDetails summary, .tableDetails summary { cursor: pointer; min-height: 44px; padding: 10px 0; font-weight: 600; }
+.citationDetails ul { max-width: 95ch; }
+.registerLink { white-space: nowrap; }
+.tableDetails { margin: 32px 0 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+.tableDetails > summary { padding: 16px 0; }
+.tableScroll { padding-bottom: 16px; }
+.table { width: 100%; min-width: 62.5rem; border-collapse: collapse; font-size: 0.875rem; line-height: 1.6; }
+.table caption { text-align: left; padding: 0 0 16px; color: var(--muted); font-size: 0.875rem; }
+.table th, .table td { text-align: left; vertical-align: top; border-bottom: 1px solid var(--rule); padding: 14px 16px; }
+.table th:first-child, .table td:first-child { padding-left: 0; }
+.table th:last-child, .table td:last-child { padding-right: 0; }
+.table thead th { border-bottom: 2px solid var(--muted); font-weight: 650; }
+.table tbody th { width: 14%; font-weight: 400; }
+.table td:nth-child(2) { width: 15%; }
+.table td:nth-child(3) { width: 26%; }
+.table td:nth-child(4) { width: 25%; }
+.table td:nth-child(5) { width: 20%; }
+.table p { margin: 8px 0 0; }
+.year { display: block; font-weight: 650; white-space: nowrap; }
+.cellNote { display: block; margin-top: 6px; }
+.value, .forecastValue { display: block; font-size: 1.25rem; font-weight: 600; }
+.forecastValue { color: var(--ochre); }
+.outlook { border-top-color: var(--ochre); }
+.outlook .eyebrow { color: var(--ochre); }
+.forecastPanel { margin-top: 36px; }
+.forecastMetadata { max-width: 76ch; }
+.facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 32px; margin: 24px 0; }
+.facts dt { font-size: 0.875rem; color: var(--muted); }
+.facts dd { margin: 2px 0 0; }
+.definitions { max-width: 66ch; margin: 24px 0 40px; }
+.definitions > div { margin-bottom: 20px; }
+.definitions dt { font-weight: 650; }
+.definitions dd { margin: 4px 0 0; }
+.releaseNotes { max-width: 76ch; margin-block: 32px 40px; }
+.sourceList { list-style: none; margin: 24px 0 0; padding: 0; }
+.sourceEntry { padding: 20px 0 8px; border-top: 1px solid var(--rule); scroll-margin-top: 96px; }
+.sourceEntry:target { border-top: 2px solid var(--ochre); }
+.sourceUrl { font-size: 0.875rem; overflow-wrap: anywhere; }
+
+@media (max-width: 767px) {
+  .section { padding: 48px 0; }
+  .controls, .facts { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .controls { max-width: 100%; }
+  .sectionHeader { margin-bottom: 24px; }
+  .readingNote { padding-left: 14px; }
+  .takeaway { padding-left: 14px; }
+  .chartScroll { display: none; }
+  .mobilePlot { display: block; margin: 20px 0; }
+  .figure { margin-bottom: 28px; }
+}
+
+@media (forced-colors: active) {
+  .section { --paper: Canvas; --ink: CanvasText; --muted: CanvasText; --ochre: LinkText; --rule: CanvasText; }
+  .recordedPoint, .forecastPoint { fill: CanvasText; }
+  .recordedLine, .preliminaryLine, .forecastLine, .preliminaryPoint { stroke: CanvasText; }
+  .pointLabel, .forecastLabel, .axisLabel { fill: CanvasText; }
+}

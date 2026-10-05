@@ -1,0 +1,146 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openvalley.org/schemas/schools-v1.json",
+  "title": "Open Valley public Schools payload v1",
+  "description": "Only payload.json may be served. Source edition hashes, archive paths, catalog observations, eligibility flags and lineage belong in publisher-only files. content_digest is SHA-256 of canonical UTF-8 JSON with this field omitted (sorted keys, compact separators, unescaped Unicode, no newline).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "dataset_date", "content_digest", "campuses", "schools", "programs", "notes", "enrollment", "projections", "sources", "series"],
+  "properties": {
+    "schema_version": {"type": "integer", "const": 1},
+    "dataset_date": {"$ref": "#/$defs/date"},
+    "content_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "campuses": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/campus"}},
+    "schools": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/school"}},
+    "programs": {"type": "array", "items": {"$ref": "#/$defs/program"}},
+    "notes": {"type": "array", "items": {"$ref": "#/$defs/text"}},
+    "enrollment": {"type": "array", "items": {"$ref": "#/$defs/observation"}},
+    "projections": {"type": "array", "items": {"$ref": "#/$defs/projection"}},
+    "sources": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/source"}},
+    "series": {"type": "array", "items": {"$ref": "#/$defs/series"}}
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[A-Za-z0-9_-]+$"},
+    "text": {"type": "string", "minLength": 1},
+    "date": {"type": "string", "format": "date", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"},
+    "year": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}$"},
+    "grade": {"type": "string", "pattern": "^(PK|K|[1-9]|1[0-2]|12\\+|UNGR)(-(K|[1-9]|1[0-2]|12\\+))?$"},
+    "valueState": {"type": "string", "enum": ["observed", "missing", "suppressed", "not_applicable"]},
+    "reference": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source_id", "source_locator"],
+      "properties": {"source_id": {"$ref": "#/$defs/id"}, "source_locator": {"$ref": "#/$defs/text"}}
+    },
+    "references": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/reference"}},
+    "enrollmentRef": {
+      "type": ["object", "null"], "additionalProperties": false,
+      "description": "Resolves exactly one curated observation. Ambiguous editions or bases are rejected, never chosen by recency.",
+      "required": ["series_id", "entity_id", "school_year", "grade_scope"],
+      "properties": {
+        "series_id": {"$ref": "#/$defs/id"}, "entity_id": {"$ref": "#/$defs/id"},
+        "school_year": {"$ref": "#/$defs/year"}, "grade_scope": {"$ref": "#/$defs/grade"}
+      }
+    },
+    "campus": {
+      "type": "object", "additionalProperties": false,
+      "required": ["campus_id", "name", "address", "physical_town", "latitude", "longitude", "state_school_id", "sources", "notes"],
+      "properties": {
+        "campus_id": {"$ref": "#/$defs/id"}, "name": {"$ref": "#/$defs/text"},
+        "address": {"$ref": "#/$defs/text"}, "physical_town": {"$ref": "#/$defs/text"},
+        "latitude": {"type": "number", "minimum": -90, "maximum": 90},
+        "longitude": {"type": "number", "minimum": -180, "maximum": 180},
+        "state_school_id": {"$ref": "#/$defs/id"}, "sources": {"$ref": "#/$defs/references"},
+        "notes": {"type": "string"}
+      }
+    },
+    "gradeConfiguration": {
+      "type": "object", "additionalProperties": false,
+      "required": ["school_year", "grade_scope", "verified_at", "source_id", "source_locator"],
+      "properties": {
+        "school_year": {"$ref": "#/$defs/year"}, "grade_scope": {"$ref": "#/$defs/grade"},
+        "verified_at": {"$ref": "#/$defs/date"}, "source_id": {"$ref": "#/$defs/id"},
+        "source_locator": {"$ref": "#/$defs/text"}
+      }
+    },
+    "school": {
+      "type": "object", "additionalProperties": false,
+      "required": ["school_id", "name", "campus_id", "directory_school_id", "state_school_id", "aliases", "grade_configurations", "usual_next_school_ids", "pathway_note", "sources", "latest_attending_enrollment_ref", "current_enrollment_ref"],
+      "properties": {
+        "school_id": {"$ref": "#/$defs/id"}, "name": {"$ref": "#/$defs/text"}, "campus_id": {"$ref": "#/$defs/id"},
+        "directory_school_id": {"$ref": "#/$defs/id"}, "state_school_id": {"$ref": "#/$defs/id"},
+        "aliases": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/text"}},
+        "grade_configurations": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/gradeConfiguration"}},
+        "usual_next_school_ids": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/id"}},
+        "pathway_note": {"$ref": "#/$defs/text"}, "sources": {"$ref": "#/$defs/references"},
+        "latest_attending_enrollment_ref": {"$ref": "#/$defs/enrollmentRef"},
+        "current_enrollment_ref": {"$ref": "#/$defs/enrollmentRef"}
+      }
+    },
+    "program": {
+      "type": "object", "additionalProperties": false,
+      "required": ["program_id", "name", "school_id", "campus_id", "grade_scope", "school_year", "current_enrollment_ref", "value_state", "sources", "notes"],
+      "properties": {
+        "program_id": {"$ref": "#/$defs/id"}, "name": {"$ref": "#/$defs/text"}, "school_id": {"$ref": "#/$defs/id"},
+        "campus_id": {"type": ["string", "null"], "pattern": "^[A-Za-z0-9_-]+$"},
+        "grade_scope": {"type": ["string", "null"]}, "school_year": {"$ref": "#/$defs/year"},
+        "current_enrollment_ref": {"$ref": "#/$defs/enrollmentRef"}, "value_state": {"$ref": "#/$defs/valueState"},
+        "sources": {"$ref": "#/$defs/references"}, "notes": {"type": "string"}
+      }
+    },
+    "source": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source_id", "title", "url", "published_at", "reviewed_at", "locators"],
+      "properties": {
+        "source_id": {"$ref": "#/$defs/id"}, "title": {"$ref": "#/$defs/text"},
+        "url": {"type": "string", "pattern": "^https://"},
+        "published_at": {"type": ["string", "null"], "format": "date"},
+        "reviewed_at": {"$ref": "#/$defs/date"},
+        "locators": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/text"}}
+      }
+    },
+    "observation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["observation_id", "series_id", "entity_id", "school_year", "reference_date", "reference_date_status", "grade_scope", "population_basis", "count_basis", "value", "value_state", "status", "source_id", "source_locator", "notes"],
+      "properties": {
+        "observation_id": {"$ref": "#/$defs/text"}, "series_id": {"$ref": "#/$defs/id"}, "entity_id": {"$ref": "#/$defs/id"},
+        "school_year": {"$ref": "#/$defs/year"}, "reference_date": {"type": ["string", "null"], "format": "date"},
+        "reference_date_status": {"type": "string", "enum": ["known", "unknown"]},
+        "grade_scope": {"$ref": "#/$defs/grade"}, "population_basis": {"$ref": "#/$defs/id"},
+        "count_basis": {"type": "string", "enum": ["reported_headcount", "derived_headcount"]},
+        "value": {"type": ["integer", "null"], "minimum": 0, "maximum": 9007199254740991},
+        "value_state": {"$ref": "#/$defs/valueState"},
+        "status": {"type": "string", "enum": ["observed", "preliminary", "final"]},
+        "source_id": {"$ref": "#/$defs/id"}, "source_locator": {"$ref": "#/$defs/text"}, "notes": {"type": "string"}
+      }
+    },
+    "projection": {
+      "type": "object", "additionalProperties": false,
+      "required": ["observation_id", "series_id", "entity_id", "school_year", "reference_date", "reference_date_status", "grade_scope", "population_basis", "count_basis", "value", "value_state", "status", "source_id", "source_locator", "notes", "forecast_vintage", "author", "base_year", "horizon", "assumptions"],
+      "properties": {
+        "observation_id": {"$ref": "#/$defs/text"}, "series_id": {"$ref": "#/$defs/id"}, "entity_id": {"$ref": "#/$defs/id"},
+        "school_year": {"$ref": "#/$defs/year"}, "reference_date": {"type": ["string", "null"], "format": "date"},
+        "reference_date_status": {"type": "string", "enum": ["known", "unknown"]},
+        "grade_scope": {"$ref": "#/$defs/grade"}, "population_basis": {"$ref": "#/$defs/id"},
+        "count_basis": {"type": "string", "const": "projected_headcount"},
+        "value": {"type": ["integer", "null"], "minimum": 0, "maximum": 9007199254740991},
+        "value_state": {"$ref": "#/$defs/valueState"}, "status": {"type": "string", "const": "projection"},
+        "source_id": {"$ref": "#/$defs/id"}, "source_locator": {"$ref": "#/$defs/text"}, "notes": {"type": "string"},
+        "forecast_vintage": {"$ref": "#/$defs/text"}, "author": {"$ref": "#/$defs/text"},
+        "base_year": {"$ref": "#/$defs/year"}, "horizon": {"$ref": "#/$defs/text"}, "assumptions": {"$ref": "#/$defs/text"}
+      }
+    },
+    "series": {
+      "type": "object", "additionalProperties": false,
+      "description": "Never merge keys or bridge a null value/year gap. connect_points=false forbids a continuous line even within the group. Forecast and history groups are never joined.",
+      "required": ["series_key", "series_id", "entity_id", "grade_scope", "population_basis", "count_basis", "kind", "connect_points", "description", "observation_ids"],
+      "properties": {
+        "series_key": {"$ref": "#/$defs/text"}, "series_id": {"$ref": "#/$defs/id"}, "entity_id": {"$ref": "#/$defs/id"},
+        "grade_scope": {"$ref": "#/$defs/grade"}, "population_basis": {"$ref": "#/$defs/id"},
+        "count_basis": {"type": "string", "enum": ["reported_headcount", "derived_headcount", "projected_headcount"]},
+        "kind": {"type": "string", "enum": ["history", "projection"]}, "connect_points": {"type": "boolean"},
+        "description": {"$ref": "#/$defs/text"},
+        "observation_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/text"}}
+      }
+    }
+  }
+}

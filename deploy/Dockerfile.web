@@ -1,0 +1,20 @@
+# Build from the repository root with this Dockerfile's allowlisted context.
+FROM node:22-bookworm-slim@sha256:43ac6c60b8f89723f746e8a92ce91abd5017e627ce1ddfe4238355d3a30b772c AS build
+WORKDIR /app/web
+ENV NEXT_TELEMETRY_DISABLED=1
+COPY web/package.json web/package-lock.json ./
+RUN npm ci --include=dev
+COPY web/ ./
+COPY warren/outputs/warren_properties.json /app/warren/outputs/warren_properties.json
+RUN npm run build
+
+FROM node:22-bookworm-slim@sha256:43ac6c60b8f89723f746e8a92ce91abd5017e627ce1ddfe4238355d3a30b772c AS runtime
+WORKDIR /app/web
+ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 HOSTNAME=0.0.0.0 PORT=3000
+COPY --from=build --chown=node:node /app/web/.next/standalone /app/
+COPY --from=build --chown=node:node /app/web/.next/static ./.next/static
+COPY --from=build --chown=node:node /app/web/public ./public
+COPY --from=build --chown=node:node /app/web/src/content ./src/content
+USER node
+EXPOSE 3000
+CMD ["node", "server.js"]

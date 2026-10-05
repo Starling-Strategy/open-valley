@@ -55,6 +55,10 @@ data/str/
 
 # Tool artifacts
 .serena/
+.openchamber/
+web/test-results/
+web/playwright-report/
+web/public/maplibre/
 
 # Logs
 *.log

@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "derivations": [
+    {"output":{"series_id":"wwsu-2016","entity_id":"harwood-middle","school_year":"2016-17","grade_scope":"7-8"},"kind":"grades","contributors":[
+      {"source_id":"1g7PC4OTz2KsWShYNSd0p4DouDdfsOoP2","source_locator":"p3; 2016 Harwood Grade 7","grade_scope":"7","value":77},
+      {"source_id":"1g7PC4OTz2KsWShYNSd0p4DouDdfsOoP2","source_locator":"p3; 2016 Harwood Grade 8","grade_scope":"8","value":75}
+    ]},
+    {"output":{"series_id":"wwsu-2016","entity_id":"harwood-high","school_year":"2016-17","grade_scope":"9-12"},"kind":"grades","contributors":[
+      {"source_id":"1g7PC4OTz2KsWShYNSd0p4DouDdfsOoP2","source_locator":"p3; 2016 Harwood Grade 9","grade_scope":"9","value":127},
+      {"source_id":"1g7PC4OTz2KsWShYNSd0p4DouDdfsOoP2","source_locator":"p3; 2016 Harwood Grade 10","grade_scope":"10","value":129},
+      {"source_id":"1g7PC4OTz2KsWShYNSd0p4DouDdfsOoP2","source_locator":"p3; 2016 Harwood Grade 11","grade_scope":"11","value":135},
+      {"source_id":"1g7PC4OTz2KsWShYNSd0p4DouDdfsOoP2","source_locator":"p3; 2016 Harwood Grade 12","grade_scope":"12","value":127}
+    ]},
+    {"output":{"series_id":"district-2017","entity_id":"huusd","school_year":"2017-18","grade_scope":"K-12+"},"kind":"district","contributors":[
+      {"observation":{"series_id":"district-2017","entity_id":"fayston","school_year":"2017-18","grade_scope":"K-6"}},
+      {"observation":{"series_id":"district-2017","entity_id":"moretown","school_year":"2017-18","grade_scope":"K-6"}},
+      {"observation":{"series_id":"district-2017","entity_id":"waitsfield","school_year":"2017-18","grade_scope":"K-6"}},
+      {"observation":{"series_id":"district-2017","entity_id":"warren","school_year":"2017-18","grade_scope":"K-6"}},
+      {"observation":{"series_id":"district-2017","entity_id":"brookside","school_year":"2017-18","grade_scope":"K-4"}},
+      {"observation":{"series_id":"district-2017","entity_id":"crossett-brook","school_year":"2017-18","grade_scope":"5-8"}},
+      {"observation":{"series_id":"district-2017","entity_id":"harwood-middle","school_year":"2017-18","grade_scope":"7-8"}},
+      {"observation":{"series_id":"district-2017","entity_id":"harwood-high","school_year":"2017-18","grade_scope":"9-12+"}}
+    ]},
+    {"output":{"series_id":"district-2017","entity_id":"fayston","school_year":"2017-18","grade_scope":"K-6"},"kind":"grades","contributors":[
+      {"source_id":"146yQpsn-lwf-AwRzXPwrXB6PAHtA5LY3","source_locator":"p8; Fayston; District Oct 1; K","grade_scope":"K","value":10},
+      {"source_id":"146yQpsn-lwf-AwRzXPwrXB6PAHtA5LY3","source_locator":"p8; Fayston; District Oct 1; 1","grade_scope":"1","value":6},
+      {"source_id":"146yQpsn-lwf-AwRzXPwrXB6PAHtA5LY3","source_locator":"p8; Fayston; District Oct 1; 2","grade_scope":"2","value":13},
+      {"source_id":"146yQpsn-lwf-AwRzXPwrXB6PAHtA5LY3","source_locator":"p8; Fayston; District Oct 1; 3","grade_scope":"3","value":10},
+      {"source_id":"146yQpsn-lwf-AwRzXPwrXB6PAHtA5LY3","source_locator":"p8; Fayston; District Oct 1; 4","grade_scope":"4","value":10},
+      {"source_id":"146yQpsn-lwf-AwRzXPwrXB6PAHtA5LY3","source_locator":"p8; Fayston; District Oct 1; 5","grade_scope":"5","value":16},
+      {"source_id":"146yQpsn-lwf-AwRzXPwrXB6PAHtA5LY3","source_locator":"p8; Fayston; District Oct 1; 6","grade_scope":"6","value":16}
+    ]},
+    {"output":{"series_id":"district-2017","entity_id":"moretown","school_year":"2017-18","grade_scope":"K-6"},"kind":"grades","contributors":[
+      {"source_id":"146yQpsn-lwf-AwRzXPwrXB6PAHtA5LY3","source_locator":"p8; Moretown; District Oct 1; K","grade_scope":"K","value":15},
+      {"source_id":"146yQpsn-lwf-AwRzXPwrXB6PAHtA5LY3","source_locator":"p8; Moretown; District Oct 1; 1","grade_scope":"1","value":17},
+      {"source_id":"146yQpsn-lwf-AwRzXPwrXB6PAHtA5LY3","source_locator":"p8; Moretown; District Oct 1; 2","grade_scope":"2","value":18},
+      {"source_id":"146yQpsn-lwf-AwRzXPwrXB6PAHtA5LY3","source_locator":"p8; Moretown; District Oct 1; 3","grade_scope":"3","value":13},
+      {"source_id":"146yQpsn-lwf-AwRzXPwrXB6PAHtA5LY3","source_locator":"p8; Moretown; District Oct 1; 4","grade_scope":"4","value":15},
+      {"source_id":"146yQpsn-lwf-AwRzXPwrXB6PAHtA5LY3","source_locator":"p8; Moretown; District Oct 1; 5","grade_scope":"5","value":15},
+      {"source_id":"146yQpsn-lwf-AwRzXPwrXB6PAHtA5LY3","source_locator":"p8; Moretown; District Oct 1; 6","grade_scope":"6","value":13}
+    ]},
+    {"output":{"series_id":"district-2017","entity_id":"waitsfield","school_year":"2017-18","grade_scope":"K-6"},"kind":"grades","contributors":[
+      {"source_id":"146yQpsn-lwf-AwRzXPwrXB6PAHtA5LY3","source_locator":"p8; Waitsfield; District Oct 1; K","grade_scope":"K","value":19},
+      {"source_id":"146yQpsn-lwf-AwRzXPwrXB6PAHtA5LY3","source_locator":"p8; Waitsfield; District Oct 1; 1","grade_scope":"1","value":15},
+      {"source_id":"146yQpsn-lwf-AwRzXPwrXB6PAHtA5LY3","source_locator":"p8; Waitsfield; District Oct 1; 2","grade_scope":"2","value":10},
+      {"source_id":"146yQpsn-lwf-AwRzXPwrXB6PAHtA5LY3","source_locator":"p8; Waitsfield; District Oct 1; 3","grade_scope":"3","value":23},
+      {"source_id":"146yQpsn-lwf-AwRzXPwrXB6PAHtA5LY3","source_locator":"p8; Waitsfield; District Oct 1; 4","grade_scope":"4","value":16},
+      {"source_id":"146yQpsn-lwf-AwRzXPwrXB6PAHtA5LY3","source_locator":"p8; Waitsfield; District Oct 1; 5","grade_scope":"5","value":17},
+      {"source_id":"146yQpsn-lwf-AwRzXPwrXB6PAHtA5LY3","source_locator":"p8; Waitsfield; District Oct 1; 6","grade_scope":"6","value":12}
+    ]},
+    {"output":{"series_id":"district-2017","entity_id":"warren","school_year":"2017-18","grade_scope":"K-6"},"kind":"grades","contributors":[
+      {"source_id":"146yQpsn-lwf-AwRzXPwrXB6PAHtA5LY3","source_locator":"p9; Warren; District Oct 1; K","grade_scope":"K","value":16},
+      {"source_id":"146yQpsn-lwf-AwRzXPwrXB6PAHtA5LY3","source_locator":"p9; Warren; District Oct 1; 1","grade_scope":"1","value":19},
+      {"source_id":"146yQpsn-lwf-AwRzXPwrXB6PAHtA5LY3","source_locator":"p9; Warren; District Oct 1; 2","grade_scope":"2","value":16},
+      {"source_id":"146yQpsn-lwf-AwRzXPwrXB6PAHtA5LY3","source_locator":"p9; Warren; District Oct 1; 3","grade_scope":"3","value":21},
+      {"source_id":"146yQpsn-lwf-AwRzXPwrXB6PAHtA5LY3","source_locator":"p9; Warren; District Oct 1; 4","grade_scope":"4","value":17},
+      {"source_id":"146yQpsn-lwf-AwRzXPwrXB6PAHtA5LY3","source_locator":"p9; Warren; District Oct 1; 5","grade_scope":"5","value":21},
+      {"source_id":"146yQpsn-lwf-AwRzXPwrXB6PAHtA5LY3","source_locator":"p9; Warren; District Oct 1; 6","grade_scope":"6","value":25}
+    ]},
+    {"output":{"series_id":"district-2017","entity_id":"brookside","school_year":"2017-18","grade_scope":"K-4"},"kind":"grades","contributors":[
+      {"source_id":"146yQpsn-lwf-AwRzXPwrXB6PAHtA5LY3","source_locator":"p9; Thatcher Brook; District Oct 1; K","grade_scope":"K","value":72},
+      {"source_id":"146yQpsn-lwf-AwRzXPwrXB6PAHtA5LY3","source_locator":"p9; Thatcher Brook; District Oct 1; 1","grade_scope":"1","value":76},
+      {"source_id":"146yQpsn-lwf-AwRzXPwrXB6PAHtA5LY3","source_locator":"p9; Thatcher Brook; District Oct 1; 2","grade_scope":"2","value":72},
+      {"source_id":"146yQpsn-lwf-AwRzXPwrXB6PAHtA5LY3","source_locator":"p9; Thatcher Brook; District Oct 1; 3","grade_scope":"3","value":74},
+      {"source_id":"146yQpsn-lwf-AwRzXPwrXB6PAHtA5LY3","source_locator":"p9; Thatcher Brook; District Oct 1; 4","grade_scope":"4","value":75}
+    ]},
+    {"output":{"series_id":"district-2017","entity_id":"harwood-middle","school_year":"2017-18","grade_scope":"7-8"},"kind":"grades","contributors":[
+      {"source_id":"146yQpsn-lwf-AwRzXPwrXB6PAHtA5LY3","source_locator":"p9; Harwood; District Oct 1; Grade 7","grade_scope":"7","value":68},
+      {"source_id":"146yQpsn-lwf-AwRzXPwrXB6PAHtA5LY3","source_locator":"p9; Harwood; District Oct 1; Grade 8","grade_scope":"8","value":75}
+    ]},
+    {"output":{"series_id":"district-2017","entity_id":"harwood-high","school_year":"2017-18","grade_scope":"9-12+"},"kind":"grades","contributors":[
+      {"source_id":"146yQpsn-lwf-AwRzXPwrXB6PAHtA5LY3","source_locator":"p9; Harwood; District Oct 1; Grade 9","grade_scope":"9","value":130},
+      {"source_id":"146yQpsn-lwf-AwRzXPwrXB6PAHtA5LY3","source_locator":"p9; Harwood; District Oct 1; Grade 10","grade_scope":"10","value":116},
+      {"source_id":"146yQpsn-lwf-AwRzXPwrXB6PAHtA5LY3","source_locator":"p9; Harwood; District Oct 1; Grade 11","grade_scope":"11","value":124},
+      {"source_id":"146yQpsn-lwf-AwRzXPwrXB6PAHtA5LY3","source_locator":"p9; Harwood; District Oct 1; Grade 12+","grade_scope":"12+","value":131}
+    ]},
+    {"output":{"series_id":"nesdec-2018-history","entity_id":"huusd","school_year":"2018-19","grade_scope":"K-12"},"kind":"district","contributors":[
+      {"observation":{"series_id":"nesdec-2018-history","entity_id":"fayston","school_year":"2018-19","grade_scope":"K-6"}},
+      {"observation":{"series_id":"nesdec-2018-history","entity_id":"moretown","school_year":"2018-19","grade_scope":"K-6"}},
+      {"observation":{"series_id":"nesdec-2018-history","entity_id":"waitsfield","school_year":"2018-19","grade_scope":"K-6"}},
+      {"observation":{"series_id":"nesdec-2018-history","entity_id":"warren","school_year":"2018-19","grade_scope":"K-6"}},
+      {"observation":{"series_id":"nesdec-2018-history","entity_id":"brookside","school_year":"2018-19","grade_scope":"K-4"}},
+      {"observation":{"series_id":"nesdec-2018-history","entity_id":"crossett-brook","school_year":"2018-19","grade_scope":"5-8"}},
+      {"observation":{"series_id":"nesdec-2018-history","entity_id":"harwood-middle","school_year":"2018-19","grade_scope":"7-8"}},
+      {"observation":{"series_id":"nesdec-2018-history","entity_id":"harwood-high","school_year":"2018-19","grade_scope":"9-12"}}
+    ]},
+    {"output":{"series_id":"nesdec-2018-history","entity_id":"harwood-middle","school_year":"2018-19","grade_scope":"7-8"},"kind":"grades","contributors":[
+      {"source_id":"0B2uQwDkbPKEVUWFkaTFlUXBHN1hjaXVweU42THhfSzM2Yy1Z","source_locator":"p44; Historical Enrollment; 2018-19; Grade 7","grade_scope":"7","value":65},
+      {"source_id":"0B2uQwDkbPKEVUWFkaTFlUXBHN1hjaXVweU42THhfSzM2Yy1Z","source_locator":"p44; Historical Enrollment; 2018-19; Grade 8","grade_scope":"8","value":70}
+    ]},
+    {"output":{"series_id":"district-retrospective-2019-2020","entity_id":"harwood-middle","school_year":"2019-20","grade_scope":"7-8"},"kind":"grades","contributors":[
+      {"source_id":"1ZgT8xG9VWAbQ-rN-P93EMe9As8ttnamP","source_locator":"p1; 2019 HU; Grade 7","grade_scope":"7","value":57},
+      {"source_id":"1ZgT8xG9VWAbQ-rN-P93EMe9As8ttnamP","source_locator":"p1; 2019 HU; Grade 8","grade_scope":"8","value":62}
+    ]},
+    {"output":{"series_id":"district-retrospective-2019-2020","entity_id":"harwood-high","school_year":"2019-20","grade_scope":"9-12"},"kind":"grades","contributors":[
+      {"source_id":"1ZgT8xG9VWAbQ-rN-P93EMe9As8ttnamP","source_locator":"p1; 2019 HU; Grade 9","grade_scope":"9","value":131},
+      {"source_id":"1ZgT8xG9VWAbQ-rN-P93EMe9As8ttnamP","source_locator":"p1; 2019 HU; Grade 10","grade_scope":"10","value":122},
+      {"source_id":"1ZgT8xG9VWAbQ-rN-P93EMe9As8ttnamP","source_locator":"p1; 2019 HU; Grade 11","grade_scope":"11","value":128},
+      {"source_id":"1ZgT8xG9VWAbQ-rN-P93EMe9As8ttnamP","source_locator":"p1; 2019 HU; Grade 12","grade_scope":"12","value":99}
+    ]},
+    {"output":{"series_id":"district-retrospective-2019-2020","entity_id":"harwood-middle","school_year":"2020-21","grade_scope":"7-8"},"kind":"grades","contributors":[
+      {"source_id":"1ZgT8xG9VWAbQ-rN-P93EMe9As8ttnamP","source_locator":"p1; 2020 HU; Grade 7","grade_scope":"7","value":52},
+      {"source_id":"1ZgT8xG9VWAbQ-rN-P93EMe9As8ttnamP","source_locator":"p1; 2020 HU; Grade 8","grade_scope":"8","value":55}
+    ]},
+    {"output":{"series_id":"district-retrospective-2019-2020","entity_id":"harwood-high","school_year":"2020-21","grade_scope":"9-12"},"kind":"grades","contributors":[
+      {"source_id":"1ZgT8xG9VWAbQ-rN-P93EMe9As8ttnamP","source_locator":"p1; 2020 HU; Grade 9","grade_scope":"9","value":115},
+      {"source_id":"1ZgT8xG9VWAbQ-rN-P93EMe9As8ttnamP","source_locator":"p1; 2020 HU; Grade 10","grade_scope":"10","value":124},
+      {"source_id":"1ZgT8xG9VWAbQ-rN-P93EMe9As8ttnamP","source_locator":"p1; 2020 HU; Grade 11","grade_scope":"11","value":116},
+      {"source_id":"1ZgT8xG9VWAbQ-rN-P93EMe9As8ttnamP","source_locator":"p1; 2020 HU; Grade 12","grade_scope":"12","value":106}
+    ]}
+  ],
+  "reconciliations": [
+    {"output":{"series_id":"district-2017-pk-inclusive","entity_id":"huusd","school_year":"2017-18","grade_scope":"PK-12+"},"kind":"pk_inclusive","contributors":[
+      {"observation":{"series_id":"district-2017","entity_id":"huusd","school_year":"2017-18","grade_scope":"K-12+"}},
+      {"entity_id":"fayston","source_id":"146yQpsn-lwf-AwRzXPwrXB6PAHtA5LY3","source_locator":"p8; Fayston; District Oct 1; PK","grade_scope":"PK","value":23},
+      {"entity_id":"moretown","source_id":"146yQpsn-lwf-AwRzXPwrXB6PAHtA5LY3","source_locator":"p8; Moretown; District Oct 1; PK","grade_scope":"PK","value":41},
+      {"entity_id":"waitsfield","source_id":"146yQpsn-lwf-AwRzXPwrXB6PAHtA5LY3","source_locator":"p8; Waitsfield; District Oct 1; PK","grade_scope":"PK","value":26},
+      {"entity_id":"warren","source_id":"146yQpsn-lwf-AwRzXPwrXB6PAHtA5LY3","source_locator":"p9; Warren; District Oct 1; PK","grade_scope":"PK","value":31},
+      {"entity_id":"brookside","source_id":"146yQpsn-lwf-AwRzXPwrXB6PAHtA5LY3","source_locator":"p9; Thatcher Brook; District Oct 1; PK","grade_scope":"PK","value":105}
+    ]},
+    {"output":{"series_id":"public-pk-october","entity_id":"huusd","school_year":"2025-26","grade_scope":"PK"},"kind":"district","contributors":[
+      {"observation":{"series_id":"public-pk-october","entity_id":"brookside","school_year":"2025-26","grade_scope":"PK"}},
+      {"observation":{"series_id":"public-pk-october","entity_id":"fayston","school_year":"2025-26","grade_scope":"PK"}},
+      {"observation":{"series_id":"public-pk-october","entity_id":"moretown","school_year":"2025-26","grade_scope":"PK"}},
+      {"observation":{"series_id":"public-pk-october","entity_id":"waitsfield","school_year":"2025-26","grade_scope":"PK"}},
+      {"observation":{"series_id":"public-pk-october","entity_id":"warren","school_year":"2025-26","grade_scope":"PK"}}
+    ]}
+  ]
+}

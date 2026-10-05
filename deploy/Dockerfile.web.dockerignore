@@ -1,0 +1,19 @@
+# Deny by default: research, data, credentials and legacy API never enter the build.
+**
+!web/
+!web/package.json
+!web/package-lock.json
+!web/next.config.ts
+!web/next-env.d.ts
+!web/tsconfig.json
+!web/postcss.config.mjs
+!web/mdx-components.tsx
+!web/scripts/
+!web/scripts/prepare-map.mjs
+!web/src/
+!web/src/**
+!web/public/
+!web/public/**
+!warren/
+!warren/outputs/
+!warren/outputs/warren_properties.json

@@ -3,37 +3,45 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "node scripts/prepare-map.mjs",
+    "prebuild": "node scripts/prepare-map.mjs",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:browser": "playwright test",
+    "test:unit": "node --import tsx --test src/components/schools/*.test.ts src/components/schools/*.test.mjs"
   },
   "dependencies": {
-    "@copilotkit/react-core": "^1.50.1",
-    "@copilotkit/react-ui": "^1.50.1",
     "@mdx-js/loader": "^3.1.1",
     "@mdx-js/react": "^3.1.1",
-    "@next/mdx": "^16.1.1",
+    "@next/mdx": "16.3.8",
     "@tailwindcss/typography": "^0.5.19",
     "@types/leaflet": "^1.9.21",
     "gray-matter": "^4.0.3",
     "leaflet": "^1.9.4",
-    "maplibre-gl": "^5.15.0",
-    "next": "16.1.1",
-    "next-mdx-remote": "^5.0.0",
+    "maplibre-gl": "6.12.0",
+    "next": "16.3.8",
+    "next-mdx-remote": "6.0.0",
+    "pg": "^8.23.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-leaflet": "^5.0.0",
-    "recharts": "^3.6.0"
+    "recharts": "^3.6.0",
+    "remark-gfm": "^4.0.1",
+    "server-only": "^0.0.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.1.1",
+    "eslint-config-next": "16.3.8",
     "tailwindcss": "^4",
+    "tsx": "^4.23.15",
     "typescript": "^5"
   }
 }

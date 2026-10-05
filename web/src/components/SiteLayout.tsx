@@ -1,24 +1,12 @@
 import Navigation from "./Navigation";
 import Footer from "./Footer";
 
-interface SiteLayoutProps {
-  children: React.ReactNode;
-  showFooter?: boolean;
-}
-
-/**
- * Shared layout for pages with navigation.
- * The explore (chat) page uses a different layout without footer.
- */
-export default function SiteLayout({
-  children,
-  showFooter = true,
-}: SiteLayoutProps) {
+export default function SiteLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="site-shell">
       <Navigation />
-      <main className="flex-1">{children}</main>
-      {showFooter && <Footer />}
+      <main id="main-content" tabIndex={-1}>{children}</main>
+      <Footer />
     </div>
   );
 }

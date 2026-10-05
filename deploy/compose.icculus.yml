@@ -1,0 +1,22 @@
+# Reference configuration for the existing Openship-managed project.
+# Provision the credential mount and an eligible database release before applying.
+services:
+  web:
+    image: ${OPENVALLEY_WEB_IMAGE:?Set the reviewed image tag or digest}
+    command: ["node", "server.js"]
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      HOSTNAME: 0.0.0.0
+      PORT: "3000"
+      SCHOOLS_DATABASE_URL_FILE: /run/secrets/schools-database-url
+    ports:
+      - "100.75.27.44:3400:3000"
+    volumes:
+      - /opt/openvalley-schools/credentials/runtime-database-url:/run/secrets/schools-database-url:ro
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

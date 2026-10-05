@@ -141,9 +141,9 @@ async function build(revision) {
     await run('npm', ['ci', '--include=dev'], { cwd: join(scratch, 'web'), env });
     await run('npm', ['run', 'build'], { cwd: join(scratch, 'web'), env });
     const bundle = join(scratch, 'bundle');
-    await cp(join(scratch, 'web/.next/standalone'), bundle, { recursive: true });
+    await cp(join(scratch, 'web/.next/standalone'), bundle, { recursive: true, verbatimSymlinks: true });
     for (const path of ['.next/static', 'public', 'src/content'])
-      await cp(join(scratch, 'web', path), join(bundle, 'web', path), { recursive: true });
+      await cp(join(scratch, 'web', path), join(bundle, 'web', path), { recursive: true, verbatimSymlinks: true });
     await writeFile(join(bundle, 'receipt.json'), JSON.stringify({ revision, builtAt: new Date().toISOString() }));
     await mkdir(dirname(release), { recursive: true });
     await rename(bundle, release);

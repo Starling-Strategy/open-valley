@@ -52,6 +52,9 @@ node scripts/staging.mjs deploy
 node scripts/staging.mjs status
 node scripts/staging.mjs start
 
+# Read-only acceptance of the live build, assets and public-data boundary.
+node --test scripts/test_staging.mjs
+
 # Stop only staging's two managed processes; preserve its files.
 node scripts/staging.mjs stop
 

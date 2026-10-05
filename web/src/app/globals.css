@@ -2,7 +2,7 @@
 
 .staging-banner { display: flex; flex-wrap: wrap; gap: .5rem 1rem; justify-content: center; padding: .6rem 1rem; background: #f4df9f; color: #292719; font: .875rem/1.5 Arial, sans-serif; }
 .staging-banner strong { text-transform: uppercase; letter-spacing: .08em; }
-.staging-banner a { color: inherit; text-decoration: underline; text-underline-offset: .2em; }
+.staging-banner a { color: inherit; text-decoration: underline; }
 @plugin "@tailwindcss/typography";
 
 :root {

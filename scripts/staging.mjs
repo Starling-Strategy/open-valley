@@ -62,7 +62,7 @@ async function waitFor(check, label) {
     try { if (await check()) return; } catch { /* readiness may lag process start */ }
     await delay(500);
   }
-  throw new Error(`${label} did not become ready; inspect staging logs.`);
+  throw new Error(`${label} did not become ready; inspect staging status.`);
 }
 async function configureProcess(config) {
   const file = join(root, `${config.name}.json`);
@@ -107,13 +107,16 @@ async function publish() {
   phase = 'validating and publishing current evidence';
   const candidate = join(root, 'candidate');
   await run('python3', ['-B', 'scripts/school_board/build_public_snapshot.py', '--output', candidate, '--root', collection]);
-  const expected = await withDatabase('schools_runtime', async client =>
-    (await client.query('SELECT release_id FROM schools.current_publication')).rows[0]?.release_id || 'none');
+  const expected = await currentPublication() || 'none';
   const result = await run(process.execPath, ['scripts/school_board/publish.mjs', '--candidate', candidate,
     '--root', collection, '--expected-base', expected], {
     env: { ...environment, SCHOOLS_PUBLISHER_DATABASE_URL: url('schools_publisher') },
   });
   return JSON.parse(result).releaseId;
+}
+async function currentPublication() {
+  return withDatabase('schools_runtime', async client =>
+    (await client.query('SELECT release_id FROM schools.current_publication')).rows[0]?.release_id || null);
 }
 async function applyExclusions() {
   phase = 'applying current exclusions';
@@ -170,16 +173,24 @@ async function startWeb(revision) {
   });
   await waitFor(async () => {
     const response = await fetch(`http://127.0.0.1:${port}/schools`, { signal: AbortSignal.timeout(4000) });
-    return response.ok && (await response.text()).includes(revision.slice(0, 7));
+    const html = await response.text();
+    return response.ok && html.includes(revision.slice(0, 7));
   }, 'Staging web');
+}
+async function schoolsReady() {
+  const response = await fetch(`http://127.0.0.1:${port}/api/ready`, { signal: AbortSignal.timeout(4000) });
+  await response.body?.cancel();
+  return response.ok;
 }
 async function status() {
   const active = await state();
   const rows = (await processes()).map(p => ({ name: p.name, status: p.pm2_env.status, pid: p.pid, restarts: p.pm2_env.restart_time }));
   let ready = false;
+  let publicationId = null;
   try { ready = Boolean(active && rows.some(p => p.name === appName && p.status === 'online') &&
-    (await fetch(`http://127.0.0.1:${port}/api/ready`, { signal: AbortSignal.timeout(4000) })).ok); } catch {}
-  console.log(JSON.stringify({ url: `${origin}/schools`, ready, active, processes: rows }, null, 2));
+    await schoolsReady()); } catch {}
+  try { publicationId = await currentPublication(); } catch {}
+  console.log(JSON.stringify({ url: `${origin}/schools`, ready, active, publicationId, processes: rows }, null, 2));
 }
 async function main() {
   const command = process.argv[2];
@@ -209,13 +220,13 @@ async function main() {
     if (command === 'withdraw') { await applyExclusions(); await status(); return; }
     await applyExclusions(); // Recovery must never restore an excluded publication.
     const previous = await state();
-    let revision = previous?.revision, publicationId = previous?.publicationId;
+    let revision = previous?.revision;
     if (command === 'deploy') {
       await run('git', ['diff', '--quiet', 'HEAD']);
       if ((await run('git', ['ls-files', '--others', '--exclude-standard'])).trim()) throw new Error('Commit staging inputs before deployment.');
       revision = (await run('git', ['rev-parse', 'HEAD'])).trim();
       await build(revision);
-      publicationId = await publish();
+      await publish();
     } else if (command === 'rollback') {
       revision = process.argv[3];
       if (!/^[0-9a-f]{40}$/.test(revision)) throw new Error('Invalid release revision.');
@@ -224,7 +235,9 @@ async function main() {
     if (!revision) throw new Error('No staged build exists. Run deploy first.');
     try {
       await startWeb(revision);
-      await saveState({ revision, publicationId, updatedAt: new Date().toISOString() });
+      // A recovery after withdrawal may intentionally serve the unavailable page.
+      if (command === 'deploy') await waitFor(schoolsReady, 'Published schools');
+      await saveState({ revision, updatedAt: new Date().toISOString() });
     } catch (error) {
       if (previous && previous.revision !== revision) await startWeb(previous.revision);
       throw error;

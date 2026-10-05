@@ -22,7 +22,8 @@ Staging files live under `/rocky/open-valley/staging/`:
 - `releases/<git-sha>/`: immutable standalone code, static assets and a build
   receipt. No school payload or collection is bundled into these releases.
 - `candidate/`: registered publication candidate, managed by the normal privacy
-  cleanup protocol; `active.json` records the selected code and publication.
+  cleanup protocol; `active.json` records the selected code. `status` reads the
+  current publication ID directly from PostgreSQL.
 - `pm2/`: process-manager state. Application/database stdout and stderr are
   discarded to avoid accumulating data-bearing logs. PM2 retains lifecycle
   information; `status` exposes only names, PIDs, restart counts and release IDs.
@@ -104,3 +105,23 @@ The process-management lockfile pins PM2. Overrides update its vulnerable YAML,
 FTP and file-watcher dependencies; staging does not use watch mode/glob patterns,
 FTP, PM2 cloud integration or YAML process definitions. Recheck the tooling audit
 and process lifecycle when updating these pins.
+
+## October 5 verification
+
+The deployed build passed all 14 browser cases, 16 UI unit tests, the live
+standalone acceptance check, lint, build/typecheck and documentation link checks.
+The publication tooling passed 45 Python and 13 credential tests; the staging
+dependency audit reported no vulnerabilities.
+
+Live checks confirmed app crash recovery, PostgreSQL immediate-shutdown recovery,
+stop/start and recovery after stopping the dedicated process-manager daemon.
+An unhealthy code rollback restored the previous working build. Lock contention
+and a dirty-checkout deployment were rejected without replacing the app. These
+checks preserved the same publication. No host/container reboot was performed.
+OpenChamber loaded the full HTTPS Schools and Homes URLs and the readiness result;
+separate-device access remains unconfirmed.
+
+Code review: skipped (ce-code-review unavailable). The independent review attempt
+timed out without a verdict; a manual diff check and the verification above were
+completed. The failed review receipt is
+`/tmp/opencode/compound-engineering-30021/ce-code-review/20261005-140230-2fd15806/`.

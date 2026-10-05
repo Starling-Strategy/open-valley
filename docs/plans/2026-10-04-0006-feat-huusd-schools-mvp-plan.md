@@ -2,7 +2,7 @@
 title: Open Valley Homes and Schools - Integrated Delivery Plan
 type: feat
 date: 2026-10-04
-updated: 2026-10-04
+updated: 2026-10-05
 artifact_contract: ce-unified-plan/v1
 product_contract_source: ce-plan-bootstrap
 origin: docs/openvalley-mvp-working-notes.md
@@ -37,6 +37,22 @@ U7 proved managed Icculus deployment and temporary HTTPS ingress with an earlier
 shell image. Production credentials, live school publication, public cutover and
 retirement remain the deferred portions of U7–U10. The full Definition of Done
 below remains the production release gate.
+
+### October 5 private staging checkpoint
+
+PR #12 merged the school-first application. The owner then authorized making the
+private preview a reusable staging environment. The [staging guide](../STAGING.md)
+records the shared review URL, isolated code releases, dedicated local PostgreSQL
+cluster, and update/recovery/withdrawal commands. The existing operator-deployed
+Rockefeller route serves staging at
+`https://rockefeller.tail7a94dc.ts.net:10005/schools`.
+
+Staging runs reviewed public evidence through the same publication checks. App
+and database process recovery, cold process-manager recovery, failed-release
+fallback, and the school/Homes browser flows were verified. A full coding-runtime
+replacement needs manual recovery; no host restart was used for acceptance.
+Production credential setup, Icculus publication and public cutover remain at the
+deferred execution boundary above.
 
 ---
 

@@ -6,6 +6,7 @@ export const metadata: Metadata = {
   title: "Open Valley | Homes and Schools",
   description:
     "Independent civic research on homes and the Harwood Unified Union School District in Vermont, published by Open Valley.",
+  ...(process.env.NEXT_PUBLIC_OPENVALLEY_STAGING === "true" ? { robots: { index: false, follow: false } } : {}),
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

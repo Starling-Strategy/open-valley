@@ -26,6 +26,9 @@ fallback and does not need the legacy FastAPI or AI services.
 
 ## School data and database setup
 
+For the shared private review environment, use the [staging guide](docs/STAGING.md).
+It has a stable tailnet URL, isolated builds and a dedicated local database.
+
 Use PostgreSQL 16 and Python 3.11+ for publication tooling. Follow the
 [publication guide](docs/school-board/publication.md) for migrations, synthetic
 fixtures, publication, withdrawal, and integration tests. Run synthetic examples

@@ -1,0 +1,12 @@
+{
+  "name": "openvalley-staging-tools",
+  "private": true,
+  "dependencies": {
+    "pm2": "7.0.4"
+  },
+  "overrides": {
+    "basic-ftp": "6.2.2",
+    "js-yaml": "4.3.2",
+    "chokidar": "4.0.3"
+  }
+}

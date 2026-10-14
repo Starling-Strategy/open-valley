@@ -154,6 +154,13 @@ install the standalone tree with its `web/.next/static` and `web/public` assets.
 The web service binds `127.0.0.1:3460`, behind the existing Tailscale route at
 `https://rockefeller.tail7a94dc.ts.net:10016/`.
 
+The local forwarding workaround at `http://127.0.0.1:13460` (also `localhost`
+on that port) is explicitly allowed by `OPENVALLEY_PREVIEW_ORIGINS`. The original
+Tailscale address stays in `OPENVALLEY_PREVIEW_ORIGIN`. Both POST endpoints use
+the same exact-origin check; an arbitrary Host or forwarded-host header does not
+grant access. Without the extra configuration, Next sees its backend listener
+URL and rejects the browser's forwarded-port Origin with HTTP 403.
+
 Extraction uses the image built by `deploy/research/Dockerfile.extract` and
 `scripts/school_board/build_research_library.py --root ... --provided ... --ocr`.
 Mount the repository read-only, the shared collection at its actual absolute

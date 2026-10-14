@@ -16,6 +16,7 @@ export OPENVALLEY_PREVIEW_CHAT=true
 export NEXT_PUBLIC_OPENVALLEY_STAGING=true NEXT_TELEMETRY_DISABLED=1
 export OPENVALLEY_SUBSTACK_URL=https://openvalley.substack.com
 export OPENVALLEY_PREVIEW_ORIGIN=https://rockefeller.tail7a94dc.ts.net:10016
+export OPENVALLEY_PREVIEW_ORIGINS=http://127.0.0.1:13460,http://localhost:13460
 export OPENVALLEY_CHAT_MODEL=openai/gpt-5.4-mini
 if [[ "${1:-web}" == indexer ]]; then
   export RESEARCH_INDEX_DATABASE_URL="postgresql://research_owner@localhost/openvalley_research?host=$ROOT/research-search/socket"

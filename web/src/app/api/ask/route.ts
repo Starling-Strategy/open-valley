@@ -4,6 +4,7 @@ import { searchLibrary } from '@/lib/research-search.mjs';
 import { enrollmentEvidence } from '@/lib/research-enrollment';
 import { writeStory } from '@/lib/research-answer';
 import { readSchoolsPublication } from '@/lib/schools.server';
+import { isAllowedRequestOrigin } from '@/lib/request-origin.mjs';
 import type { StorySource } from '@/lib/research-types';
 
 export const dynamic = 'force-dynamic';
@@ -23,8 +24,7 @@ async function readBody(request: Request) {
 
 export async function POST(request: Request) {
   if (process.env.OPENVALLEY_PREVIEW_CHAT !== 'true' || !process.env.OPENVALLEY_CHAT_API_KEY) return respond({ error: 'The assistant is not connected. You can still browse the document library.' },503);
-  const origin=request.headers.get('origin');
-  if (origin && origin!==process.env.OPENVALLEY_PREVIEW_ORIGIN && origin!==new URL(request.url).origin) return respond({ error: 'Request not allowed.' },403);
+  if (!isAllowedRequestOrigin(request)) return respond({ error: 'Request not allowed.' },403);
   let question: string, previousQuestions: string[];
   try {
     const body=await readBody(request);

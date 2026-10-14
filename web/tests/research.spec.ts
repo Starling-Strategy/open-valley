@@ -1,5 +1,15 @@
 import { test, expect } from '@playwright/test';
 
+test('assistant and library accept the configured tunnel origin, not arbitrary origins',async({request})=>{
+  test.skip(!process.env.REBUILD_LIVE_PREVIEW,'Requires configured private origins');
+  for(const path of ['/api/ask','/api/library/search']) {
+    const allowed=await request.post(path,{data:{},headers:{Origin:'http://127.0.0.1:13460',Host:'127.0.0.1:13460'}});
+    expect(allowed.status()).toBe(400); // Passed origin validation; deliberately invalid body avoids inference.
+    const denied=await request.post(path,{data:{},headers:{Origin:'https://example.org','X-Forwarded-Host':'example.org','X-Forwarded-Proto':'https'}});
+    expect(denied.status()).toBe(403);
+  }
+});
+
 test('library opens original PDF bytes, exact page links and alternative editions',async({page,request})=>{
   test.skip(!process.env.REBUILD_LIVE_PREVIEW,'Requires reviewed library');
   await page.goto('/library');

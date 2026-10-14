@@ -1,0 +1,38 @@
+diff --git a/packages/gateway_core/src/gateway_core/auth.py b/packages/gateway_core/src/gateway_core/auth.py
+--- a/packages/gateway_core/src/gateway_core/auth.py
++++ b/packages/gateway_core/src/gateway_core/auth.py
+@@ -14,7 +14,7 @@
+ class BearerCredentials(BaseModel):
+     publication_url: str | None = None
+     substack_sid: str | None = None
+-    connect_sid: str | None = None
++    connect_sid: str = ""
+
+
+ def validate_bearer_credentials(
+@@ -35,8 +35,8 @@
+     parsed = urlparse(credentials.publication_url)
+     if parsed.scheme not in ("http", "https") or not parsed.netloc:
+         raise ValueError(f"{source} must contain a valid HTTP or HTTPS publication_url")
+-    if not credentials.substack_sid or not credentials.connect_sid:
+-        raise ValueError(f"{source} must contain substack_sid and connect_sid")
++    if not credentials.substack_sid:
++        raise ValueError(f"{source} must contain substack_sid")
+
+
+ def decode_bearer_credentials(raw: str) -> BearerCredentials:
+diff --git a/packages/gateway_core/src/gateway_core/client/base.py b/packages/gateway_core/src/gateway_core/client/base.py
+--- a/packages/gateway_core/src/gateway_core/client/base.py
++++ b/packages/gateway_core/src/gateway_core/client/base.py
+@@ -202,8 +202,10 @@
+         connect_sid: str,
+         request_id: str | None = None,
+     ) -> None:
+-        self._cookies = {"substack.sid": substack_sid, "connect.sid": connect_sid}
++        self._cookies = {"substack.sid": substack_sid}
++        if connect_sid:
++            self._cookies["connect.sid"] = connect_sid
+         self._http: httpx.AsyncClient | None = None
+         self._rid = f"[{request_id}] " if request_id else ""
+
+     async def __aenter__(self) -> Self:

@@ -11,6 +11,8 @@ test.beforeEach(async ({ page }) => {
 test("school-first navigation reaches the database-backed reading page", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("link", { name: /Start with our schools/ }).click();
+  await expect(page).toHaveURL(/\/district$/);
+  await page.getByRole("link", { name: /Explore the full enrollment history/ }).click();
   await expect(page).toHaveURL(/\/schools$/);
   await expect(page.getByRole("heading", { level: 1 })).toContainText(/schools/i);
   await expect(page.locator("#school-directory")).toBeVisible();

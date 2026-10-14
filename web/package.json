@@ -10,7 +10,7 @@
     "start": "next start",
     "lint": "eslint",
     "test:browser": "playwright test",
-    "test:unit": "node --import tsx --test src/components/schools/*.test.ts src/components/schools/*.test.mjs"
+    "test:unit": "node --import tsx --test src/components/schools/*.test.ts src/components/schools/*.test.mjs src/lib/*.test.mjs"
   },
   "dependencies": {
     "@mdx-js/loader": "^3.1.1",
@@ -18,6 +18,7 @@
     "@next/mdx": "16.3.8",
     "@tailwindcss/typography": "^0.5.19",
     "@types/leaflet": "^1.9.21",
+    "fast-xml-parser": "5.11.2",
     "gray-matter": "^4.0.3",
     "leaflet": "^1.9.4",
     "maplibre-gl": "6.12.0",

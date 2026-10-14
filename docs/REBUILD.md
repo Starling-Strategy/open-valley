@@ -23,9 +23,11 @@ the owner is ready; replacing maconphillips.com follows that migration.
 - `/meetings`: filtered public procedural links from the dated local inventory.
   Held/scheduled labels describe the September 29 snapshot. Current official
   schedules and recording channels are linked separately.
-- `/ask`: private model-backed research preview using six reviewed readings and
-  active enrollment observations. Retrieval is lexical, not a completed vector
-  search pipeline. Answers return validated source IDs and original URLs.
+- `/ask`: hybrid semantic/keyword research over 16 reviewed documents and active
+  enrollment observations. Answers include server-owned source quotations,
+  page links and claim-support checks.
+- `/library`: searchable studies, public minutes and background readings with
+  original PDFs, extracted pages and labeled alternate editions.
 - `/updates`, `/newsletter`: Substack-ready writing and weekly-letter pages.
   Earlier essays link to their Ghost originals; the new project note is a draft.
 
@@ -53,13 +55,15 @@ rollback. Do not re-enable the old repository's automatic deployment by accident
 
 Preview: https://rockefeller.tail7a94dc.ts.net:10016/
 
-Tailscale Serve routes that port to `127.0.0.1:3460`. This is a session-launched
-Next standalone process, not a reboot-persistent production service. The existing
-native staging service on port 3457 and Serve port 10005 is separate.
+Tailscale Serve routes that port to `127.0.0.1:3460`. The standalone preview and
+research indexer now run as enabled user services with lingering. The running
+bundle is outside `.next`, so builds do not overwrite it. See
+[RESEARCH-ASSISTANT.md](RESEARCH-ASSISTANT.md) for installation and database details.
+The native staging service on port 3457 and Serve port 10005 is separate.
 
 Build from `web` with `NEXT_PUBLIC_OPENVALLEY_STAGING=true npm run build`.
-Prepare standalone static assets as in `deploy/Dockerfile.web`, then launch
-`web/.next/standalone/web/server.js` with:
+Prepare standalone static assets as in `deploy/Dockerfile.web`, install the
+bundle under `research-search/preview`, then use the preview service with:
 
 - `HOSTNAME=127.0.0.1`, `PORT=3460`.
 - `SCHOOL_BOARD_ROOT=/srv/storage/files/coding-storage/open-valley/school-board`.
@@ -70,7 +74,8 @@ Prepare standalone static assets as in `deploy/Dockerfile.web`, then launch
 - `OPENVALLEY_CHAT_API_KEY` resolved into process memory from the owner-approved
   general-purpose OpenRouter 1Password item. Never put the key in this repo or
   shell arguments. The unrelated client key is not authorized.
-- `OPENVALLEY_CHAT_MODEL=openai/gpt-4.1-mini` for the initial private evaluation.
+- `OPENVALLEY_CHAT_MODEL=openai/gpt-5.4-mini` after live financial-answer testing.
+- `RESEARCH_DATABASE_URL` using the derived search database's `research_reader` role.
 - `OPENVALLEY_SUBSTACK_URL` overrides the confirmed default
   `https://openvalley.substack.com`. Supported origins are a Substack publication or
   `maconphillips.com`/`www.maconphillips.com` after custom-domain migration.
@@ -87,14 +92,12 @@ the local gateway described in [SUBSTACK.md](SUBSTACK.md). Official setup refere
 
 ## Evidence and remaining work
 
-The reviewed text lives outside Git in
-`school-board/supplements/rebuild-reviewed`. The initial importer captured six
-public sources. `scripts/school_board/import_facilities_review.py` adds eight
-hash-pinned, manually reviewed facilities/committee editions (14 sources total).
-PDF coverage is selected pages, not complete reports. See
-[FACILITIES-COVERAGE.md](FACILITIES-COVERAGE.md) for organization and gaps.
+The active library lives outside Git in `school-board/supplements/research-library`.
+It incorporates the earlier reviewed corpus and full page extraction of four
+consultant PDFs: 16 documents, 295 pages/text sections and 301 indexed passages.
+See [RESEARCH-ASSISTANT.md](RESEARCH-ASSISTANT.md) for research, scope and evaluation.
 The generated catalog was rebuilt: 3,044 sources, 2,608 with local content,
-2,874 indexed file paths. Current exclusion rules apply at read time, including
+2,892 indexed file paths. Current exclusion rules apply at read time, including
 content/path alias closure. Source hashes are checked before inference; policy,
 reviewed-source contents and active publication are rechecked before an answer.
 
@@ -118,7 +121,7 @@ access through the owner's 1Password credential is verified (see SUBSTACK.md).
 The Exa credential offered in chat
 was not stored or used; reporting discovery is a later newsletter workflow.
 
-## Validation
+## Initial checkpoint validation
 
 - Next production build and TypeScript checks; ESLint.
 - 23 JavaScript/TypeScript unit tests, including retrieval, citation validation,
@@ -133,3 +136,19 @@ was not stored or used; reporting discovery is a later newsletter workflow.
 The existing dependency audit still reports seven production advisories (six
 moderate, one high); no automatic major-version downgrade was applied. Full
 database lifecycle integration and remote CI were not rerun in this worktree.
+
+## Research revision validation
+
+- Production build, TypeScript and ESLint passed.
+- 34 JS/TS tests, 48 Python collection tests, and a real disposable pgvector
+  lifecycle test passed. No remote embedding provider is used in that lifecycle test.
+- Nine focused Chromium tests passed, including PDF byte ranges, page anchors,
+  source wording, alternative editions, and 320/390/1440px layouts.
+- All six principal private-preview routes returned HTTP 200 and `noindex`.
+- Known-exclusion verification passed over 23,667 files and 4,969 archive members.
+- Live embedding retrieval improved expected-page hit@5 from 5/12 to 10/12 in
+  the initial development set. Live answer evaluation drove the model and
+  citation changes; excerpts remain the explicit fallback for rejected answers.
+- The earlier PR CI failure was an obsolete `Homes` navigation selector in the
+  withdrawal test. It now navigates through `About`, preserving the back-history
+  withdrawal assertion. GitHub checks are reported separately on PR #15.

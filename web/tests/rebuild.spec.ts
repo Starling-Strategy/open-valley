@@ -11,7 +11,7 @@ test('new entry points and original essay links work', async ({ page }) => {
 
 test('starter question fills the real composer and provider errors remain visible', async ({ page }) => {
   await page.goto('/ask');
-  const starter = 'What is the Cabot feasibility study meant to establish?';
+  const starter = 'What did the committee ask the Cabot feasibility study to examine?';
   await page.getByRole('button', { name: starter }).click();
   await expect(page.getByLabel('Your question', { exact: true })).toHaveValue(starter);
   test.skip(!process.env.REBUILD_LIVE_PREVIEW, 'Submitting requires the privately configured preview');
@@ -48,7 +48,7 @@ test('district selection works independently of map tiles', async ({ page }) => 
 for (const width of [320, 390, 1440]) {
   test(`rebuild fits a ${width}px viewport`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
-    for (const route of ['/', '/ask', '/district', '/meetings', '/updates']) {
+    for (const route of ['/', '/ask', '/district', '/meetings', '/updates', '/library']) {
       await page.goto(route);
       await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

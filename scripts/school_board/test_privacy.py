@@ -71,6 +71,22 @@ class PrivacyCleanupTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             local_path(self.root, "link")
 
+    def test_research_library_derivatives_and_metadata_are_deleted_without_catalog_rebuild(self):
+        folder = self.root / 'supplements/research-library'
+        folder.mkdir(parents=True)
+        pages = b'[{"text":"synthetic derived excerpt"}]'
+        (folder / 'closed.pages.json').write_bytes(pages)
+        self.write('supplements/research-library/library.json', {'schemaVersion': 1, 'documents': [{
+            'id': 'closed', 'aliases': ['closed'], 'description': 'synthetic derived description',
+            'files': [{'localPath': 'archive/huusd-board/closed.txt', 'sha256': self.digest}],
+            'pagesPath': 'supplements/research-library/closed.pages.json', 'pagesSha256': hashlib.sha256(pages).hexdigest()}]})
+        self.write('supplements/research-library/catalog.json', [{'source_id': 'closed'}])
+        result = apply(self.root, {'source_ids': ['closed']}, self.archive)
+        self.assertEqual(result['deleted_files'], 3)
+        self.assertFalse((folder / 'closed.pages.json').exists())
+        self.assertEqual(json.loads((folder / 'library.json').read_text())['documents'], [])
+        self.assertEqual(json.loads((folder / 'catalog.json').read_text()), [])
+
     def test_retry_removes_pending_exclusions_after_catalog_rebuild(self):
         self.write("reports/privacy-exclusions.json", {"source_ids": ["closed"],
                    "paths": ["archive/huusd-board/closed.txt"], "sha256": [self.digest]})

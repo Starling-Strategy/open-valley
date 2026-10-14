@@ -23,6 +23,7 @@ export default function Home() {
         <Link className="tool-card" href="/meetings"><span className="tool-number">03 / Follow</span><h3>Follow the public work.</h3><p>Browse meetings, open agendas and minutes, and find the official schedule and recordings.</p><span className="card-link">Browse meetings ↗</span></Link>
       </div>
     </section>
+    <section className="library-invitation"><div><p className="eyebrow">The evidence behind the choices</p><h2>Studies. Scenarios. The original pages.</h2><p>Explore the TruexCullins assessments and public committee records. Search by meaning, read the PDF, and ask a better question.</p></div><Link className="button" href="/library">Explore the document library →</Link></section>
     <section className="tool-section"><div className="section-heading"><div><p className="eyebrow">Notes from Macon</p><h2>Thinking out loud. Showing the work.</h2></div><Link className="quiet-link" href="/updates">All updates →</Link></div>
       {updates.slice(0,3).map(post => <article className="update-row" key={post.slug}><div className="note">{post.date}<br />{post.kind}</div><div><h3><Link href={`/updates/${post.slug}`}>{post.title}</Link></h3><p>{post.summary}</p></div><Link href={`/updates/${post.slug}`} aria-label={`Read ${post.title}`}>↗</Link></article>)}
     </section>

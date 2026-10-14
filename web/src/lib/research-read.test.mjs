@@ -1,0 +1,34 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { mkdtemp, mkdir, writeFile, rm, symlink } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { digest } from './evidence-core.mjs';
+import { readLibrary } from './research-read.mjs';
+
+test('library rejects mutated originals, projections, policy and symlinks; alias exclusions precede reads', async t => {
+  const root=await mkdtemp(path.join(tmpdir(),'research-reader-'));
+  t.after(()=>rm(root,{recursive:true,force:true}));
+  for (const dir of ['catalog','reports','supplements/research-library']) await mkdir(path.join(root,dir),{recursive:true});
+  const pages=JSON.stringify([{page:1,text:'Synthetic public facility assessment.',method:'pdf-text'}]);
+  const file=Buffer.from('%PDF-synthetic');
+  const policy={source_ids:[],paths:[],sha256:[]};
+  const doc={id:'original',aliases:['original','alias'],url:'https://huusd.org/board',title:'Test',date:'2025-03',kind:'Study',description:'Synthetic',files:[{id:digest(file),localPath:'source.pdf',sha256:digest(file)}],pagesPath:'pages.json',pagesSha256:digest(pages)};
+  const json=(p,v)=>writeFile(path.join(root,p),JSON.stringify(v));
+  await writeFile(path.join(root,'source.pdf'),file);await writeFile(path.join(root,'pages.json'),pages);
+  await json('catalog/sources.json',[]);await json('reports/privacy-exclusions.json',policy);
+  await json('supplements/research-library/library.json',{schemaVersion:1,documents:[doc]});
+  assert.equal((await readLibrary(root)).chunks.length,1);
+  await writeFile(path.join(root,'source.pdf'),'modified');
+  await assert.rejects(readLibrary(root),/changed/);
+  await json('reports/privacy-exclusions.json',{...policy,source_ids:['alias']});
+  assert.equal((await readLibrary(root)).documents.length,0);
+  await json('reports/privacy-exclusions.json',{...policy,sha256:[doc.files[0].sha256]});
+  assert.equal((await readLibrary(root)).documents.length,0);
+  await json('reports/privacy-exclusions.json',{});
+  await assert.rejects(readLibrary(root),/policy/);
+  await json('reports/privacy-exclusions.json',policy);await writeFile(path.join(root,'source.pdf'),file);
+  await writeFile(path.join(root,'pages.json'),pages+' ');await assert.rejects(readLibrary(root),/changed/);
+  await rm(path.join(root,'pages.json'));await writeFile(path.join(root,'elsewhere.json'),pages);
+  await symlink(path.join(root,'elsewhere.json'),path.join(root,'pages.json'));await assert.rejects(readLibrary(root),/path/);
+});

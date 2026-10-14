@@ -101,8 +101,8 @@ test('production browser acceptance and HTML/RSC/JSON withdrawal', { timeout: 12
     await historyPage.route('https://tile.openstreetmap.org/**', route => route.abort());
     await historyPage.goto(`${address}/schools`);
     await historyPage.locator('#school-toggle-school').waitFor();
-    await historyPage.getByRole('navigation', { name: 'Primary navigation' }).getByRole('link', { name: 'Homes', exact: true }).click();
-    await historyPage.waitForURL(`${address}/homes`);
+    await historyPage.getByRole('navigation', { name: 'Primary navigation' }).getByRole('link', { name: 'About', exact: true }).click();
+    await historyPage.waitForURL(`${address}/about`);
     // Visibility must change in a separately committed database operation.
     await writeFile(join(fixtureRoot, 'collection/reports/privacy-exclusions.json'), JSON.stringify({
       schema_version: 1, source_ids: ['report'], paths: [], sha256: [],

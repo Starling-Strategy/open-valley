@@ -2,7 +2,21 @@
 
 Status: private preview, reviewed October 14, 2026.
 
-## Connected evidence
+## Semantic-library revision
+
+The active assistant now uses the 16-document, page-level library described in
+[RESEARCH-ASSISTANT.md](RESEARCH-ASSISTANT.md). It includes all extracted pages of
+the four reviewed consultant PDFs (283 PDF pages, including 69 OCR pages), the
+six selected committee minutes and the six earlier background readings. The
+December 2024 update and March 2025 reconfiguration report are now connected.
+The report itself dates the edition to March 2025; no exact day is inferred from
+the supplied filename. Alternate supplied editions are labeled separately.
+
+The sections below document the earlier excerpt-only checkpoint. Its 14-source
+count and selected-page limits no longer describe the active assistant. The
+March 19 presentation and other unreviewed materials remain future work.
+
+## Earlier excerpt-only evidence
 
 The assistant reads 14 reviewed source editions plus the active Schools
 publication's enrollment observations. This is a subset of the 3,044-record

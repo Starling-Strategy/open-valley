@@ -8,7 +8,7 @@ test('old committee records cannot establish a vote last night',async()=>{
   assert.match(result.story.limitation,/cannot tell us whether a vote occurred/);
 });
 
-test('unsupported generations are retried then replaced with labeled source excerpts',async t=>{
+test('failed explanation offers source links without dumping raw extraction into prose',async t=>{
   const original=globalThis.fetch;t.after(()=>{globalThis.fetch=original;});
   const chunks=[{id:'E1',text:'This synthetic study describes planning, not a decision.',title:'Study',date:'2025-03',kind:'Consultant study'}];
   let requests=0;
@@ -19,6 +19,7 @@ test('unsupported generations are retried then replaced with labeled source exce
     return Response.json({choices:[{finish_reason:'stop',message:{content:JSON.stringify(value)}}]});
   };
   const answer=await writeStory('What did the study recommend?',[],chunks);
-  assert.equal(requests,4);assert.equal(answer.mode,'excerpts');
-  assert.equal(answer.story.paragraphs[0].text,chunks[0].text);
+  assert.equal(requests,4);assert.equal(answer.mode,'sources');
+  assert.equal(answer.story.paragraphs.length,0);
+  assert.match(answer.story.limitation,/explanation/);
 });

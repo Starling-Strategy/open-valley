@@ -85,7 +85,7 @@ export function validateVectors(response, count, dimensions) {
 }
 
 export function validateStory(answer, chunks) {
-  if (!answer || typeof answer.headline !== 'string' || answer.headline.length > 140 || !Array.isArray(answer.paragraphs) || answer.paragraphs.length > 5) throw new Error('Invalid story');
+  if (!answer || typeof answer.headline !== 'string' || answer.headline.length > 140 || !Array.isArray(answer.paragraphs) || answer.paragraphs.length > 10) throw new Error('Invalid story');
   const available = new Map(chunks.map(c => [c.id, c]));
   const paragraphs = answer.paragraphs.map(p => {
     if (typeof p.text !== 'string' || !p.text.trim() || p.text.length > 1800 || !Array.isArray(p.citations) || p.citations.length < 1 || p.citations.length > 3) throw new Error('Invalid paragraph');

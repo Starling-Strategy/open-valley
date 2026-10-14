@@ -57,9 +57,118 @@ committee-linked editions. AppleDouble `._` files are ignored.
    server-owned quote IDs under a strict JSON schema. The server resolves exact
    contiguous wording and checks its source. A second inference checks whether
    the prose and headline are supported by the cited passages. It can trigger
-   one revision, then a clearly labeled excerpt fallback. This is an additional
+   one revision, then a source-link guide without raw OCR in answer prose. This is an additional
    check, not proof of factual correctness. A deterministic recent-vote guard
    prevents older documents from establishing whether a vote happened yesterday.
+
+## Typed briefings and canonical framework examples
+
+The October 14 answer revision uses **AI SDK 7.0.140**, its OpenAI-compatible
+provider **3.0.68**, and **Zod 4.6.7**, pinned in the lockfile. This is the existing
+TypeScript/Next.js runtime; it does not introduce a Python inference service.
+The implementations below follow these upstream examples (reviewed October 14):
+
+| Reference | Application here |
+| --- | --- |
+| [Pydantic AI RAG example](https://ai.pydantic.dev/examples/rag/) | Dependency-bounded retrieval over reviewed pgvector records; documents remain data, not instructions. The existing hybrid search stays in place. |
+| [Pydantic AI structured outputs and validators](https://ai.pydantic.dev/output/) | Typed question intent and separate domain validation; matching a schema is not proof that a claim is supported. |
+| [AI SDK structured data](https://ai-sdk.dev/docs/ai-sdk-core/generating-structured-data) | `generateText` + `Output.object` with Zod for the planner, writer and claim checker, replacing handwritten response parsing. |
+| [AI SDK compatible provider](https://ai-sdk.dev/providers/openai-compatible-providers) | Explicit OpenRouter endpoint, existing approved credential, bounded output and timeouts, zero transport retries, no prompt telemetry. |
+| [AI SDK testing](https://ai-sdk.dev/docs/ai-sdk-core/testing) | `MockLanguageModelV4` tests malformed output, catalog constraints and provider failure independently of real inference. |
+| [Compass answer layer, pinned revision](https://github.com/Starling-Strategy/compass/blob/13788f5/backend/src/compass_backend/answer_layer/service.py) | A useful reviewed briefing exists independently of prose generation. Source identity, values and qualifications belong to application code. |
+
+Question → typed scope → current eligible evidence/structured adapter → reviewed
+brief or checked generated explanation → source/coverage recheck → rendering.
+The model supplies intent and wording, never authoritative URLs or data IDs.
+No framework is treated as an accuracy guarantee; local acceptance cases below
+are the evidence for this application's behavior.
+
+### Classroom-size scenario
+
+The resident-request scenario is paraphrased without sender names, addresses,
+mail headers or the email body in `web/scripts/research-answer-scenarios.json`.
+The email is not ingested or cited as public evidence.
+
+The current collection has no verified classroom-assignment projection. The
+classroom route says this explicitly and provides a school/reporting-group
+coverage table from the current Schools publication, measurement definitions,
+and a concrete aggregate-data request. It does **not** infer that the district
+lacks or has failed to publish those records. Isolated examples in essays and
+consultant class-size targets cannot fill in school-by-grade averages.
+
+`research-classroom.ts` defines a future observation contract, with synthetic
+tests for its aggregation semantics. It is **not connected to a classroom data
+importer yet**, and its calculated fixtures are never presented as HUUSD data.
+The contract records school, grade, section, date, period, student counts, adult
+roles, simultaneous-presence versus FTE basis, estimate/projection status and
+source locator. Missing rows are not zero. Incompatible dates, periods, grades,
+schools or definitions cannot be pooled. A pooled students-per-adult ratio is
+distinct from the arithmetic mean of individual classroom ratios. Assigned
+student counts do not by themselves measure attendance or actual adult presence.
+
+### Facilities briefing
+
+`research-facilities.ts` contains eight reviewed qualitative Fayston findings.
+They resolve quotations from eligible **native narrative pages** 71, 72, 74, 78,
+80, 83, 87 and 90 at request time. Full source pages and quotations remain in the
+shared collection; Git versions the reviewed summaries and short span selectors.
+Each page's normalized SHA-256 and the source edition date are pinned. If a page
+changes, is missing, or is withdrawn, the reviewed briefing is unavailable.
+The summary preserves the generally good structural finding alongside repairs.
+It is a selected overview, not an exhaustive line-item inventory, a priority
+ranking or a current-condition inspection. Other schools use source retrieval
+and checked generation; they do not inherit Fayston's findings.
+
+Table-aware extraction (including Compass's Docling/TableFormer configuration)
+remains a candidate for a separately verified financial-table ingestion step.
+It has not been installed or used to certify OCR cost-column associations here.
+
+### Conversation and source inspection
+
+The UI groups evidence by document, opens exact supporting wording from an
+inline citation, and retains in-memory turns when the evidence is unchanged.
+On blur it hides answers; on return it revalidates the corpus/policy/publication
+version through `/api/ask/evidence`. A changed version or unavailable check clears
+the turns. No localStorage or persistent transcript store is introduced.
+
+Follow-up scope travels in a signed, one-hour context token bound to the evidence
+version. Tampering, expiration or a source/publication change rejects it before
+inference. The key is process-local; a service restart invalidates old tokens.
+The token contains question/scope, not cached source prose. Future multi-process
+deployments will need a shared signing key or session adapter. Request diagnostics
+record IDs, stages and failure categories, not question text or generated prose.
+
+### Acceptance scenarios
+
+| Scenario | Required behavior |
+| --- | --- |
+| Fayston repairs | Readable grouped findings, native citations, structural qualification; no OCR amounts. |
+| Every school's class sizes and adult ratios | Coverage gaps per reporting group, distinct measures, concrete request fields; no invented averages. |
+| “What about Warren's third grade?” | Carry classroom intent forward; replace school scope and retain grade. |
+| “What is Warren's latest enrollment?” | Explicit new topic selects enrollment; preserve dates and preliminary status. |
+| Hypothetical 24 students and 2 adults (aggregation unit test) | Mean class size 24, students per adult 12; FTE allocations and projections cannot be reported as observed classroom presence. |
+| Different dates/periods; duplicate sections | Reject incompatible aggregation and double counting. |
+| Recent board vote | Older planning material cannot establish last night's action. |
+| Fayston costs | Improvement estimate and replacement benchmark remain distinct and natively cited. |
+| Model/validation failure | Reviewed brief remains useful; other answers offer source links, never a raw OCR wall. |
+| Source withdrawn while reading/following up | Hide/recheck, clear stale turns and reject stale context. |
+
+Run the fixtures with `npm run test:unit`; run
+`SCHOOL_BOARD_ROOT=... node --import tsx scripts/check-reviewed-brief.mts` for the
+actual source pins. `node scripts/evaluate-research-answers.mjs` is an explicit
+paid live run against the private preview, with non-content outcome metadata.
+The live cases are a small development acceptance set, not a held-out score.
+
+October 14 validation for this revision: 44 JS/TS tests, lint, TypeScript and
+production build passed. Four focused Chromium tests passed (including a
+320px classroom table, citation keyboard controls, retained follow-up context
+and withdrawal). The actual eligible-source check passed for all eight Fayston
+findings. All six live answer scenarios passed; the final run took 2.3–7.2
+seconds per answer. A real browser interaction through a local `13460` forwarding
+proxy returned both reviewed briefings with no page errors; the 390px page had
+no document-level horizontal overflow. Docker build and runtime health were
+also checked separately from model/data access. The session desktop browser
+connector was unavailable; visual checks used local Chromium.
 
 Cross-encoder reranking, query expansion and a graph database were considered
 but not added. They introduce more latency and evaluation work. The present

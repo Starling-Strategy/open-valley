@@ -1,4 +1,6 @@
 import { test, expect } from '@playwright/test';
+import { classroomBrief } from '../src/lib/research-classroom';
+import { basicPlan } from '../src/lib/research-plan';
 
 test('assistant and library accept the configured tunnel origin, not arbitrary origins',async({request})=>{
   test.skip(!process.env.REBUILD_LIVE_PREVIEW,'Requires configured private origins');
@@ -31,15 +33,46 @@ test('library opens original PDF bytes, exact page links and alternative edition
   await expect(page.getByRole('status')).toHaveText('0 pages match');
 });
 
-test('answers show exact supporting wording and page references',async({page})=>{
+test('citations open exact wording, preserve unchanged conversations and clear withdrawn evidence',async({page})=>{
   test.skip(!process.env.REBUILD_LIVE_PREVIEW,'Requires enabled preview composer');
-  await page.route('**/api/ask',route=>route.fulfill({contentType:'application/json',body:JSON.stringify({headline:'A planning guideline, not a bus schedule',mode:'generated',retrieval:{mode:'hybrid',reason:''},limitation:'Actual routes need further study.',paragraphs:[{heading:'Travel time',text:'The study sets a planning guideline for travel time.',citations:[{chunkId:'E1',quote:'Synthetic quoted planning guideline.'}]}],sources:[{id:'E1',documentId:'study',title:'Planning study',url:'https://huusd.org/board',libraryUrl:'/library/study#page-9',fileUrl:'/api/library/study/file/hash#page=9',page:9,date:'2025-03',kind:'Study',method:'pdf-text'}]})}));
+  let version='fixture-one';
+  await page.route('**/api/ask/evidence',route=>route.fulfill({json:{evidenceVersion:version}}));
+  const requests:Record<string,unknown>[]=[];
+  await page.route('**/api/ask',route=>{requests.push(route.request().postDataJSON());return route.fulfill({contentType:'application/json',body:JSON.stringify({headline:'A planning guideline, not a bus schedule',mode:'generated',evidenceVersion:'fixture-one',context:'synthetic-context',retrieval:{mode:'hybrid',reason:''},limitation:'Actual routes need further study.',paragraphs:[{heading:'Travel time',text:'The study sets a planning guideline for travel time.',citations:[{chunkId:'E1',quote:'Synthetic quoted planning guideline.'}]}],sources:[{id:'E1',documentId:'study',title:'Planning study',url:'https://huusd.org/board',libraryUrl:'/library/study#page-9',fileUrl:'/api/library/study/file/hash#page=9',page:9,date:'2025-03',kind:'Study',method:'pdf-text'}]})});});
   await page.goto('/ask');await page.getByLabel('Your question',{exact:true}).fill('What are the bus guidelines?');
   await page.getByRole('button',{name:'Ask Open Valley ↑'}).click();
   await expect(page.getByRole('heading',{name:'A planning guideline, not a bus schedule'})).toBeVisible();
-  await page.getByText('Read the source wording',{exact:true}).click();
+  await page.getByRole('button',{name:'Read source wording: Planning study, page 9'}).click();
   await expect(page.locator('blockquote')).toHaveText('Synthetic quoted planning guideline.');
   await expect(page.getByRole('link',{name:'PDF page ↗'})).toHaveAttribute('href',/#page=9$/);
+  await expect(page.getByRole('link',{name:'PDF page ↗'})).toHaveAttribute('target','_blank');
+  await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
+  await expect(page.getByText('Rechecking the source collection…')).toHaveCount(0);
+  await expect(page.locator('.research-story')).toHaveCount(1);
+  await page.getByLabel('Ask a follow-up',{exact:true}).fill('What does that mean for Fayston?');
+  await page.getByRole('button',{name:'Ask Open Valley ↑'}).click();
+  await expect(page.locator('.research-story')).toHaveCount(2);
+  expect(requests[1].context).toBe('synthetic-context');
+  version='withdrawn';
   await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
   await expect(page.locator('.research-story')).toHaveCount(0);
+  await expect(page.locator('.availability[role="alert"]')).toContainText('evidence changed');
+});
+
+test('classroom guide stays readable on a narrow phone and offers a scoped follow-up',async({page})=>{
+  test.skip(!process.env.REBUILD_LIVE_PREVIEW,'Requires enabled preview composer');
+  await page.setViewportSize({width:320,height:740});
+  const story=classroomBrief(basicPlan('Class sizes at all schools'),[]);
+  await page.route('**/api/ask',route=>route.fulfill({json:{...story,mode:'reviewed',sources:[],retrieval:{mode:'reviewed',reason:''},evidenceVersion:'fixture'}}));
+  await page.route('**/api/ask/evidence',route=>route.fulfill({json:{evidenceVersion:'fixture'}}));
+  await page.goto('/ask');
+  await page.getByRole('button',{name:/What are class sizes and adult-to-student ratios/}).click();
+  await page.getByRole('button',{name:'Ask Open Valley ↑'}).click();
+  await expect(page.getByRole('heading',{name:'Class size and adult coverage measure different things'})).toBeVisible();
+  await expect(page.getByRole('table')).toHaveCount(1);
+  await expect(page.getByText('Measurement guidance, not findings about classroom conditions.')).toBeVisible();
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
+  const bounds=await page.locator('.brief-table-scroll').boundingBox();expect(bounds!.x).toBeGreaterThanOrEqual(0);expect(bounds!.x+bounds!.width).toBeLessThanOrEqual(320);
+  await page.getByRole('button',{name:/What is the latest published enrollment/}).click();
+  await expect(page.getByLabel('Ask a follow-up',{exact:true})).toHaveValue('What is the latest published enrollment at each school?');
 });

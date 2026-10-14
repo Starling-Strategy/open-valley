@@ -3,6 +3,16 @@ export interface ResearchDocument { id: string; title: string; date: string | nu
 export interface ResearchChunk { id: string; documentId: string; title: string; date: string | null; kind: string; page: number | null; method: string; text: string; input: string; inputHash: string; score?: number }
 export interface LibraryDocument extends Omit<ResearchDocument, 'files'> { aliases: string[]; pagesPath: string; pagesSha256: string; files: (Omit<ResearchFile,'href'> & { localPath: string; sha256: string })[]; pages: { page: number | null; text: string; method: string }[] }
 export interface ResearchLibrary { root: string; documents: LibraryDocument[]; chunks: ResearchChunk[]; corpusDigest: string; policyDigest: string }
-export interface Story { headline: string; paragraphs: { heading: string; text: string; citations: { chunkId: string; quote: string }[] }[]; limitation: string }
+export interface Story {
+  headline: string;
+  paragraphs: { heading: string; text: string; citations: { chunkId: string; quote: string }[] }[];
+  limitation: string;
+  summary?: string;
+  format?: 'list' | 'explanation';
+  limitationHeading?: string;
+  guidance?: { heading: string; text: string }[];
+  tables?: { caption: string; columns: string[]; rows: string[][] }[];
+  followups?: string[];
+}
 export interface StorySource { id: string; documentId: string; title: string; url: string; libraryUrl: string; fileUrl?: string; page: number | null; date: string | null; kind: string; method: string }
-export interface ResearchAnswer extends Story { sources: StorySource[]; mode: 'generated' | 'excerpts'; retrieval: { mode: string; reason: string } }
+export interface ResearchAnswer extends Story { sources: StorySource[]; mode: 'generated' | 'reviewed' | 'sources'; retrieval: { mode: string; reason: string }; evidenceVersion?: string; context?: string }

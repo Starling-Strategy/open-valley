@@ -96,8 +96,21 @@ export function validateStory(answer, chunks) {
       return { chunkId: c.chunkId, quote: normalizeQuote(c.quote) };
     });
     const nativeAmounts=citations.filter(c=>available.get(c.chunkId).method!=='ocr').flatMap(c=>moneyValues(c.quote));
-    for(const amount of moneyValues(p.text)) {
-      if(!nativeAmounts.some(n=>Math.abs(n.value-amount.value)<=amount.tolerance))throw new Error('Financial figure needs native-text support');
+    const amounts=moneyValues(p.text);
+    const calculated=[];
+    if(/\bcalculat(?:ed|ion)|\bsubtract(?:ion|ing)?\b|\bdifference\b|\bless\b|\bmore\b/i.test(p.text)) {
+      for(let i=1;i<amounts.length;i++) {
+        const left=amounts[i-1],right=amounts[i];
+        const operation=p.text.slice(left.end,right.start).trim();
+        // Only an explicit subtraction of exact cited values is eligible. Do not
+        // search all pairs in a cost table for a coincidentally matching result.
+        if(!/^(?:minus|−|-)$/i.test(operation)||![left,right].every(a=>nativeAmounts.some(n=>n.value===a.value)))continue;
+        const difference=left.value-right.value;
+        if(difference>=0)calculated.push({value:difference});
+      }
+    }
+    for(const amount of amounts) {
+      if(![...nativeAmounts,...calculated].some(n=>Math.abs(n.value-amount.value)<=amount.tolerance))throw new Error('Financial figure needs native-text support');
     }
     if(/which is why.{0,60}round|(?:FAQ|study|report).{0,25}round/i.test(p.text)&&moneyValues(p.text).length>1)throw new Error('Unverified linkage between financial figures');
     return { heading: typeof p.heading === 'string' ? p.heading.slice(0, 90) : '', text: p.text.trim(), citations };
@@ -109,7 +122,7 @@ export function validateStory(answer, chunks) {
 function moneyValues(text) {
   return [...text.matchAll(/(\$)?(\d[\d,]*(?:\.\d+)?)\s*(million\b|billion\b|bn\b|m\b)?/gi)].filter(m=>m[1]||m[3]).map(m=>{
     const factor=/^(billion|bn)$/i.test(m[3]||'')?1e9:m[3]?1e6:1;
-    return {value:Number(m[2].replaceAll(',',''))*factor,tolerance:factor*Math.pow(10,-(m[2].split('.')[1]?.length||0))/2};
+    return {value:Number(m[2].replaceAll(',',''))*factor,tolerance:factor*Math.pow(10,-(m[2].split('.')[1]?.length||0))/2,start:m.index,end:m.index+m[0].length};
   });
 }
 

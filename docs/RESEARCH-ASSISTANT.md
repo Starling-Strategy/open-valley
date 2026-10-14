@@ -92,7 +92,12 @@ Live testing exposed two important failures in the earlier model:
   temporal instructions, native summary context, and a claim-support review.
 
 Numerical financial answers now exclude OCR passages when native text is
-available; money amounts must be supported by a cited native-text span. Enrollment
+available; money amounts must be supported by a cited native-text span. Answers
+may also show a labeled dollar subtraction when both exact operands
+appear in cited native text and the server verifies the result (including stated
+rounding). This fixes a false rejection of the valid Fayston comparison:
+$15,105,000 minus $7,352,902 is $7,752,098. Unsupported inputs, wrong results and
+OCR-only calculations remain rejected. Enrollment
 questions resolve the published school/reference tuple and keep one complete
 record per passage, rather than splitting a mixed-year JSON dump. The latest
 live checks returned Fayston's $7,352,902 improvement estimate separately from

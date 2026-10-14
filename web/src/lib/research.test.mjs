@@ -58,3 +58,19 @@ test('money needs cited native text; similar FAQ and OCR totals cannot be equate
   story.paragraphs[0]={text:'The estimate is $15.1 million.',citations:[{chunkId:'E2',quote:chunks[1].text}]};
   assert.throws(()=>validateStory(story,chunks),/native-text/);
 });
+
+test('a labeled subtraction uses cited exact inputs and validates its result, including rounding',()=>{
+  const quote='Improvement estimate: $7,352,902. Replacement benchmark: $15,105,000.';
+  const chunks=[{id:'E1',text:quote,method:'pdf-text'}];
+  const story=text=>({headline:'Comparing estimates',limitation:'',paragraphs:[{text,citations:[{chunkId:'E1',quote}]}]});
+  assert.equal(validateStory(story('The calculated difference is $7,752,098 ($15,105,000 minus $7,352,902).'),chunks).paragraphs.length,1);
+  assert.equal(validateStory(story('Subtracting $7,352,902 from the benchmark gives about $7.75 million less: $15,105,000 minus $7,352,902.'),chunks).paragraphs.length,1);
+  for(const text of [
+    'The difference is $7,752,098.',
+    'The calculated difference is $9 million ($15,105,000 minus $7,352,902).',
+    'The calculated difference is $7,752,098 ($15,000,000 minus $7,247,902).',
+    'The calculated difference is $7,752,098 ($15,105,000 plus $7,352,902).',
+    'The calculated difference is $7,752,098 ($15,105,000 and $7,352,902).',
+  ])assert.throws(()=>validateStory(story(text),chunks),/native-text/);
+  assert.throws(()=>validateStory(story('The calculated difference is $7,752,098 ($15,105,000 minus $7,352,902).'),[{...chunks[0],method:'ocr'}]),/native-text/);
+});

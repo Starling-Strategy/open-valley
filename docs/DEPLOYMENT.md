@@ -2,7 +2,7 @@
 
 Purpose: Record verified infrastructure and the path to the next release.
 Audience: Open Valley maintainers and delivery agents.
-Status: canonical; Rockefeller container candidate verified locally, public cutover pending.
+Status: canonical; public Rockefeller deployment verified.
 Owner: Open Valley
 Last updated: 2026-10-15
 
@@ -11,18 +11,20 @@ Last updated: 2026-10-15
 The owner selected a containerized **public origin on Rockefeller**, reached via
 Cloudflare Tunnel, with the existing Tailscale-only staging kept separate. This
 supersedes the Icculus application target below; those sections retain historical
-infrastructure and recovery context. Icculus still serves the public holding page.
+infrastructure and recovery context. Icculus retains the fallback holding page.
 
-The candidate runs on `127.0.0.1:3461`, with an independent socket-only production
+Production runs on `127.0.0.1:3461`, with an independent socket-only production
 database and a minimal eligible-source export. Real container role-denial checks,
 page rendering and restart recovery passed. Cloudflare browser authorization
 timed out, but direct API authentication created the dedicated tunnel and its
-connector reported four healthy connections. Persistent usage controls and
-production search projection promotion are implemented; public cutover still
-requires final endpoint verification. See [the Rockefeller runbook](../deploy/rockefeller/README.md) for
-the verified topology, commands, release IDs and remaining cutover work.
+connector reported four healthy connections. On October 15 at 01:22 UTC, the
+hostname was routed to that tunnel. Public HTTPS readiness, page rendering,
+original PDF downloads, hybrid search and request-origin checks passed.
+Persistent usage controls and the independent production search index are active.
+See [the Rockefeller runbook](../deploy/rockefeller/README.md) for the verified
+topology, release pin, live answer checks and recovery procedure.
 
-## Target
+## Historical target — superseded
 
 Deploy the school release as a **fresh application on Icculus through Openship**, using the existing `openvalley` PostgreSQL database. The [integrated delivery plan](plans/2026-10-04-0006-feat-huusd-schools-mvp-plan.md) owns scope, sequencing, and release gates.
 

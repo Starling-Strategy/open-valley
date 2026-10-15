@@ -1,10 +1,11 @@
-# Rockefeller public-origin candidate
+# Rockefeller public deployment
 
-Status: **local candidate, not publicly routed** (October 14–15, 2026).
+Status: **public at https://openvalley.maconphillips.com** (October 15, 2026).
 
 The owner selected Rockefeller for the public origin and Cloudflare Tunnel for
 HTTPS ingress. Existing private staging remains on port 3460 / Tailscale 10016.
-Icculus still serves the public holding page. DNS has not been changed.
+The hostname was switched to the dedicated tunnel at 01:22 UTC. Icculus retains
+the fallback holding page.
 
 ## Isolation
 
@@ -34,10 +35,10 @@ Icculus still serves the public holding page. DNS has not been changed.
 
 Use explicit `OPENVALLEY_PRODUCTION_ROOT` and an immutable `OPENVALLEY_WEB_IMAGE`
 when running `docker compose -f deploy/rockefeller/compose.yml ...` from the repo.
-The current candidate uses the previously tested `openvalley-research-brief-check`
-image (`sha256:430a05952debd305a2b5135fb027d818cb3d2bbed1bb93f3586d283fe760cfc6`,
-application revision `c74d426`). Replace that mutable convenience tag with the
-recorded release image reference before public promotion.
+The deployed application revision is `b370ac5`. The private `release.env` pins
+`OPENVALLEY_WEB_IMAGE=sha256:2eee4681ebdc8818dc3e64577924aa36fa528daff5603ac6215c5809d3982ace`
+and enables inference. `openvalley-web:b370ac5` is the build's convenience tag;
+Compose selects the immutable local image ID.
 
 1. Create a private production parent directory and an empty `socket` child.
    Give the socket directory ownership 999:999 and mode 0755, matching the pinned
@@ -83,7 +84,7 @@ a path notification alone is not a deletion receipt. Source exclusion is not an 
 affected serving files, projections and controlled recovery copies; do not
 restore an older policy or withdrawn release.
 
-## Evidence so far
+## Verification
 
 - Production Schools publication `4f32e218-f8ae-4c50-9536-30f0177f400a`: 8 reporting
   groups, 178 enrollment observations, same reviewed content digest as staging.
@@ -100,8 +101,32 @@ restore an older policy or withdrawn release.
 - The earlier publication CI failure was the obsolete Cabot starter selector.
   Updating it to the classroom question preserves the assertion. Full synthetic
   browser/publication/HTML/RSC/JSON withdrawal passed locally after the fix.
+- All three GitHub checks passed for `8c0e4b2`: privacy regressions, pgvector
+  lifecycle (including concurrent admission and persistent quotas), and synthetic
+  publication. TypeScript, ESLint and the release Docker build also passed.
+- Production search contains 301 verified passages. Public search returned
+  `hybrid`; both API endpoints accepted the public origin and rejected another
+  origin. Public readiness returned 200 with `Cache-Control: no-store`.
+- Public Chromium checks passed for original PDF bytes/range requests, exact-page
+  links, citation inspection/conversation invalidation, and the narrow-phone
+  classroom guide. The conversation/UI tests use synthetic intercepted answers;
+  the PDF test reads actual public source bytes.
+- All six live answer scenarios passed against the production container before
+  cutover. The policy service completed a stop/revoke/prune/re-export/recreate
+  cycle successfully; its path watcher is enabled. User lingering is enabled so
+  the tunnel and policy watcher can start without an interactive login.
+- The first public scenario run exposed intermittent omission of the replacement
+  benchmark distinction in financial answers. Revision `b370ac5` adds a
+  server-side check and correction retry before support review can approve such
+  an answer. Its regression test failed before the change and passed afterward;
+  all 47 unit tests, ESLint and TypeScript passed.
+- After deploying `b370ac5`, all six scenarios passed over public HTTPS, including
+  the classroom → Warren third grade → enrollment follow-up chain and the
+  Fayston cost comparison. Response times were 1.9–19.3 seconds. The container
+  replacement preserved admission counters (16 questions and one search before
+  and after replacement), and public readiness recovered successfully.
 
-## Public cutover work remaining
+## Tunnel and recovery
 
 Cloudflared 2026.10.0 was installed with its GitHub release SHA-256 verified.
 The browser callback timed out. Direct authentication using the owner-supplied
@@ -112,15 +137,19 @@ credential was resolved only into a temporary 0600 file on `/run/user/1000` and
 removed immediately after the CLI operation. The tunnel service does not need
 the management token or its October 18 expiration renewal to keep running.
 
-The offered token's ordinary DNS-list API returns 403; the official cloudflared
-zone/tunnel route endpoint passed authentication and reported the deliberately
-missing preflight tunnel. Actual hostname mutation still requires read-back.
+The offered token's ordinary DNS-list API returns 403. The official cloudflared
+zone/tunnel route endpoint accepted `route dns --overwrite-dns` for this hostname
+and confirmed the tunnel CNAME. Public HTTPS then served the new application.
+The prior DNS record could not be exported with this token; recovery below uses
+the retained holding-page origin instead of claiming an exact DNS rollback.
 
 `openvalley-production-tunnel.service` runs the dedicated connector with origin
 `http://127.0.0.1:3461`, catch-all 404 and loopback-only metrics on 20246. Its
-`/ready` endpoint reported four ready connections. Public cutover must verify
-DNS/HTTPS, real answers and source downloads after selecting the release image.
+`/ready` endpoint reported four ready connections. Public HTTPS and original
+source downloads were verified after cutover.
 To restore the holding page without altering DNS, set this tunnel's sole ingress
 origin to the existing `http://100.75.27.44:3401` and restart the tunnel service.
-That recovery depends on Icculus; normal serving does not. A running loopback
-candidate or a connected tunnel alone is not public-deployment evidence.
+That recovery depends on Icculus; normal serving does not. The fallback origin
+returned its expected 503 holding page immediately before cutover.
+
+Off-host backup/recovery and broader source ingestion remain follow-up work.

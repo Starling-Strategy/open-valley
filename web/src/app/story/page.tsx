@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PageLayout, PageHeader } from '@/components/PageLayout';
 
 export const metadata = {
   title: "De-Homesteading Warren | Open Valley",
@@ -18,13 +19,13 @@ const historicalRows = [
 
 export default function StoryPage() {
   return (
-    <div className="site-container">
-      <header className="editorial-hero">
+    <PageLayout width="reading">
+      <PageHeader>
         <p className="eyebrow"><Link href="/homes">Homes</Link> · Earlier research</p>
         <h1>De-Homesteading Warren</h1>
         <p className="lede">How property transfers can help us investigate changes in the use of homes.</p>
         <p className="note">Open Valley · January 2026 · Retained research, not a live housing report</p>
-      </header>
+      </PageHeader>
 
       <aside className="availability" aria-labelledby="story-availability">
         <h2 id="story-availability">Transfer animation unavailable</h2>
@@ -74,6 +75,6 @@ export default function StoryPage() {
         </div>
         <p className="reading-copy">Read more about <Link className="text-link" href="/data">the housing data sources</Link> and <Link className="text-link" href="/learn/glossary">the terminology</Link>.</p>
       </section>
-    </div>
+    </PageLayout>
   );
 }

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PageLayout, PageHeader } from '@/components/PageLayout';
 import { readSchoolsPublication } from "@/lib/schools.server";
 import { SchoolOverview } from "@/components/schools/SchoolOverview";
 import { EnrollmentHistory } from "@/components/schools/EnrollmentHistory";
@@ -18,9 +19,9 @@ export const metadata = {
 export default async function SchoolsPage() {
   const publication = await readSchoolsPublication();
   if (!publication) {
-    return <div className="site-container">
+    return <PageLayout>
       <SchoolsRefresh />
-      <section className={`editorial-hero ${styles.hero}`} aria-labelledby="schools-title">
+      <PageHeader aria-labelledby="schools-title">
         <p className="eyebrow">Schools · Harwood Unified Union School District</p>
         <h1 id="schools-title">Our schools,<br />in perspective.</h1>
         <div className="availability" role="status">
@@ -28,18 +29,18 @@ export default async function SchoolsPage() {
           <p>We could not load a current verified release. Please return later, or visit the <a href="https://huusd.org/our-schools">district’s school directory</a>.</p>
         </div>
         <p><Link href="/homes">Explore the Homes research →</Link></p>
-      </section>
-    </div>;
+      </PageHeader>
+    </PageLayout>;
   }
   const { payload } = publication;
-  return <div className="site-container" data-release-id={publication.releaseId}>
+  return <PageLayout data-release-id={publication.releaseId}>
     <SchoolsRefresh />
-    <header className={`editorial-hero ${styles.hero}`}>
+    <PageHeader>
       <p className="eyebrow">Schools · Harwood Unified Union School District</p>
       <h1>Our schools,<br />in perspective.</h1>
       <p className="lede">A shared starting point for understanding our district in Vermont: the schools we have today, the children they serve, and what the enrollment record can tell us.</p>
       <p className={styles.dateline}>Evidence reviewed through <time dateTime={payload.dataset_date}>{dateLabel(payload.dataset_date)}</time></p>
-    </header>
+    </PageHeader>
     <nav aria-label="On this page" className={styles.contents}>
       <a href="#school-directory"><span aria-hidden="true">01</span> Today’s schools</a>
       <a href="#enrollment-history"><span aria-hidden="true">02</span> Enrollment over time</a>
@@ -56,5 +57,5 @@ export default async function SchoolsPage() {
       <p>This first account describes the district and its enrollment record. It is a foundation for those conversations.</p>
     </aside>
     <div id="sources" className={styles.chapter}><SourceNotes payload={payload} /></div>
-  </div>;
+  </PageLayout>;
 }

@@ -8,7 +8,7 @@ for(const scenario of cases){
   const start=Date.now();
   try {
     const response=await fetch(`${process.env.RESEARCH_EVAL_BASE_URL||'http://127.0.0.1:3460'}/api/ask`,{
-      method:'POST',headers:{'Content-Type':'application/json','Origin':'http://127.0.0.1:13460'},
+      method:'POST',headers:{'Content-Type':'application/json','Origin':process.env.RESEARCH_EVAL_ORIGIN||'http://127.0.0.1:13460'},
       body:JSON.stringify({question:scenario.question,context:answers.get(scenario.previous)?.context}),signal:AbortSignal.timeout(130000),
     });
     assert.equal(response.status,200);

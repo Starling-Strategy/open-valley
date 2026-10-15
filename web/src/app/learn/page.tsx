@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PageLayout, PageHeader } from '@/components/PageLayout';
 import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
@@ -54,8 +55,8 @@ export default async function LearnPage() {
   const posts = await getPosts();
 
   return (
-      <div className="site-container">
-          <header className="editorial-hero">
+      <PageLayout width="reading">
+          <PageHeader>
             <p className="eyebrow"><Link href="/homes">Homes</Link> · Research</p>
             <h1>
               Research &amp; Articles
@@ -64,7 +65,7 @@ export default async function LearnPage() {
               Deep dives into Warren&apos;s housing data, Vermont policy, and our methodology.
             </p>
             <p className="note reading-copy">Retained articles from the original housing research. Dates and historical findings belong to each article; these are not live housing counts.</p>
-          </header>
+          </PageHeader>
 
           {posts.length === 0 ? (
             <div className="availability">
@@ -112,6 +113,6 @@ export default async function LearnPage() {
               ))}
             </div>
           )}
-      </div>
+      </PageLayout>
   );
 }

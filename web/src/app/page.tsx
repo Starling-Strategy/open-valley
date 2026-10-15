@@ -1,11 +1,12 @@
 import Link from 'next/link';
+import { PageLayout } from '@/components/PageLayout';
 import { updates } from '@/lib/updates';
 import { NewsletterCard } from '@/components/NewsletterCard';
 
 export const dynamic = 'force-dynamic';
 
 export default function Home() {
-  return <div className="site-container">
+  return <PageLayout className="home-page">
     <section className="new-hero">
       <div><p className="eyebrow"><span className="live-dot" /> Mad River Valley, Vermont · Looking beyond</p>
         <h1>Our community.<br />Our choices.<br /><em>A clearer view.</em></h1>
@@ -29,5 +30,5 @@ export default function Home() {
     </section>
     <NewsletterCard />
     <section className="source-promise"><p className="eyebrow">Open by design</p><h2>Don’t take a chart—or a chatbot—at its word.</h2><p>Follow the source. Check the date. Ask what’s missing. Original district records stay a click away, and personal perspectives are labeled as such.</p><Link className="quiet-link" href="/about">Our approach to evidence →</Link></section>
-  </div>;
+  </PageLayout>;
 }

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PageLayout, PageHeader } from '@/components/PageLayout';
 
 export const metadata = {
   title: "Homes | Open Valley",
@@ -14,13 +15,13 @@ const research = [
 
 export default function HomesPage() {
   return (
-    <div className="site-container">
-      <header className="editorial-hero">
+    <PageLayout>
+      <PageHeader>
         <p className="eyebrow">Homes · Warren, Vermont</p>
         <h1>The places we call home.</h1>
         <p className="lede">Parcels, dwellings, homesteads, and property taxes: a starting point for understanding Warren&apos;s housing.</p>
         <p className="note reading-copy">This section retains Open Valley&apos;s earlier housing research. Articles carry their original dates; historical findings are not live counts.</p>
-      </header>
+      </PageHeader>
       <nav className="research-list" aria-label="Homes research">
         {research.map((item) => (
           <div className="research-row" key={item.href}>
@@ -29,6 +30,6 @@ export default function HomesPage() {
           </div>
         ))}
       </nav>
-    </div>
+    </PageLayout>
   );
 }

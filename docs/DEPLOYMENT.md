@@ -2,9 +2,24 @@
 
 Purpose: Record verified infrastructure and the path to the next release.
 Audience: Open Valley maintainers and delivery agents.
-Status: canonical; local application verified, production school cutover pending.
+Status: canonical; Rockefeller container candidate verified locally, public cutover pending.
 Owner: Open Valley
-Last updated: 2026-10-04
+Last updated: 2026-10-15
+
+## Current deployment decision — Rockefeller
+
+The owner selected a containerized **public origin on Rockefeller**, reached via
+Cloudflare Tunnel, with the existing Tailscale-only staging kept separate. This
+supersedes the Icculus application target below; those sections retain historical
+infrastructure and recovery context. Icculus still serves the public holding page.
+
+The candidate runs on `127.0.0.1:3461`, with an independent socket-only production
+database and a minimal eligible-source export. Real container role-denial checks,
+page rendering and restart recovery passed. Cloudflare browser authorization
+timed out while retrieving the certificate; no tunnel/DNS cutover has occurred.
+Inference remains disabled pending production credential delivery and persistent
+usage controls. See [the Rockefeller runbook](../deploy/rockefeller/README.md) for
+the verified topology, commands, release IDs and remaining cutover work.
 
 ## Target
 

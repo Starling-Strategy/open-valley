@@ -11,7 +11,7 @@ test('new entry points and original essay links work', async ({ page }) => {
 
 test('starter question fills the real composer and provider errors remain visible', async ({ page }) => {
   await page.goto('/ask');
-  const starter = 'What did the committee ask the Cabot feasibility study to examine?';
+  const starter = 'What are class sizes and adult-to-student ratios at each HUUSD school?';
   await page.getByRole('button', { name: starter }).click();
   await expect(page.getByLabel('Your question', { exact: true })).toHaveValue(starter);
   test.skip(!process.env.REBUILD_LIVE_PREVIEW, 'Submitting requires the privately configured preview');

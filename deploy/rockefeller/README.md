@@ -21,8 +21,14 @@ Icculus still serves the public holding page. DNS has not been changed.
 - Production data root: `/srv/storage/files/coding-storage/open-valley/production`.
   Web mounts only its `collection` tree and database socket, both read-only; it
   does not mount the working archive, staging database, Docker socket or host home.
-- Inference is intentionally disabled in this candidate. Provider credential
-  delivery and persistent usage controls are required before enabling it publicly.
+- Inference is enabled per release by `OPENVALLEY_CHAT_ENABLED`. The launcher
+  resolves the owner-approved OpenRouter credential from 1Password into the
+  container environment; no key is stored in `release.env` or the image.
+- Production request admission is persisted in PostgreSQL: two concurrent leases,
+  60 questions/hour and 120/day, 120 searches/hour and 500/day. Leases expire after
+  three minutes; counters survive restarts. Records contain only random IDs,
+  endpoint kind and timestamps, not questions, IP addresses or responses. These
+  are request limits, not a provider-level dollar-spend guarantee.
 
 ## Bootstrap and reproduce
 
@@ -54,11 +60,26 @@ recorded release image reference before public promotion.
    the host parent remains private. Existing destinations are never overwritten.
 6. Start `web`, require `/api/ready`, and inspect actual page content—not HTTP 200
    alone, because source-unavailable pages intentionally still return HTML.
+7. Apply `web/scripts/research-budget.sql` as `research_owner`. To reuse tested
+   vectors, `web/scripts/promote-research-index.mjs` reads the staging projection
+   through `RESEARCH_PROMOTION_SOURCE_DATABASE_URL` (`research_reader`) and writes
+   through `RESEARCH_INDEX_DATABASE_URL` (`research_owner`). The current
+   `SCHOOL_BOARD_ROOT` must match the source index's corpus, profile and every
+   chunk's input hash. Text is hydrated from eligible files, not copied from the
+   index. Commit is atomic and rechecks source eligibility.
+8. Create the private `production/release.env` containing only
+   `OPENVALLEY_WEB_IMAGE=<immutable release>` and `OPENVALLEY_CHAT_ENABLED=true`.
+   `bash deploy/rockefeller/run-production.sh up` privately resolves the key and
+   recreates the web container. Do not print resolved Compose configuration.
 
-For subsequent publications, prepare and validate a fresh bundle, stop serving
-before replacing it, remove superseded serving copies, and restart against the
-new bundle. Register production in the canonical withdrawal/revocation procedure
-before public promotion. Source exclusion is not an ordinary rollback: remove
+`openvalley-production-policy.path` watches the canonical policy, catalog and
+reviewed library manifest. Its service stops the web container, deletes the old
+serving export, applies Schools revocation, prunes research projections, and
+re-exports currently eligible files. Any failure leaves the web stopped; inspect
+its journal and rerun the service after correction. Changed corpora use keyword
+fallback until their new search projection is published. For an explicit
+withdrawal, invoke this service as part of the operation and verify completion;
+a path notification alone is not a deletion receipt. Source exclusion is not an ordinary rollback: remove
 affected serving files, projections and controlled recovery copies; do not
 restore an older policy or withdrawn release.
 
@@ -83,15 +104,23 @@ restore an older policy or withdrawn release.
 ## Public cutover work remaining
 
 Cloudflared 2026.10.0 was installed with its GitHub release SHA-256 verified.
-Browser authorization was attempted, but the callback timed out before delivering
-`~/.cloudflared/cert.pem`. The browser may have downloaded that certificate.
-No tunnel or DNS record was created. The offered API token can list tunnels and
-the zone but returns 403 on this zone's DNS records.
+The browser callback timed out. Direct authentication using the owner-supplied
+Cloudflare API credential successfully created the dedicated tunnel
+`58fb5337-82e5-4e59-9e06-20acbdebeaa4` (`openvalley-rockefeller`). Its standard
+tunnel-specific credential is mode 0600 under `~/.cloudflared`; the management
+credential was resolved only into a temporary 0600 file on `/run/user/1000` and
+removed immediately after the CLI operation. The tunnel service does not need
+the management token or its October 18 expiration renewal to keep running.
 
-After authorization: create a dedicated Open Valley tunnel, run with only its
-tunnel-specific credential, and route its origin to `http://127.0.0.1:3461` with
-a catch-all 404. The account-management certificate does not belong in the web
-container. Before switching the hostname, finish inference budgeting/credential
-delivery, populate the production search index, wire withdrawal to this new
-copy/database, verify restart recovery, and record the original DNS route for
-rollback. A running loopback candidate is not public-deployment evidence.
+The offered token's ordinary DNS-list API returns 403; the official cloudflared
+zone/tunnel route endpoint passed authentication and reported the deliberately
+missing preflight tunnel. Actual hostname mutation still requires read-back.
+
+`openvalley-production-tunnel.service` runs the dedicated connector with origin
+`http://127.0.0.1:3461`, catch-all 404 and loopback-only metrics on 20246. Its
+`/ready` endpoint reported four ready connections. Public cutover must verify
+DNS/HTTPS, real answers and source downloads after selecting the release image.
+To restore the holding page without altering DNS, set this tunnel's sole ingress
+origin to the existing `http://100.75.27.44:3401` and restart the tunnel service.
+That recovery depends on Icculus; normal serving does not. A running loopback
+candidate or a connected tunnel alone is not public-deployment evidence.

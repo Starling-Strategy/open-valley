@@ -33,7 +33,25 @@ test('real pgvector indexing is idempotent, leased, retryable, read-only and ret
     const before=await readFile(calls,'utf8');await run();assert.equal(await readFile(calls,'utf8'),before);
     const readerURL=new URL(url);readerURL.username='research_reader';readerURL.password='';
     const reader=new pg.Client({connectionString:readerURL.href});await reader.connect();
-    try{await assert.rejects(reader.query('DELETE FROM research.chunks'),e=>e.code==='42501');}finally{await reader.end();}
+    try{
+      await assert.rejects(reader.query('DELETE FROM research.chunks'),e=>e.code==='42501');
+      await db.query(await readFile(new URL('./research-budget.sql',import.meta.url),'utf8'));
+      const peers=await Promise.all(Array.from({length:3},async()=>{const c=new pg.Client({connectionString:readerURL.href});await c.connect();return c;}));
+      try {
+        const results=await Promise.all(peers.map(c=>c.query("SELECT request_budget.reserve('ask') AS id")));
+        const leases=results.map(r=>r.rows[0].id).filter(Boolean);assert.equal(leases.length,2);
+        for(const id of leases)await reader.query('SELECT request_budget.release($1)',[id]);
+      }finally{await Promise.all(peers.map(c=>c.end()));}
+      await assert.rejects(reader.query('DELETE FROM request_budget.requests'),e=>e.code==='42501');
+      await assert.rejects(reader.query('SELECT * FROM request_budget.requests'),e=>e.code==='42501');
+      for(let i=2;i<60;i++){const id=(await reader.query("SELECT request_budget.reserve('ask') AS id")).rows[0].id;assert.ok(id);await reader.query('SELECT request_budget.release($1)',[id]);}
+      assert.equal((await reader.query("SELECT request_budget.reserve('ask') AS id")).rows[0].id,null);
+      await db.query("UPDATE request_budget.requests SET created_at=created_at-interval '2 hours'");
+      for(let i=0;i<60;i++){const id=(await reader.query("SELECT request_budget.reserve('ask') AS id")).rows[0].id;assert.ok(id);await reader.query('SELECT request_budget.release($1)',[id]);}
+      assert.equal((await reader.query("SELECT request_budget.reserve('ask') AS id")).rows[0].id,null);
+      assert.equal((await db.query('SELECT count(*) FROM request_budget.requests')).rows[0].count,'120');
+      await assert.rejects(reader.query("SELECT request_budget.reserve('unknown')"));
+    }finally{await reader.end();}
     await edition('Revised synthetic school planning assumptions.');
     await assert.rejects(run([],{MALFORMED:'1'}));
     assert.equal((await db.query('SELECT count(*) FROM research.chunks')).rows[0].count,'0');

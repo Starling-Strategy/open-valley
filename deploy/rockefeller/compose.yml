@@ -62,8 +62,10 @@ services:
       SCHOOLS_DATABASE_URL: postgresql://schools_runtime@localhost/openvalley_schools?host=/socket
       RESEARCH_DATABASE_URL: postgresql://research_reader@localhost/openvalley_research?host=/socket
       OPENVALLEY_PREVIEW_ORIGIN: https://openvalley.maconphillips.com
-      # Enable inference only after its credential and persistent budget are ready.
-      OPENVALLEY_PREVIEW_CHAT: 'false'
+      OPENVALLEY_PREVIEW_CHAT: ${OPENVALLEY_CHAT_ENABLED:-false}
+      OPENVALLEY_PERSISTENT_LIMITS: 'true'
+      OPENVALLEY_CHAT_API_KEY: ${OPENVALLEY_CHAT_API_KEY:-}
+      OPENVALLEY_CHAT_MODEL: openai/gpt-5.4-mini
       OPENVALLEY_SUBSTACK_URL: https://openvalley.substack.com
     volumes:
       - ${OPENVALLEY_PRODUCTION_ROOT:?Set production root}/collection:/collection:ro

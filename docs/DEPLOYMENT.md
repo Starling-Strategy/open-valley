@@ -16,9 +16,10 @@ infrastructure and recovery context. Icculus still serves the public holding pag
 The candidate runs on `127.0.0.1:3461`, with an independent socket-only production
 database and a minimal eligible-source export. Real container role-denial checks,
 page rendering and restart recovery passed. Cloudflare browser authorization
-timed out while retrieving the certificate; no tunnel/DNS cutover has occurred.
-Inference remains disabled pending production credential delivery and persistent
-usage controls. See [the Rockefeller runbook](../deploy/rockefeller/README.md) for
+timed out, but direct API authentication created the dedicated tunnel and its
+connector reported four healthy connections. Persistent usage controls and
+production search projection promotion are implemented; public cutover still
+requires final endpoint verification. See [the Rockefeller runbook](../deploy/rockefeller/README.md) for
 the verified topology, commands, release IDs and remaining cutover work.
 
 ## Target

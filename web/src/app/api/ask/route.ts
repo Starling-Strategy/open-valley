@@ -10,6 +10,7 @@ import { planQuestion } from '@/lib/research-plan';
 import { classroomBrief } from '@/lib/research-classroom';
 import { facilityBrief } from '@/lib/research-facilities';
 import { evidenceVersion, readContext, signContext } from '@/lib/research-context';
+import { reserveResearchRequest } from '@/lib/research-budget.mjs';
 
 export const dynamic = 'force-dynamic';
 const headers = { 'Cache-Control': 'private, no-store' };
@@ -40,7 +41,10 @@ export async function POST(request: Request) {
   calls=calls.filter(t=>Date.now()-t<3600000);
   if (inFlight>=2 || calls.length>=60) return respond({ error: 'The preview is busy. Please try again shortly, or search the library.' },429);
   inFlight++; calls.push(Date.now()); const requestId=randomUUID();
+  let lease;
   try {
+    lease=await reserveResearchRequest('ask');
+    if(!lease)return respond({error:'The assistant has reached its usage limit. Please try again later, or browse the library.'},429);
     const library=await readLibrary();
     const publication=await readSchoolsPublication();
     const version=evidenceVersion(library,publication?.releaseId);
@@ -87,5 +91,5 @@ export async function POST(request: Request) {
   } catch {
     console.warn(JSON.stringify({ event:'research_request_failed',requestId,stage:'evidence_or_retrieval' }));
     return respond({ error:'The evidence library is temporarily unavailable. Please try again.',requestId },503);
-  } finally { inFlight--; }
+  } finally { inFlight--; await lease?.release(); }
 }

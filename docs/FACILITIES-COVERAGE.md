@@ -1,6 +1,9 @@
 # Facilities and committee evidence coverage
 
-Status: private preview, reviewed October 14, 2026.
+Authority: historical — October 14, 2026 coverage checkpoints. The semantic-library
+revision superseded the earlier excerpt-only checkpoint below. Current architecture
+is maintained in [RESEARCH-ASSISTANT.md](RESEARCH-ASSISTANT.md); production
+operations belong to the [Rockefeller runbook](../deploy/rockefeller/README.md).
 
 ## Semantic-library revision
 
@@ -41,7 +44,7 @@ has 13 Building Use & Visioning entries, including a September 16 entry; an entr
 does not establish that minutes or a transcript are available. The index remains
 a September 29 snapshot, with some future scheduled meetings.
 
-## Located but not yet assistant-ready
+## Earlier excerpt checkpoint: materials then awaiting review
 
 Following hyperlinks in the April 6 public minutes identifies these existing
 cataloged PDFs despite their generic filenames:
@@ -70,7 +73,7 @@ are not made eligible merely by being linked or locally available.
   decisions need separate dated records. Missing evidence is not proof that an
   action never occurred.
 
-## Import and validation
+## Historical excerpt import and validation
 
 ```sh
 python3 -B scripts/school_board/import_facilities_review.py --root "$SCHOOL_BOARD_ROOT"

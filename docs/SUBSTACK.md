@@ -1,5 +1,10 @@
 # Open Valley Substack connection
 
+Authority: authoritative integration interface, with October 14, 2026 setup
+receipts. Gateway availability, authentication tests and account/draft counts
+below are dated observations, not a fresh account-status check. Public deployment
+is documented in the [Rockefeller runbook](../deploy/rockefeller/README.md).
+
 Publication: https://openvalley.substack.com
 
 The owner created this publication on October 14, 2026. The public RSS feed is
@@ -18,7 +23,8 @@ Dependencies installed with `uv sync --frozen --all-packages --no-dev`.
 Local compatibility patch: `deploy/substack-gateway/sid-only.patch` permits a
 session with only `substack.sid` and omits the absent legacy `connect.sid` cookie.
 Apply it with `git apply` from the gateway checkout when reinstalling the pinned
-revision. The running checkout already has this patch and authentication tests.
+revision. The checkout was observed with this patch and passing authentication
+tests on October 14, 2026; service availability has not been rechecked here.
 
 Run from that checkout:
 

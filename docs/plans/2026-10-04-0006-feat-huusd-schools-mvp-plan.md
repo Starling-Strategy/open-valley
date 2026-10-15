@@ -11,6 +11,13 @@ execution: code
 
 # Open Valley Homes and Schools — Integrated Delivery Plan
 
+> **Authority: historical — October 4, 2026 delivery plan.** The Icculus/Openship
+> target and execution authorization describe the original release plan and do
+> not authorize current operations. Current production is governed by the
+> [Rockefeller runbook](../../deploy/rockefeller/README.md). Original requirements,
+> decisions and dated completion records remain below; planned receipt paths
+> are not evidence that those files were delivered.
+
 ## Goal Capsule
 
 **Objective:** A resident anywhere in HUUSD can understand the schools the district has today, see how enrollment has changed since before the pandemic, and check the evidence behind those numbers.

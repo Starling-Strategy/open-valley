@@ -54,6 +54,9 @@ data/str/
 !data/.gitkeep
 
 # Tool artifacts
+# Upstream prototype inputs stay local; authored/derived artifacts are tracked.
+artifacts/aoe-enrollment-20251125.xlsx
+artifacts/vermont-town-population-1930-2025.xls
 .serena/
 .openchamber/
 web/test-results/

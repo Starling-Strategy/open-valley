@@ -1,13 +1,17 @@
 # Local school-board privacy tools
 
-Python 3.11 or newer is required. Source documents live at
-`/rocky/open-valley/school-board`; the repository stores code, policy and minimal
-deletion metadata. Set `SCHOOL_BOARD_ROOT` to use a different collection.
+Authority: authoritative collection-tool interface, reviewed October 15, 2026.
+
+Python 3.11 or newer is required. The authoritative working collection on
+Rockefeller is `/srv/storage/files/coding-storage/open-valley/school-board`.
+Set `SCHOOL_BOARD_ROOT` explicitly; `/rocky/open-valley/school-board` is the
+older coding-container path. The repository stores code, reviewed publication
+inputs, policy and minimal deletion metadata, not original source documents.
 
 ## Refresh and verify
 
 ```bash
-export SCHOOL_BOARD_ROOT=/rocky/open-valley/school-board
+export SCHOOL_BOARD_ROOT=/srv/storage/files/coding-storage/open-valley/school-board
 python3 scripts/school_board/build_catalog.py
 python3 scripts/school_board/build_meeting_guide.py
 python3 scripts/school_board/verify_collection.py
@@ -63,13 +67,19 @@ duplicate source identities, including archive-only formats. It does not create 
 python3 scripts/school_board/delete_records.py \
   --root "$SCHOOL_BOARD_ROOT" \
   --request docs/school-board/executive-review-deletion-request.json \
-  --archive /rocky/open-valley/huusd-board.zip
+  --archive /absolute/path/to/reviewed-input-archive.zip
 ```
 
 Rebuild and verify afterward. A collection lock serializes cleanup operations.
 On interruption, rerun the same request before
 rebuilding; exclusion metadata is written first to block reindexing. Verification
 must pass before treating the cleanup as complete. Remote sources are not altered.
+
+Supply the actual controlled input archive requiring sanitization. Immediately
+complete production withdrawal through the
+[Rockefeller runbook](../../deploy/rockefeller/README.md): collection deletion
+alone does not clear serving exports, database publications or research indexes.
+Rebuild the catalog, run coordinated withdrawal and verify serving state.
 
 ## Regression checks
 

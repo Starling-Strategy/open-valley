@@ -1,10 +1,15 @@
 # Schools publication and withdrawal
 
-The application serves one eligible PostgreSQL release at request time. It does
+Authority: authoritative Schools publication/withdrawal contract, reviewed October 15, 2026.
+
+The Schools reader serves one eligible PostgreSQL release at request time. It does
 not read the collection, reviewed inputs, or candidate files. Start with the
 [candidate interface](../../scripts/school_board/README.md#candidate-interface-for-the-publisher)
 for numerical/source validation and the [deployment guide](../DEPLOYMENT.md) for
-hosting. Production credentials and live U8 verification remain deferred.
+hosting. Production is public on Rockefeller; its
+[runbook](../../deploy/rockefeller/README.md) owns connections, deployment and
+coordinated exclusion handling. Other application readers use the eligible
+research collection independently of the Schools publication reader.
 
 ## Database boundary
 
@@ -16,7 +21,8 @@ privileges. The migration creates the NOLOGIN/NOINHERIT `schools_owner` if absen
 It creates no passwords and changes no other schema or database-wide grants.
 `db/schools/migrate.mjs` accepts `SCHOOLS_ADMIN_DATABASE_URL` only for loopback
 synthetic databases. Production must run the SQL through its approved privileged
-credential consumer, separately from the app and publisher.
+administrative connection, separately from the app and publisher. Rockefeller's
+bootstrap uses the database container's local postgres identity and peer socket.
 
 The preflight inspects effective privileges, including PUBLIC and column grants.
 It refuses private-table/sequence access, unrelated schema creation, and executable
@@ -41,11 +47,12 @@ have explicit EXECUTE grants with PUBLIC revoked.
 
 ## Runtime
 
-Mount the runtime URI in `/run/secrets/schools-database-url`, then set
-`SCHOOLS_DATABASE_URL_FILE` to that path. For synthetic local work,
-`SCHOOLS_DATABASE_URL` is also supported; the file takes precedence. The connection
-must authenticate as `schools_runtime`. Credentials are neither printed nor put
-in command arguments. Restart the application after changing its credential mount.
+Production supplies `SCHOOLS_DATABASE_URL` for `schools_runtime` over the mounted
+Unix socket using peer authentication, as configured in
+`deploy/rockefeller/compose.yml`. The reader also supports
+`SCHOOLS_DATABASE_URL_FILE`; the file takes precedence when set. Password-bearing
+credentials are neither printed nor put in command arguments. Restart the
+application after changing connection configuration.
 
 `readSchoolsPublication()` in `web/src/lib/schools.server.ts` returns
 `{ releaseId, payload: SchoolsPayload } | null`. Its pool is created lazily on
@@ -76,10 +83,11 @@ node scripts/school_board/publish.mjs \
 ```
 
 Use the current release UUID instead of `none` when replacing or recovering a
-release. Supply `SCHOOLS_PUBLISHER_DATABASE_URL` privately in the publisher child's
-environment through the approved credential consumer. The application receives
-only the runtime credential. No production credential setup is part of the local
-workflow below.
+release. Supply `SCHOOLS_PUBLISHER_DATABASE_URL` as an operator-provided connection
+URL in the publisher child's environment. Rockefeller uses its restricted peer
+identity; password-bearing environments must use an approved private credential
+consumer. The application receives only the runtime identity. No production
+credential setup is part of the synthetic workflow below.
 
 Reviewed inputs default to `data/school-board/public/`. `SCHOOLS_PUBLIC_INPUTS`
 selects a dedicated absolute input directory for synthetic/local work. Under the
@@ -106,6 +114,10 @@ Success prints only `{ "releaseId": "<uuid>" }`. Keep that non-sensitive receipt
 and verify readiness/public responses through the host's deployment process.
 
 ## Withdraw, then finish deletion
+
+For production, complete the coordinated policy operation in the
+[Rockefeller runbook](../../deploy/rockefeller/README.md). A standalone Schools
+revocation does not remove the research serving export or search projections.
 
 An exclusion change is an operational action: update the canonical manifest using
 the existing privacy tools and **immediately apply it to the serving database**:

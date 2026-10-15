@@ -1,6 +1,9 @@
 # Research assistant and document library
 
-Status: private Tailscale preview, October 14, 2026. PR #15.
+Authority: authoritative research architecture and development guide, reviewed
+October 15, 2026. Production is public on Rockefeller; see the
+[production runbook](../deploy/rockefeller/README.md). October 14 validation
+results below remain dated evidence.
 
 ## What is connected
 
@@ -153,10 +156,13 @@ record IDs, stages and failure categories, not question text or generated prose.
 | Model/validation failure | Reviewed brief remains useful; other answers offer source links, never a raw OCR wall. |
 | Source withdrawn while reading/following up | Hide/recheck, clear stale turns and reject stale context. |
 
-Run the fixtures with `npm run test:unit`; run
+From `web/`, run the fixtures with `npm run test:unit`; run
 `SCHOOL_BOARD_ROOT=... node --import tsx scripts/check-reviewed-brief.mts` for the
 actual source pins. `node scripts/evaluate-research-answers.mjs` is an explicit
-paid live run against the private preview, with non-content outcome metadata.
+paid live run, with non-content outcome metadata. It defaults to the private
+preview; set `RESEARCH_EVAL_BASE_URL` and `RESEARCH_EVAL_ORIGIN` explicitly to
+test another authorized origin, including production. Live runs consume the
+same request budget as readers.
 The live cases are a small development acceptance set, not a held-out score.
 
 October 14 validation for this revision: 44 JS/TS tests, lint, TypeScript and
@@ -237,14 +243,16 @@ withdrawal lifecycle separately from live-source/model evaluation.
   duplicate cleanup remains the authoritative collection deletion path.
 - The indexer prunes withdrawn chunks/documents before requesting embeddings.
   It uses durable jobs, bounded attempts, lease renewal, fencing, a single-worker
-  advisory lock and atomic installation. The watcher reconciles every minute.
+  advisory lock and atomic installation. The private-staging watcher reconciles every minute.
   After urgent deletion, stop the watcher and run `--purge-only`, then restart it;
   never leave cleanup at a UI filter. Also remove externally supplied originals
   and review extracts if an affected record exists outside the collection.
+  Production exclusions additionally require the coordinated stop/revoke/prune/
+  re-export operation in the [Rockefeller runbook](../deploy/rockefeller/README.md).
 - Unknown session boundaries require exclusion and review. A regex screen is
   supplementary, not clearance of a newly discovered document.
 
-## Operations
+## Private staging operations
 
 `deploy/research/compose.yml` runs pgvector PostgreSQL on a mode-0700 Unix socket,
 with no network interface or published port. Data lives at
@@ -291,7 +299,8 @@ the worker, `RESEARCH_DATABASE_URL` for reads, `OPENVALLEY_CHAT_API_KEY` for
 inference. Integration tests use `RESEARCH_TEST_DATABASE_URL` and synthetic
 provider responses; they create and drop only their named test database.
 
-Remaining public-launch work includes persistent inference quotas, a broader
-independently labeled evaluation set, reviewed structured cost tables, and
-collection backup/recovery. Current request limits are process-local. This is
-still an explicitly private preview, not a public cutover.
+Production has PostgreSQL-backed persistent request admission; private staging
+retains process-local limits. Production quota values, deployment and recovery
+belong to the [Rockefeller runbook](../deploy/rockefeller/README.md). Broader
+independently labeled evaluation, reviewed structured financial tables and
+off-host backup/recovery remain follow-up work.

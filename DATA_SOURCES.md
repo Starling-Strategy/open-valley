@@ -1,8 +1,17 @@
 # Open Valley Data Sources
 
+> **Historical research reference — reviewed October 15, 2026.** This describes
+> the earlier housing/FPF pipeline, not current production. Acquisition commands,
+> row counts and database examples are dated evidence, not a supported setup
+> procedure. Use [deployment](docs/DEPLOYMENT.md) for current operations and
+> [the retained architecture](docs/data-documentation/DATA_ARCHITECTURE.md) for
+> historical context. The old `api/` directory no longer exists; retained land
+> scripts are under `scripts/land/` and FPF scripts under `scripts/community/`.
+> FPF material obtained through personal email is not a public source collection.
+
 Reference for all data sources, APIs, and import pipelines.
 
-For entity relationships and data models, see `docs/DATA_ARCHITECTURE.md`.
+For retained entity relationships and data models, see `docs/data-documentation/DATA_ARCHITECTURE.md`.
 
 ---
 

@@ -1,6 +1,10 @@
 # Open Valley rebuild — private preview
 
-Status: working branch `feat/open-valley-rebuild`, October 14, 2026.
+Authority: historical — October 14, 2026 pre-cutover checkpoint on
+`feat/open-valley-rebuild`. This records the private rebuild and holding-page
+state at that time. Public serving moved to Rockefeller on October 15; use the
+[Rockefeller runbook](../deploy/rockefeller/README.md) for current operations.
+The observations and test results below have not been refreshed.
 
 ## Direction
 

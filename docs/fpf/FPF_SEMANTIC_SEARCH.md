@@ -1,5 +1,11 @@
 # FPF Semantic Search Implementation
 
+> **Historical FPF implementation reference.** Current public search uses the
+> [reviewed school library](../RESEARCH-ASSISTANT.md), not personal-email FPF
+> data. Legacy connection examples and `api/` paths below are not production
+> instructions; retained FPF scripts live in `scripts/community/`. See
+> [current deployment](../DEPLOYMENT.md). No current Gmail access is implied.
+
 This document describes the semantic search implementation for Front Porch Forum (FPF) posts in the Open Valley project.
 
 ## Overview

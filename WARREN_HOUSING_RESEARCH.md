@@ -1,5 +1,14 @@
 # Warren, Vermont: Housing Intelligence Report
 
+> **Historical research, not a current housing or legal assessment.** Figures and
+> policy descriptions below retain their original research dates. The proposed
+> tax-rate hierarchy and filing timelines have not been reverified as current law;
+> the report itself notes that differential rates were not set. Transaction and
+> owner-address indicators are signals, not verified occupancy changes.
+> [Current operations](docs/DEPLOYMENT.md) and
+> [retained calibration evidence](docs/data-documentation/CALIBRATION_PROPERTIES.md)
+> are separate authorities. Reviewed for scope and links October 15, 2026.
+
 *A data-driven analysis of property composition using Vermont Act 73 (2025) classifications*
 
 **Last Updated**: 2026-01-01
@@ -83,7 +92,7 @@ We use four properties on Woods Road as calibration points for data quality. The
 | 200 Woods Rd S | Schulthess | NHS_RESIDENTIAL (+ ADU) | Swiss owner, long-term renter in ADU |
 | 94 Woods Rd N | Mad River LLC | NHS_RESIDENTIAL | Brooklyn LLC operating STR |
 
-**See**: [`/docs/CALIBRATION_PROPERTIES.md`](docs/CALIBRATION_PROPERTIES.md) for detailed analysis.
+**See**: [calibration properties](docs/data-documentation/CALIBRATION_PROPERTIES.md) for detailed historical analysis.
 
 ### Data Quality Lessons Learned
 

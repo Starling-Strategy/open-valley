@@ -2,7 +2,7 @@
 
 Purpose: U1 / R13 follow-on inventory.
 Audience: Open Valley contributors and delivery agents.
-Status: Source coverage for a later release; no staffing or class-size series extracted.
+Status: Historical source inventory checked October 4, 2026; no staffing or class-size series extracted at that checkpoint.
 Owner: Open Valley
 Last updated: 2026-10-04
 

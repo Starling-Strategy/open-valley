@@ -1,5 +1,13 @@
 # Transition Map Methodology
 
+> **Historical methodology and revision record.** The opening three-category
+> counts and validation SQL predate the later five-category analysis in this
+> document. Use the later section to understand the revised −109 result, not to
+> infer verified occupancy or filed homestead changes. The former animated map
+> component has been removed; `/story` preserves the historical summary and
+> explicitly reports that the animation is unavailable. This is not a current
+> deployment or runnable SQL procedure. See [current documentation](../README.md).
+
 **Last Updated**: 2026-01-02
 
 This document explains exactly how the animated homestead transitions map works, including why a specific transfer might or might not appear.

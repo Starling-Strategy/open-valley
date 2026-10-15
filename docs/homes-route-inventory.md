@@ -1,5 +1,10 @@
 # Homes route inventory and U4 handoff
 
+> **Authority: historical — October 4, 2026 handoff and integration receipt.**
+> “Current”, “pending” and “implemented now” below refer to that checkpoint.
+> See the dated [MVP verification](school-board/mvp-verification.md) and the
+> current [Rockefeller runbook](../deploy/rockefeller/README.md).
+
 Date: 2026-10-04. Scope: preparatory U4 on the host-supplied
 `docs/homes-schools-mvp-plan` checkout, base `506553b`.
 

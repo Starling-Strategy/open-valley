@@ -3,9 +3,10 @@ import SiteLayout from "@/components/SiteLayout";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Open Valley | Homes and Schools",
+  title: "Open Valley | Better information. Better decisions.",
   description:
-    "Independent civic research on homes and the Harwood Unified Union School District in Vermont, published by Open Valley.",
+    "Public data, useful tools, and perspective from Macon Phillips. Understanding the decisions facing the Mad River Valley and beyond, starting with our schools.",
+  ...(process.env.NEXT_PUBLIC_OPENVALLEY_STAGING === "true" ? { robots: { index: false, follow: false } } : {}),
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

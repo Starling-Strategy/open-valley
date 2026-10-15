@@ -1,5 +1,13 @@
 # Open Valley Glossary
 
+> **Historical housing-model reference.** This is not the current public runtime
+> architecture or a current-law guide. Filing dates and tax-policy descriptions
+> require original-source verification; timely filing and late-filing cutoffs
+> must not be conflated. Examples using `use`, `str_listing_ids` and
+> `get_tax_classification()` describe the Pydantic schema; the retained ORM uses
+> `dwelling_use`, `str_listing_id` and `tax_classification` instead. See
+> [current documentation](README.md) and [deployment](DEPLOYMENT.md).
+
 Terms and definitions for Warren property data.
 
 ## Data Model

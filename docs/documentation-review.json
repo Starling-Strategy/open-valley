@@ -1,0 +1,42 @@
+{
+  "reviewed_at": "2026-10-15",
+  "reviewed_head_before_cleanup": "1d2b7c7768aef2d6067a7910e11c910d9d09ce37",
+  "target_base_before_cleanup": "9c535bd",
+  "status": "Full-file review and current-versus-historical reconciliation; final working-tree links and inventory validated before commit.",
+  "limits": ["Historical numerical findings and legal assertions were not independently reverified.", "External URLs were not exhaustively checked.", "Raw source documents and credentials remain outside Git.", "Historical MDX already renders with an Earlier research notice; its original prose is retained."],
+  "authoritative": [
+    "AGENTS.md", "CLAUDE.md", "README.md", "STARTUP.md",
+    "deploy/rockefeller/README.md", "docs/DEPLOYMENT.md", "docs/README.md",
+    "docs/RESEARCH-ASSISTANT.md", "docs/SUBSTACK.md", "docs/school-board/README.md",
+    "docs/school-board/publication.md", "scripts/school_board/README.md",
+    "web/AGENTS.md", "web/CLAUDE.md", "web/README.md"
+  ],
+  "authoritative_directory_map_with_historical_evidence": ["warren/README.md"],
+  "historical": [
+    "DATA_SOURCES.md", "WARREN_HOUSING_RESEARCH.md", "artifacts/README.md",
+    "data/FPF_POLITICAL_ANALYSIS.md", "docs/FACILITIES-COVERAGE.md", "docs/GLOSSARY.md",
+    "docs/REBUILD.md", "docs/Research_Products/DE-HOMESTEADING_WARREN.md",
+    "docs/Research_Products/TRANSITION_MAP_METHODOLOGY.md",
+    "docs/Research_Products/key_stats_WARREN_HOUSING_RESEARCH.md",
+    "docs/data-documentation/CALIBRATION_PROPERTIES.md",
+    "docs/data-documentation/DATA_ARCHITECTURE.md",
+    "docs/data-documentation/DATA_STATE_ASSESSMENT.md",
+    "docs/data-documentation/DWELLING_DATA_ARCHITECTURE.md",
+    "docs/data-documentation/STR_DATA_CONFIDENCE.md",
+    "docs/fpf/FPF_SEMANTIC_SEARCH.md", "docs/fpf/TASK_SUMMARY.md",
+    "docs/homes-route-inventory.md", "docs/icculus-deployment-history.md",
+    "docs/openvalley-mvp-working-notes.md",
+    "docs/plans/2026-10-04-0006-feat-huusd-schools-mvp-plan.md",
+    "docs/school-board/credentials.md", "docs/school-board/enrollment-coverage.md",
+    "docs/school-board/mvp-verification.md", "docs/school-board/privacy-cleanup.md",
+    "docs/school-board/school-register-notes.md", "docs/school-board/staffing-class-size-coverage.md",
+    "web/src/content/posts/finding-the-strs.mdx", "web/src/content/posts/glossary.mdx",
+    "web/src/content/posts/methodology.mdx", "web/src/content/posts/why-warren.mdx"
+  ],
+  "supplemental_pr_documents": [
+    {"pr": 13, "revision": "42f295add525f0c56e2b0a2f4a6234c3e8fffe35", "path": "docs/STAGING.md", "classification": "historical proposal; superseded for new deployment work; retained branch/worktree"},
+    {"pr": 7, "revision": "636d685870fff341472f0b78574b67d6ed04cfe0", "path": "docs/private-deployment.md", "classification": "historical Homey proposal; superseded by Rockefeller"},
+    {"pr": 6, "revision": "87b96fae842b4d767c4e0e6ed30cd77cd207bacd", "path": "docs/KAMAL_TRIAL.md", "classification": "historical Kamal proposal; superseded by Rockefeller"}
+  ],
+  "moves": [{"from": "docs/DEPLOYMENT.md", "to": "docs/icculus-deployment-history.md", "note": "Historical body preserved; current DEPLOYMENT.md replaced with a runtime map linking the host runbook."}]
+}

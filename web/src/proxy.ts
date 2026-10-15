@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 export function proxy(request: NextRequest) {
-  if (request.nextUrl.pathname === "/schools" || request.nextUrl.pathname === "/api/schools") {
+  if (["/schools", "/api/schools", "/district", "/meetings", "/ask", "/api/ask", "/library"].includes(request.nextUrl.pathname) || request.nextUrl.pathname.startsWith('/library/') || request.nextUrl.pathname.startsWith('/api/library/')) {
     const response = NextResponse.next();
     response.headers.set("Cache-Control", "private, no-store, max-age=0, must-revalidate");
     response.headers.set("Pragma", "no-cache");
@@ -19,6 +19,12 @@ export const config = {
   matcher: [
     "/schools",
     "/api/schools",
+    "/district",
+    "/meetings",
+    "/ask",
+    "/api/ask",
+    "/library/:path*",
+    "/api/library/:path*",
     "/admin/:path*",
     "/api/admin/:path*",
     "/awp(.*)",

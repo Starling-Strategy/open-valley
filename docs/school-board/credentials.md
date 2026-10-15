@@ -1,5 +1,11 @@
 # Schools database credential delivery
 
+> **Authority: historical — October 4, 2026 Icculus credential-consumer design
+> and verification.** These commands target the superseded Icculus deployment,
+> not Rockefeller. Current production uses Unix-socket peer authentication;
+> see the [Rockefeller runbook](../../deploy/rockefeller/README.md). The retained
+> consumer remains code for that older environment, not the default setup.
+
 This is the project-specific private consumer for the U7 prerequisite. It runs
 from the active managed coding runtime and targets the existing Icculus database.
 1Password is authoritative; this consumer creates missing identities and reuses
@@ -52,7 +58,7 @@ user SSH configuration, and host-key updates are disabled. Connect timeout is
 five seconds. SSH receives only static Python source in its command; the two
 passwords travel as JSON on SSH stdin. There is no remote script upload.
 
-## Provision
+## Historical Icculus provisioning procedure
 
 From the repository root:
 

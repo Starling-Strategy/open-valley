@@ -79,6 +79,14 @@ def _apply(root, request, archive):
     report = json.loads(report_path.read_text())
     extraction = json.loads(extraction_path.read_text())
     catalog = json.loads((root / "catalog/sources.json").read_text())
+    library_path = root / 'supplements/research-library/library.json'
+    library = json.loads(library_path.read_text()) if library_path.exists() else None
+    if library:
+        for doc in library['documents']:
+            for alias in doc['aliases']:
+                catalog.append({'source_id': alias, 'files': [
+                    {'local_path': f['localPath'], 'sha256': f['sha256']} for f in doc['files']
+                ] + [{'local_path': doc['pagesPath'], 'sha256': doc['pagesSha256']}]})
     if not isinstance(request, dict):
         raise ValueError("Deletion request must be an object")
     for key in ("paths", "source_ids"):
@@ -143,6 +151,12 @@ def _apply(root, request, archive):
     report["deleted_files"] = list({row["original_path"]: row for row in report["deleted_files"] + receipts}.values())
     write_json(manifest_path, rules)
     write_json(report_path, report)
+    if library:
+        library['documents'] = [d for d in library['documents'] if not any(canonical_id(alias) in ids for alias in d['aliases'])]
+        write_json(library_path, library)
+        supplement_catalog = library_path.with_name('catalog.json')
+        if supplement_catalog.exists():
+            write_json(supplement_catalog, [r for r in json.loads(supplement_catalog.read_text()) if canonical_id(r['source_id']) not in ids])
     # Include prior exclusions too, making an interrupted archive rewrite retryable.
     archive_result = sanitize_archive(archive, set(rules["paths"]), set(rules["sha256"]))
     for relative in paths:

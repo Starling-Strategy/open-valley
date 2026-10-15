@@ -1,4 +1,9 @@
 # Front Porch Forum Political Activity Analysis
+
+> **Historical analysis of a digest sample.** This is not a representative survey
+> or a statement of current community opinion. The source was a personal-email
+> research collection, not the public school-board corpus. No new email access or
+> ingestion is implied. See [current documentation](../docs/README.md).
 ## Mad River Valley (Warren, Waitsfield, Fayston, Moretown)
 
 **Data Source**: 3,298 daily FPF digests, 58,174 posts, 6,438 unique people

@@ -1,0 +1,21 @@
+services:
+  database:
+    image: pgvector/pgvector:0.8.2-pg16
+    container_name: openvalley-research-db
+    user: "1000:1000"
+    network_mode: none
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: openvalley_research
+      POSTGRES_USER: research_owner
+      PGHOST: /socket
+      POSTGRES_HOST_AUTH_METHOD: trust
+    command: ["postgres", "-c", "listen_addresses=", "-c", "unix_socket_directories=/socket", "-c", "unix_socket_permissions=0700"]
+    volumes:
+      - ${OPENVALLEY_RESEARCH_ROOT:?set research root}/postgres:/var/lib/postgresql/data
+      - ${OPENVALLEY_RESEARCH_ROOT:?set research root}/socket:/socket
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h /socket -U research_owner -d openvalley_research"]
+      interval: 10s
+      timeout: 3s
+      retries: 5

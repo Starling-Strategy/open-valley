@@ -1,5 +1,13 @@
 # Dwelling Data Architecture
 
+> **Historical design proposal, not an implemented correction runbook.** The
+> proposed audit trigger does not cover all fields changed by its soft-delete
+> example, and physical-delete logging conflicts with the shown audit foreign
+> key. Do not run these examples as a verified repair procedure. The retained
+> ORM uses different field names from several Pydantic examples. Earlier STR
+> correction locations are superseded by [calibration evidence](CALIBRATION_PROPERTIES.md).
+> See [current deployment](../DEPLOYMENT.md).
+
 See [GLOSSARY.md](../GLOSSARY.md) for detailed definitions of DwellingUse, tax classification, and the data model.
 
 ## The Problem

@@ -1,0 +1,7 @@
+tunnel: 58fb5337-82e5-4e59-9e06-20acbdebeaa4
+credentials-file: /home/macon/.cloudflared/openvalley-rockefeller.json
+metrics: 127.0.0.1:20246
+ingress:
+  - hostname: openvalley.maconphillips.com
+    service: http://127.0.0.1:3461
+  - service: http_status:404

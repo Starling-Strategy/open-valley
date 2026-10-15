@@ -8,6 +8,8 @@ Last updated: 2026-10-22
 
 School-board materials are stored on Rockefeller at `/srv/storage/files/coding-storage/open-valley/school-board` (`/rocky/open-valley/school-board` inside the older coding container). Production runs on Icculus; see [Deployment](docs/DEPLOYMENT.md), which also owns the withdrawal procedure.
 
+For writing, Notion editorial management and crossposting, read the repository's [Open Valley editorial skill](skills/openvalley-editorial/SKILL.md). It covers the verified CLI fallback for Notion schema edits and keeps draft management separate from public publication and email delivery.
+
 ## Executive sessions and individual students
 
 - Never collect, retain, index, summarize, embed, publish, or include transcripts or recordings of executive-session discussions in this project's dataset.

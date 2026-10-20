@@ -9,6 +9,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "npm run test:unit",
     "test:browser": "playwright test",
     "test:unit": "node --import tsx --test src/components/schools/*.test.ts src/components/schools/*.test.mjs"
   },

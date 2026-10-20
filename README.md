@@ -2,7 +2,7 @@
 
 Open Valley makes local public information easier to understand and check.
 
-- **Schools:** the next release explains today's Harwood Unified Union School District schools and about ten years of enrollment, with public sources beside the figures.
+- **Schools:** explains today's Harwood Unified Union School District schools, about ten years of enrollment and projections, and a searchable library of 1,157 hash-checked, privacy-screened public board, Building Use & Visioning, and district records. "Ask the record" sends questions through `/api/schools/ask` to a separate [assistant service](docs/school-board/assistant.md) that answers only from those records, with citations.
 - **Homes:** existing Warren housing, parcel, homestead, and property-tax research. Detailed expansion is deferred.
 
 ## Start here

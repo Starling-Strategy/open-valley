@@ -1,19 +1,16 @@
-import type { SchoolsPayload, SourceReference } from "../../lib/schools";
+import type { SchoolsPayload } from "../../lib/schools";
 import { dateLabel } from "./enrollment-display";
 import styles from "./enrollment.module.css";
+import { buildLibraryCatalog, payloadReferences } from "../../lib/schools-library";
+import { PublicLibrary } from "./PublicLibrary";
 
 export function SourceNotes({ payload }: { payload: SchoolsPayload }) {
-  const references: SourceReference[] = [
-    ...payload.enrollment, ...payload.projections,
-    ...payload.campuses.flatMap(campus => campus.sources),
-    ...payload.schools.flatMap(school => [...school.sources, ...school.grade_configurations]),
-    ...payload.programs.flatMap(program => program.sources),
-  ];
+  const catalog = buildLibraryCatalog(payload.sources, payloadReferences(payload));
   return (
     <section className={styles.section} aria-labelledby="school-sources-heading" id="school-sources">
       <header className={styles.sectionHeader}>
-        <p className={styles.eyebrow}>Sources and methods</p>
-        <h2 id="school-sources-heading">Where the numbers came from</h2>
+        <p className={styles.eyebrow}>Library, sources and methods</p>
+        <h2 id="school-sources-heading">Public Library &amp; Meeting Archive</h2>
         <p>Dataset updated <time dateTime={payload.dataset_date}>{dateLabel(payload.dataset_date)}</time>. The public records below supply the school facts, counts and projections on this page.</p>
       </header>
       <p className={styles.meta}>Recorded counts are not necessarily final. Missing, suppressed and not applicable are distinct from zero. Definitions and known limits accompany the figures above.</p>
@@ -27,15 +24,7 @@ export function SourceNotes({ payload }: { payload: SchoolsPayload }) {
         </dl>
       </details>
       {payload.notes.length > 0 && <div className={styles.releaseNotes}><h3>Release notes and known limits</h3><ul>{payload.notes.map((note, index) => <li key={index}>{note}</li>)}</ul></div>}
-      <h3>Public source register</h3>
-      <ol className={styles.sourceList}>{payload.sources.map(source => {
-        const locators = [...new Set([...source.locators, ...references.filter(reference => reference.source_id === source.source_id).map(reference => reference.source_locator)])];
-        return <li key={source.source_id} id={`source-${source.source_id}`} className={styles.sourceEntry}>
-          <h4><a href={source.url}>{source.title}</a></h4>
-          <p className={styles.meta}>Published: {source.published_at ? <time dateTime={source.published_at}>{dateLabel(source.published_at)}</time> : "Not stated"}. Reviewed: <time dateTime={source.reviewed_at}>{dateLabel(source.reviewed_at)}</time>.</p>
-          <details className={styles.citationDetails}><summary>Public URL and record locators ({locators.length})</summary><p className={styles.sourceUrl}><a href={source.url}>{source.url}</a></p><ul>{locators.map(locator => <li key={locator}>{locator}</li>)}</ul></details>
-        </li>;
-      })}</ol>
+      <PublicLibrary key={payload.content_digest} catalog={catalog} />
     </section>
   );
 }

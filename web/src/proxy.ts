@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 export function proxy(request: NextRequest) {
-  if (request.nextUrl.pathname === "/schools" || request.nextUrl.pathname === "/api/schools") {
+  if (["/schools", "/api/schools", "/api/schools/ask"].includes(request.nextUrl.pathname)) {
     const response = NextResponse.next();
     response.headers.set("Cache-Control", "private, no-store, max-age=0, must-revalidate");
     response.headers.set("Pragma", "no-cache");
@@ -19,6 +19,7 @@ export const config = {
   matcher: [
     "/schools",
     "/api/schools",
+    "/api/schools/ask",
     "/admin/:path*",
     "/api/admin/:path*",
     "/awp(.*)",

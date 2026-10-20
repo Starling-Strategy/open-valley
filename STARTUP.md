@@ -52,6 +52,10 @@ The web runtime accepts one of these server-only inputs:
 | `SCHOOLS_DATABASE_URL_FILE` | Read-only credential file supplied by the deployment system. |
 | `SCHOOLS_DATABASE_URL` | Connection string supplied privately to a local process. |
 
+"Ask the record" also reads `SCHOOLS_ASSISTANT_URL`, the server-only base URL of
+the [schools assistant service](docs/school-board/assistant.md). When it is unset
+or unreachable, `/api/schools/ask` returns 503 and the rest of `/schools` works.
+
 Use the restricted `schools_runtime` identity. Publisher and administrator
 access belong to separate commands, never the web process. Production delivery
 is described in the [credential guide](docs/school-board/credentials.md).

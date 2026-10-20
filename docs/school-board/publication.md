@@ -26,11 +26,15 @@ SELECT on a non-extension sequence. A failed audit needs a private administrator
 review; the migration does not repair unrelated grants. Repeating the migration
 preserves school releases.
 
+`db/schools/002_passages.sql` adds assistant passages and runs after 001
+(`migrate.mjs` applies both). It requires 001's schema, owner and roles, and does
+not require pgvector. See [assistant retrieval](assistant.md#database-dbschools002_passagessql).
+
 | Identity | Granted school access |
 |---|---|
-| Runtime | USAGE on `schools`; SELECT on `schools.current_publication` only |
-| Publisher | USAGE; EXECUTE on four fixed lifecycle functions only |
-| Owner | Owns schema, tables, view and functions; cannot log in |
+| Runtime | USAGE on `schools`; SELECT on `current_publication`, `current_retrieval` and `current_passages` only |
+| Publisher | USAGE; EXECUTE on six fixed lifecycle functions only |
+| Owner | Owns schema, tables, views and functions; cannot log in |
 
 The private tables are `policy`, monotonic `exclusions`, `releases`,
 `release_sources`, and the singleton `active_release`. Payload/lineage hashes and
@@ -96,6 +100,19 @@ the publisher:
    swaps in a different candidate or trusts a `validated` flag.
 4. Rechecks policy and expected base under the same database lock, inserts the
    immutable release and complete lineage, switches the pointer, and commits.
+
+A candidate may also carry `passages.json` and `passages.jsonl` from
+`build_passages.py`. The policy worker then verifies the manifest, file hash,
+rows digest, every row, and that each `(source_id, sha256)` is in lineage. Step 4
+becomes one transaction: stage the exact verified bytes in batches of 200 rows
+through `schools.stage_passages`, call `schools.publish`, then
+`schools.attach_passages`, which re-checks count, rows digest, text hashes,
+dimensions and `release_sources` membership. Either the release and its
+passages both become visible or neither does. Republishing an identical
+candidate is a no-op. Different passages for an existing release are rejected;
+a candidate without passages keeps any passages already attached to that release.
+Withdrawal hides passages with their release, and `delete_revoked()` removes them
+by cascade.
 
 A failure rolls back candidate activation. An unaffected eligible prior release
 remains visible; an exclusion or invalid policy cannot be rolled back by a failed

@@ -8,6 +8,7 @@ import sys
 import tempfile
 import unittest
 
+from build_passages import build_passages, synthetic_embedder
 from build_public_snapshot import build_candidate
 from publication_policy import INPUTS, cleanup, register_export, registry, validate
 
@@ -91,6 +92,26 @@ class PublicationPolicyTest(unittest.TestCase):
             (self.inputs / name).unlink()
         self.assertEqual(cleanup(self.root, self.rules), {'removed_artifacts': 1})
         self.assertEqual(registry(self.root)['artifacts'], [])
+
+    def test_passages_are_optional_verified_and_returned(self):
+        self.assertIsNone(validate(self.root, self.request)['passages'])
+        build_passages(self.candidate, self.root, self.base / 'passage-cache', embedder=synthetic_embedder)
+        manifest = json.loads((self.candidate / 'passages.json').read_text())
+        self.assertEqual(validate(self.root, self.request)['passages'], manifest)
+        rows = self.candidate / 'passages.jsonl'
+        original = rows.read_bytes()
+        for tampered in (original.replace(b'"text":"', b'"text":"x', 1), original + original):
+            rows.write_bytes(tampered)
+            with self.assertRaises(ValueError):
+                validate(self.root, self.request)
+        rows.write_bytes(original)
+        (self.candidate / 'passages.json').unlink()
+        with self.assertRaises(ValueError):
+            validate(self.root, self.request)  # Four files: neither three nor five.
+        # A registered candidate with passages is still removed as a whole on withdrawal.
+        (self.candidate / 'passages.json').write_text(json.dumps(manifest))
+        self.assertEqual(cleanup(self.root, self.rules), {'removed_artifacts': 1})
+        self.assertFalse(self.candidate.exists())
 
 
 if __name__ == '__main__':

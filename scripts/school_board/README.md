@@ -82,6 +82,24 @@ preservation of public minutes and archive permissions, retry behavior,
 traversal/symlink rejection, incomplete manifests, concurrent writers,
 cached source excerpts and content-hash aliases in the generated catalog.
 
+## Rebuild the public library register
+
+`build_public_library.py` deterministically updates `data/school-board/public/sources.json` from the 25 immutable core sources, the 7 reviewed staffing/class-size/facilities/budget reports, the Building Use & Visioning Committee supplement, the 104 meeting records, and the historical official Board & Workgroup manifest (`agenda`, `minute`, `packet`, `presentation`, `budget`, `polic`), screening every candidate against `privacy-exclusions.json`, transitive catalog aliases, and `build_public_snapshot.resolve_sources`:
+
+```bash
+python3 -B scripts/school_board/build_public_library.py --root "$SCHOOL_BOARD_ROOT"
+```
+
+Each source gets a structured `library` object: `category`, `body`, `kind`,
+`school_year` (`YYYY-YY` or `Unknown`), `document_date` (equal to `published_at`),
+sorted `meetings` (`date`, `body`, `status`) and ordered `collections` (`core`,
+`building_use_visioning`, `historical_board`, `meetings`, `reviewed_report`).
+Core categories come from the explicit `ENROLLMENT_REPORT_IDS` and
+`SCHOOL_REFERENCE_IDS` lists. `locators` hold only citation locations. Core
+locators are preserved verbatim, and library-only records have none. The snapshot
+builder validates the `library` object strictly and allows empty `locators` only
+when it is present.
+
 ## Build a public Schools candidate (U3)
 
 The four reviewed inputs in `data/school-board/public/` are publication inputs,
@@ -114,7 +132,9 @@ withdrawal belongs to U8's database/ingress lifecycle.
 
 ### Candidate interface for the publisher
 
-Exactly three files appear together:
+The builder writes exactly three files together. `build_passages.py` may add
+`passages.json` and `passages.jsonl` afterwards (see
+[assistant passages](#add-assistant-passages)); the publisher accepts three or five files:
 
 | File | Visibility and contents |
 |---|---|
@@ -255,3 +275,46 @@ python3 -B -m unittest discover -s scripts/school_board -p test_public_snapshot.
 Fixtures use `RUNNER_TEMP` on CI or `/tmp/opencode` in the managed coding runtime.
 The authoritative host also runs the full privacy regression command above and
 the real-input build command. CI does not load or fabricate the shared archive.
+
+## Add assistant passages
+
+`build_passages.py` adds `passages.json` and `passages.jsonl` to a built candidate
+for the [schools assistant](../../docs/school-board/assistant.md). It reads only
+files listed in `lineage.json`, re-hashes each one, and rejects a source the
+current exclusion policy now covers. Measure coverage first; this mode makes no
+network call and writes nothing:
+
+```bash
+python3 -B scripts/school_board/build_passages.py --extract-only \
+  --candidate /absolute/path/to/candidate --root "$SCHOOL_BOARD_ROOT"
+```
+
+Then embed with OpenRouter (`baai/bge-m3`, provider data collection denied, no
+fallbacks). The key comes from `OPENROUTER_API_KEY` or `OPENROUTER_API_KEY_FILE`
+and is never printed. Use `--limit-sources N` for a smoke run.
+
+```bash
+python3 -B scripts/school_board/build_passages.py \
+  --candidate /absolute/path/to/candidate --root "$SCHOOL_BOARD_ROOT" \
+  --cache /absolute/private/passage-cache
+```
+
+Each payload source contributes one edition. Preference runs research-library
+`*.pages.json` page lists (PDF text and OCR), PDF (`pdftotext -layout`, one entry
+per physical page), DOCX, PPTX (slides as pages), text (reviewed `PDF page N`
+markers become pages), HTML, then XLSX. A later format wins only when an earlier
+one has under 80% of its words. Other JSON, images and archives are skipped.
+Pages under 3 words are dropped; pages under 25 words count as `low_text_pages`
+(likely scanned). Passages are about 320 words with a 50-word overlap and never
+cross sources.
+
+The cache (`embeddings.sqlite3`) holds vectors and source provenance, never text.
+Every run purges entries whose source ID, path or hash the current policy
+excludes. It is still derived data: delete it with the candidate during privacy
+cleanup. A warm-cache rebuild is byte-identical. Tests use
+`synthetic_embedder`; `publication-fixtures/generate.py BASE --passages` emits a
+synthetic five-file candidate.
+
+```bash
+python3 -B -m unittest discover -s scripts/school_board -p test_passages.py -v
+```

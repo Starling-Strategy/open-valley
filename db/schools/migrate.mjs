@@ -12,7 +12,9 @@ try {
     connectionTimeoutMillis: 5000, statement_timeout: 30000 });
   client.on('error', () => {});
   await client.connect();
-  await client.query(await readFile(new URL('./001_publication.sql', import.meta.url), 'utf8'));
+  for (const name of ['./001_publication.sql', './002_passages.sql']) {
+    await client.query(await readFile(new URL(name, import.meta.url), 'utf8'));
+  }
   console.log('Schools migration complete.');
 } catch {
   console.error('Schools migration failed. Verify role prerequisites and effective privileges privately.');

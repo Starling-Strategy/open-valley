@@ -70,6 +70,9 @@ INTERNAL_LOCATOR_SUFFIXES = (
     " Catalog title was 'here'.", " Catalog title was 'at this link'.",
     ' Original PPTX SHA-256 023bff7751682ef0f79c5bfff74f9ac38e956e85c3e4f4bab4fe23e23ea58d78; both editions are in the catalog.',
 )
+LIBRARY_FIELDS = 'category body kind school_year document_date meetings collections'.split()
+LIBRARY_COLLECTIONS = ('core', 'building_use_visioning', 'historical_board', 'meetings', 'reviewed_report')
+MEETING_STATUSES = ('held', 'scheduled', 'unverified')
 
 
 def canonical_json(value):
@@ -204,6 +207,31 @@ def local_file(root, relative, label):
     return target
 
 
+def library_metadata(value, label):
+    """Finding-aid metadata. It describes a record; it is not a citation locator."""
+    fields(value, LIBRARY_FIELDS, label)
+    for key in ('category', 'body', 'kind'):
+        text(value[key], f'{label}.{key}')
+    if value['school_year'] != 'Unknown':
+        school_year(value['school_year'], label + '.school_year')
+    iso_date(value['document_date'], label + '.document_date', nullable=True)
+    require(isinstance(value['meetings'], list), label, 'expected meeting array')
+    keys = []
+    for meeting in value['meetings']:
+        fields(meeting, ('date', 'body', 'status'), label + '.meetings')
+        iso_date(meeting['date'], label + '.meetings.date')
+        text(meeting['body'], label + '.meetings.body')
+        require(meeting['status'] in MEETING_STATUSES, label, 'invalid meeting status')
+        keys.append((meeting['date'], meeting['body'], meeting['status']))
+    require(keys == sorted(set(keys)), label, 'meetings must be unique and sorted')
+    collections = value['collections']
+    require(isinstance(collections, list) and set(collections) <= set(LIBRARY_COLLECTIONS), label, 'unknown library collection')
+    require(collections == sorted(set(collections), key=LIBRARY_COLLECTIONS.index), label, 'collections must be unique and ordered')
+    require(bool(collections) and (not value['meetings']) == ('meetings' not in collections), label,
+            'meeting collection must match meeting records')
+    return value
+
+
 def resolve_sources(reviewed, catalog, root, rules):
     require(isinstance(reviewed, list) and reviewed, 'sources', 'empty source register')
     require(isinstance(catalog, list), 'catalog', 'expected source array')
@@ -218,7 +246,7 @@ def resolve_sources(reviewed, catalog, root, rules):
     selected, public = set(), {}
     for source in reviewed:
         label = 'source ' + str(source.get('source_id', '?'))
-        fields(source, 'source_id title url published_at sha256 reviewed_at public_eligible locators'.split(), label)
+        fields(source, 'source_id title url published_at sha256 reviewed_at public_eligible locators'.split(), label, ('library',))
         sid = canonical_id(source['source_id'])
         require(sid not in public, label, 'duplicate source identity')
         require(source['public_eligible'] is True, label, 'source lacks public eligibility review')
@@ -228,12 +256,15 @@ def resolve_sources(reviewed, catalog, root, rules):
         identity = url_identity(source['url'], source['source_id'], label)
         indices = by_id.get(sid, set())
         require(indices, label, 'unknown source in current catalog')
-        require(any(identity == url_identity(catalog[i].get('url', ''), source['source_id'], label) for i in indices),
+        require(any(identity == url_identity(catalog[i].get('url', '').split('#', 1)[0], source['source_id'], label) for i in indices),
                 label, 'catalog/source URL mismatch')
         require(any(f.get('sha256') == source['sha256'] for i in indices for f in catalog[i].get('files', [])),
                 label, 'reviewed source edition not in catalog')
         selected.update(indices)
-        require(isinstance(source['locators'], list) and source['locators'], label, 'missing source locator')
+        # A library-only record may have no page locator; it then establishes
+        # document availability only. Every other source needs a locator.
+        require(isinstance(source['locators'], list) and (source['locators'] or 'library' in source),
+                label, 'missing source locator')
         locators = []
         for locator in source['locators']:
             for suffix in INTERNAL_LOCATOR_SUFFIXES:
@@ -242,6 +273,10 @@ def resolve_sources(reviewed, catalog, root, rules):
             locators.append(text(locator, label + '.locators'))
         public[sid] = {'source_id': sid, 'title': text(source['title'], label), 'url': source['url'],
                        'published_at': source['published_at'], 'reviewed_at': source['reviewed_at'], 'locators': locators}
+        if 'library' in source:
+            public[sid]['library'] = library_metadata(source['library'], label + '.library')
+            require(source['library']['document_date'] == source['published_at'], label,
+                    'library document date must match publication date')
     # Follow every representation and content/path alias to a fixed point. This
     # is metadata-only discovery; catalog observations never enter output.
     pending = list(selected)

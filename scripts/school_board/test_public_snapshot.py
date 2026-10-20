@@ -161,6 +161,15 @@ class PublicSnapshotTest(unittest.TestCase):
         self.register['schools'][0]['current_enrollment_ref']['entity_id'] = 'unknown'
         self.assert_rejected('enrollment ref')
 
+    def test_catalog_slide_fragment_matches_clean_source_but_public_fragment_fails(self):
+        clean = 'https://docs.google.com/presentation/d/report/edit'
+        self.sources[0]['url'] = clean
+        self.catalog[0]['url'] = clean + '#slide=id.p1'
+        self.build()
+        self.assertEqual(self.payload()['sources'][0]['url'], clean)
+        self.sources[0]['url'] = clean + '#slide=id.p1'
+        self.assert_rejected('official public HTTPS')
+
     def test_school_enrollment_refs_can_be_null_independently_or_together(self):
         school = self.register['schools'][0]
         fields = ('current_enrollment_ref', 'latest_attending_enrollment_ref')
@@ -385,6 +394,32 @@ class PublicSnapshotTest(unittest.TestCase):
         self.build()
         self.assertEqual(len(self.payload()['notes']), 1)
         self.assertEqual(self.payload()['sources'][0]['locators'], ['p1; aggregate table.'])
+
+    def test_structured_library_metadata_is_published_and_strictly_validated(self):
+        library = {'category': 'Meetings', 'body': 'HUUSD Board', 'kind': 'Minutes', 'school_year': '2025-26',
+                   'document_date': '2025-10-02', 'collections': ['historical_board', 'meetings'],
+                   'meetings': [{'date': '2025-10-02', 'body': 'HUUSD Board', 'status': 'held'}]}
+        self.add_source('minutes')
+        self.sources[-1].update(locators=[], library=library)
+        self.build()
+        published = {s['source_id']: s for s in self.payload()['sources']}
+        self.assertEqual(published['minutes']['library'], library)
+        self.assertEqual(published['minutes']['locators'], [])
+        self.assertNotIn('library', published['report'])
+        for change, message in [
+                ({'collections': ['meetings', 'historical_board']}, 'collections'),
+                ({'collections': ['private']}, 'unknown library collection'),
+                ({'collections': ['historical_board']}, 'meeting collection'),
+                ({'meetings': library['meetings'] * 2}, 'unique and sorted'),
+                ({'meetings': [library['meetings'][0] | {'status': 'cancelled'}]}, 'meeting status'),
+                ({'school_year': '2025-27'}, 'school year'),
+                ({'document_date': None}, 'document date'),
+                ({'category': '/rocky/open-valley/private'}, 'private path'),
+                ({'extra': 'field'}, 'unknown fields')]:
+            self.sources[-1]['library'] = library | change
+            self.assert_rejected(message)
+        self.sources[-1].pop('library')
+        self.assert_rejected('missing source locator')
 
     def test_unknown_csv_field_rejected_before_candidate_creation(self):
         self.flush()

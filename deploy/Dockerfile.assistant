@@ -1,0 +1,28 @@
+# Build from the repository root with this Dockerfile's allowlisted context:
+#   docker build -f deploy/Dockerfile.assistant -t local/openvalley-schools-assistant:dev .
+# Base: python:3.12-slim-bookworm (Python 3.12.15); uv 0.13.0.
+FROM ghcr.io/astral-sh/uv:0.13.0@sha256:cdc6093146eb3ff6a40107b38f008b789e050e77ad87865e381d9917da55a168 AS uv
+
+FROM python:3.12-slim-bookworm@sha256:34386ef0cb081344d7ec1c103ba398e6e9f64e9ab3a1509accc92a4e24a07258 AS build
+COPY --from=uv /uv /usr/local/bin/uv
+ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy UV_PYTHON_DOWNLOADS=never UV_PROJECT_ENVIRONMENT=/opt/venv
+WORKDIR /src
+COPY services/schools-assistant/pyproject.toml services/schools-assistant/uv.lock ./
+RUN uv sync --frozen --no-dev --no-install-project
+COPY services/schools-assistant/README.md ./README.md
+COPY services/schools-assistant/src ./src
+RUN uv sync --frozen --no-dev --no-editable
+
+FROM python:3.12-slim-bookworm@sha256:34386ef0cb081344d7ec1c103ba398e6e9f64e9ab3a1509accc92a4e24a07258 AS runtime
+# Fixed uid/gid 1000, the same identity as the web image's `node` user: the credential consumer
+# delivers both secret files as 1000:1000 0400, and the unanswered log dir is owned by 1000.
+RUN groupadd --system --gid 1000 assistant \
+ && useradd --system --uid 1000 --gid 1000 --no-create-home --shell /usr/sbin/nologin assistant
+COPY --from=build /opt/venv /opt/venv
+ENV PATH=/opt/venv/bin:$PATH PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 PYDANTIC_AI_NO_BANNER=1 \
+    SCHOOLS_ASSISTANT_HOST=0.0.0.0 SCHOOLS_ASSISTANT_PORT=8787
+USER 1000:1000
+EXPOSE 8787
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+  CMD ["python", "-c", "import sys, urllib.request; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8787/health', timeout=3).status == 200 else 1)"]
+CMD ["schools-assistant"]

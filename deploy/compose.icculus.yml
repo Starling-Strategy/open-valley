@@ -10,13 +10,70 @@ services:
       HOSTNAME: 0.0.0.0
       PORT: "3000"
       SCHOOLS_DATABASE_URL_FILE: /run/secrets/schools-database-url
+      SCHOOLS_ASSISTANT_URL: http://assistant:8787
     ports:
       - "100.75.27.44:3400:3000"
     volumes:
       - /opt/openvalley-schools/credentials/runtime-database-url:/run/secrets/schools-database-url:ro
+    networks: [default, assistant]
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s
       timeout: 5s
       retries: 3
       start_period: 10s
+
+  # Grounded Schools assistant (services/schools-assistant, deploy/Dockerfile.assistant).
+  # No published port: only `web` reaches it, on the `assistant` network.
+  # Host prerequisites (uid/gid 1000 inside the image, the same as web's `node`):
+  #   /opt/openvalley-schools/credentials/openrouter-api-key   1000:1000 0400 (credential consumer)
+  #   /opt/openvalley-schools/credentials/runtime-database-url 1000:1000 0400 (shared with web)
+  #   /opt/openvalley-schools/unanswered/                      1000:1000 0700 (private, never published)
+  assistant:
+    image: ${OPENVALLEY_ASSISTANT_IMAGE:?Set the reviewed assistant image tag or digest}
+    restart: unless-stopped
+    environment:
+      SCHOOLS_ASSISTANT_HOST: 0.0.0.0
+      SCHOOLS_ASSISTANT_PORT: "8787"
+      SCHOOLS_DATABASE_URL_FILE: /run/secrets/schools-database-url
+      OPENROUTER_API_KEY_FILE: /run/secrets/openrouter-api-key
+      SCHOOLS_UNANSWERED_LOG_PATH: /var/lib/schools-assistant/unanswered.jsonl
+      SCHOOLS_ASSISTANT_MODEL: anthropic/claude-sonnet-5.5
+      SCHOOLS_ASSISTANT_EMBEDDING_MODEL: baai/bge-m3
+      # Only `web` forwards visitors; its X-Forwarded-For is trusted from this subnet alone.
+      SCHOOLS_ASSISTANT_TRUSTED_PROXIES: 172.31.87.0/29
+      SCHOOLS_ASSISTANT_RATE_PER_MINUTE: "6"
+      SCHOOLS_ASSISTANT_RATE_BURST: "4"
+      SCHOOLS_ASSISTANT_PROXY_RATE_PER_MINUTE: "60"
+      SCHOOLS_ASSISTANT_PROXY_RATE_BURST: "20"
+      SCHOOLS_ASSISTANT_DAILY_LIMIT: "500"
+      SCHOOLS_ASSISTANT_MAX_CONCURRENCY: "4"
+      # Below web's 45 s upstream timeout so the extractive fallback reaches the visitor.
+      SCHOOLS_ASSISTANT_ANSWER_TIMEOUT_SECONDS: "40"
+    volumes:
+      - /opt/openvalley-schools/credentials/runtime-database-url:/run/secrets/schools-database-url:ro
+      - /opt/openvalley-schools/credentials/openrouter-api-key:/run/secrets/openrouter-api-key:ro
+      - /opt/openvalley-schools/unanswered:/var/lib/schools-assistant
+    networks: [assistant]
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    # Measured: 356 MiB RSS with 7,343 passages indexed. A release change briefly holds two indexes.
+    mem_limit: 1g
+    mem_reservation: 512m
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys, urllib.request; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8787/health', timeout=3).status == 200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
+networks:
+  # Shared only by web and assistant. Not internal: the assistant needs egress to OpenRouter and to
+  # PostgreSQL over Tailscale. The fixed subnet is what SCHOOLS_ASSISTANT_TRUSTED_PROXIES names.
+  assistant:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.31.87.0/29

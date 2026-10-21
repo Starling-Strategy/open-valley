@@ -8,10 +8,12 @@ import json
 import logging
 import math
 import os
+import sys
 import time
 from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
+from datetime import UTC, date, datetime
 from typing import Annotated, Any, Literal
 
 from fastapi import FastAPI, Request
@@ -20,8 +22,9 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_validator
 from pydantic_ai.models import Model
 
+from . import guardrails
 from .agent import AnswerService
-from .config import DEFAULT_EMBEDDING_DIMS, Settings
+from .config import DEFAULT_EMBEDDING_DIMS, ConfigError, Settings
 from .db import PostgresStore, PublicationStore
 from .index import IndexCache, Unavailable
 from .retrieval import Embedder, OpenRouterEmbedder, Retriever
@@ -91,8 +94,42 @@ class TokenBucketLimiter:
             self._buckets.clear()
 
 
+class DailyCap:
+    """Model-answered questions per UTC day, in memory. Resets at UTC midnight and on restart."""
+
+    def __init__(self, limit: int, today: Callable[[], date] = lambda: datetime.now(UTC).date()) -> None:
+        self.limit = limit
+        self._today = today
+        self._day = today()
+        self.used = 0
+
+    def _roll(self) -> None:
+        day = self._today()
+        if day != self._day:
+            self._day, self.used = day, 0
+
+    @property
+    def exhausted(self) -> bool:
+        self._roll()
+        return self.used >= self.limit
+
+    def take(self) -> bool:
+        self._roll()
+        if self.used >= self.limit:
+            return False
+        self.used += 1
+        return True
+
+
+TRUSTED_PROXY_WITHOUT_CLIENT = "trusted-proxy-without-forwarded-for"
+
+
 def client_ip(request: Request, trusted: tuple[ipaddress.IPv4Network | ipaddress.IPv6Network, ...]) -> str:
-    """The peer address, or the nearest untrusted X-Forwarded-For hop when the peer is a trusted proxy."""
+    """The peer address, or the nearest untrusted X-Forwarded-For hop when the peer is a trusted proxy.
+
+    A trusted proxy that sends no usable client address gets TRUSTED_PROXY_WITHOUT_CLIENT, which
+    the caller limits with a separate, wider bucket instead of a visitor bucket.
+    """
     peer = request.client.host if request.client else "unknown"
 
     def is_trusted(value: str) -> bool:
@@ -109,15 +146,16 @@ def client_ip(request: Request, trusted: tuple[ipaddress.IPv4Network | ipaddress
         try:
             ipaddress.ip_address(hop)
         except ValueError:
-            return peer  # A malformed chain is not trusted.
+            return TRUSTED_PROXY_WITHOUT_CLIENT  # A malformed chain is not trusted.
         if not is_trusted(hop):
             return hop
-    return peer
+    return TRUSTED_PROXY_WITHOUT_CLIENT
 
 
 class _JsonFormatter(logging.Formatter):
     _FIELDS = ("release_id", "answer_kind", "guardrail", "failure", "validator_findings", "retrieval", "citations",
-               "passages", "reason", "status", "latency_ms", "error", "tool_calls", "findings")
+               "passages", "reason", "status", "latency_ms", "error", "tool_calls", "findings", "usage",
+               "degraded", "detail")
 
     def format(self, record: logging.LogRecord) -> str:
         entry: dict[str, Any] = {"ts": round(record.created, 3), "level": record.levelname.lower(),
@@ -135,13 +173,18 @@ def configure_logging() -> None:
     root.propagate = False
 
 
-def _error(status: int, code: str, headers: dict[str, str] | None = None) -> JSONResponse:
-    return JSONResponse({"error": code}, status_code=status, headers=NO_STORE | (headers or {}))
+def _error(status: int, code: str, headers: dict[str, str] | None = None, **extra: str) -> JSONResponse:
+    return JSONResponse({"error": code, **extra}, status_code=status, headers=NO_STORE | (headers or {}))
+
+
+def _seconds_to_utc_midnight() -> int:
+    now = datetime.now(UTC)
+    return max(60, 86_400 - (now.hour * 3600 + now.minute * 60 + now.second))
 
 
 def create_app(settings: Settings, *, store: PublicationStore | None = None, embedder: Embedder | None = None,
                model: Model | None = None, model_settings: dict[str, Any] | None = None,
-               clock: Callable[[], float] = time.monotonic) -> FastAPI:
+               clock: Callable[[], float] = time.monotonic, daily: DailyCap | None = None) -> FastAPI:
     """Build the app. Production passes only `settings`; tests inject fakes."""
     owned_store: PostgresStore | None = None
     if store is None:
@@ -157,6 +200,9 @@ def create_app(settings: Settings, *, store: PublicationStore | None = None, emb
                             timeout_seconds=settings.schools_assistant_answer_timeout_seconds)
     limiter = TokenBucketLimiter(rate_per_minute=settings.schools_assistant_rate_per_minute,
                                  burst=settings.schools_assistant_rate_burst, clock=clock)
+    proxy_limiter = TokenBucketLimiter(rate_per_minute=settings.schools_assistant_proxy_rate_per_minute,
+                                       burst=settings.schools_assistant_proxy_rate_burst, clock=clock)
+    daily = daily or DailyCap(settings.schools_assistant_daily_limit)
     slots = asyncio.Semaphore(settings.schools_assistant_max_concurrency)
     trusted = settings.trusted_proxy_networks
 
@@ -203,6 +249,8 @@ def create_app(settings: Settings, *, store: PublicationStore | None = None, emb
             log.warning("ready_failed", extra={"error": type(error).__name__})
             return JSONResponse({"status": "unavailable"}, status_code=503, headers=NO_STORE)
         semantic = retriever.semantic_available(index)
+        degraded = [name for name, on in (("extractive_only", model is None), ("lexical_only", not semantic),
+                                          ("daily_limit_reached", daily.exhausted)) if on]
         return JSONResponse({
             "status": "ready", "release_id": index.release_id, "passage_count": len(index.passages),
             "embedding_model": index.embedding_model,
@@ -210,14 +258,20 @@ def create_app(settings: Settings, *, store: PublicationStore | None = None, emb
             "semantic_disabled_reason": None if semantic else (index.semantic_disabled_reason
                                                                or "query embeddings unavailable"),
             "answering": "model" if model is not None else "extractive_only",
+            "degraded": degraded, "daily": {"used": daily.used, "limit": daily.limit},
         }, headers=NO_STORE)
 
     @app.post("/v1/ask")
     async def ask(body: AskRequest, request: Request) -> JSONResponse:
         started = time.monotonic()
-        wait = limiter.take(client_ip(request, trusted))
+        client = client_ip(request, trusted)
+        wait = (proxy_limiter if client == TRUSTED_PROXY_WITHOUT_CLIENT else limiter).take(client)
         if wait > 0:
             return _error(429, "rate_limited", {"Retry-After": str(max(1, math.ceil(wait)))})
+        # Declines are deterministic and free; only questions that reach the model spend the daily cap.
+        if model is not None and guardrails.check(body.messages[-1].content) is None and not daily.take():
+            log.warning("daily_limit_reached", extra={"status": daily.limit})
+            return _error(503, "busy", {"Retry-After": str(_seconds_to_utc_midnight())}, reason="daily_limit")
         try:
             await asyncio.wait_for(slots.acquire(), timeout=10)
         except TimeoutError:
@@ -240,11 +294,28 @@ def create_app(settings: Settings, *, store: PublicationStore | None = None, emb
     return app
 
 
+def load_settings(*, report_degraded: bool = True) -> Settings:
+    """Settings checked for startup. Exits with a one-line reason (never a secret) when unusable."""
+    try:
+        settings = Settings()
+        settings.validate_runtime()
+    except ConfigError as error:
+        log.critical("startup_config_error", extra={"detail": str(error)})
+        sys.exit(2)
+    except Exception as error:  # Pydantic errors could echo values; report the type only.
+        log.critical("startup_config_error", extra={"detail": type(error).__name__})
+        sys.exit(2)
+    if report_degraded and settings.openrouter_key is None:
+        log.warning("startup_degraded", extra={"degraded": ["extractive_only", "lexical_only"],
+                                               "detail": "OpenRouter key not configured"})
+    return settings
+
+
 def production_app() -> FastAPI:
     """Factory for `uvicorn --factory schools_assistant.api:production_app`."""
     os.environ.setdefault("PYDANTIC_AI_NO_BANNER", "1")
     configure_logging()
-    settings = Settings()
+    settings = load_settings()
     key = settings.openrouter_key
     embedder = model = None
     model_settings = None
@@ -255,7 +326,7 @@ def production_app() -> FastAPI:
         provider = OpenRouterProvider(api_key=key, app_title="Open Valley Schools assistant")
         model = OpenRouterModel(settings.schools_assistant_model, provider=provider)
         model_settings = {
-            "temperature": 0.1, "max_tokens": 2500,
+            "temperature": 0.1, "max_tokens": 2500, "openrouter_usage": {"include": True},
             "timeout": settings.schools_assistant_model_request_timeout_seconds,
             "openrouter_provider": {"data_collection": "deny", "allow_fallbacks": False},
         }
@@ -267,6 +338,9 @@ def production_app() -> FastAPI:
 
 def main() -> None:
     import uvicorn
+
+    configure_logging()
+    load_settings(report_degraded=False)  # Fail before binding the port; the factory reports degradation.
 
     uvicorn.run("schools_assistant.api:production_app", factory=True,
                 host=os.environ.get("SCHOOLS_ASSISTANT_HOST", "127.0.0.1"),

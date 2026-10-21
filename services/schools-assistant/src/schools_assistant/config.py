@@ -48,6 +48,12 @@ class Settings(BaseSettings):
     schools_assistant_trusted_proxies: str = "127.0.0.1,::1"
     schools_assistant_rate_per_minute: float = Field(default=6.0, gt=0)
     schools_assistant_rate_burst: int = Field(default=4, ge=1)
+    # Requests from a trusted proxy that carry no X-Forwarded-For share one separate, wider bucket
+    # so they can neither impersonate a visitor nor throttle every visitor at once.
+    schools_assistant_proxy_rate_per_minute: float = Field(default=60.0, gt=0)
+    schools_assistant_proxy_rate_burst: int = Field(default=20, ge=1)
+    # Questions that reach the model per UTC day, across all visitors. Guardrail declines don't count.
+    schools_assistant_daily_limit: int = Field(default=500, ge=1)
     schools_assistant_max_concurrency: int = Field(default=4, ge=1)
     schools_assistant_answer_timeout_seconds: float = Field(default=45.0, gt=0)
     schools_assistant_model_request_timeout_seconds: float = Field(default=30.0, gt=0)
@@ -65,6 +71,7 @@ class Settings(BaseSettings):
         if user != RUNTIME_ROLE:
             raise ConfigError(f"The database connection must log in as {RUNTIME_ROLE}")
         self.trusted_proxy_networks  # noqa: B018 - validate eagerly
+        self.openrouter_key  # noqa: B018 - an unreadable key file fails startup; a missing key degrades
 
     @cached_property
     def database_url(self) -> str | None:

@@ -261,6 +261,20 @@ def build_agent() -> Agent[TurnDeps, GroundedAnswer]:
     return agent
 
 
+def run_usage(messages: list[ModelMessage]) -> dict[str, Any]:
+    """Token counts and OpenRouter-reported cost for one run. Numbers only, never text."""
+    # Prior turns passed as history are ModelResponses without a model name; skip them.
+    responses = [m for m in messages if isinstance(m, ModelResponse) and m.model_name]
+    costs = [m.provider_details.get("cost") for m in responses if m.provider_details]
+    return {
+        "requests": len(responses),
+        "input_tokens": sum(m.usage.input_tokens for m in responses),
+        "output_tokens": sum(m.usage.output_tokens for m in responses),
+        "cache_read_tokens": sum(m.usage.cache_read_tokens for m in responses),
+        "cost_usd": round(sum(float(c) for c in costs if isinstance(c, int | float)), 6) if costs else None,
+    }
+
+
 def history(messages: list[dict[str, str]]) -> list[ModelMessage]:
     """Prior turns as plain text. Rendered [n] markers are removed because they mean nothing here."""
     result: list[ModelMessage] = []
@@ -300,6 +314,7 @@ class AnswerService:
                         today=today or date.today())
         output: GroundedAnswer | None = None
         failure = None
+        usage: dict[str, Any] | None = None
         if self.model is None:
             failure = "model_unconfigured"
         else:
@@ -316,6 +331,7 @@ class AnswerService:
                     failure = "timeout"
                 except Exception as error:  # Model, transport and retry exhaustion all fall back.
                     failure = type(error).__name__
+            usage = run_usage(run_messages)
             if failure:
                 # Tool names only: arguments can echo the question, which is not logged.
                 calls = [part.tool_name for message in run_messages if isinstance(message, ModelResponse)
@@ -341,7 +357,8 @@ class AnswerService:
                     question=question, release_id=index.release_id, reason="not_in_record")
         log.info("ask", extra={"release_id": index.release_id, "answer_kind": result["answer_kind"],
                                "failure": failure, "validator_findings": sorted(set(deps.findings)),
-                               "retrieval": sorted(deps.retrieval_modes), "citations": len(result["citations"])})
+                               "retrieval": sorted(deps.retrieval_modes), "citations": len(result["citations"]),
+                               "usage": usage})
         return result
 
     async def _fallback(self, index: ReleaseIndex, deps: TurnDeps, question: str,

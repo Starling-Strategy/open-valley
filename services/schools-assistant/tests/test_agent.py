@@ -271,3 +271,19 @@ async def test_conversation_history_is_passed_as_text() -> None:
 def test_history_drops_leading_assistant_turns() -> None:
     result = history([{"role": "assistant", "content": "Hello"}, {"role": "user", "content": "Hi"}])
     assert len(result) == 1 and isinstance(result[0], ModelRequest)
+
+
+def test_run_usage_counts_model_responses_only() -> None:
+    from pydantic_ai.messages import TextPart
+    from pydantic_ai.usage import RequestUsage
+
+    from schools_assistant.agent import run_usage
+
+    messages = [
+        ModelResponse(parts=[TextPart("prior turn")]),
+        ModelResponse(parts=[TextPart("a")], model_name="m", usage=RequestUsage(input_tokens=100, output_tokens=20),
+                      provider_details={"cost": 0.0012}),
+        ModelResponse(parts=[TextPart("b")], model_name="m", usage=RequestUsage(input_tokens=50, output_tokens=5)),
+    ]
+    assert run_usage(messages) == {"requests": 2, "input_tokens": 150, "output_tokens": 25,
+                                   "cache_read_tokens": 0, "cost_usd": 0.0012}

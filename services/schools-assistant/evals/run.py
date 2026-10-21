@@ -70,7 +70,7 @@ async def main(argv: list[str] | None = None) -> int:
 
     async with httpx.AsyncClient(base_url=args.url.rstrip("/"), timeout=90) as client:
         report = await evaluate(client, dataset, concurrency=args.concurrency)
-    report.print(include_input=False, include_output=False, include_durations=True)
+    report.print(include_input=False, include_output=False, include_durations=True, include_reasons=True)
     failed = failed_cases(report)
     if failed:
         print(f"{len(failed)} case(s) with failing assertions: {', '.join(failed)}", file=sys.stderr)

@@ -1,3 +1,4 @@
+from datetime import date
 from pathlib import Path
 
 import httpx
@@ -5,7 +6,7 @@ import pytest
 from pydantic_ai.messages import ModelResponse, ToolCallPart
 from pydantic_ai.models.function import FunctionModel
 
-from schools_assistant.api import TokenBucketLimiter, create_app
+from schools_assistant.api import DailyCap, TokenBucketLimiter, create_app, load_settings
 from schools_assistant.config import ConfigError, Settings
 
 from .conftest import FakeEmbedder, FakeStore
@@ -33,11 +34,11 @@ def answering_model() -> FunctionModel:
 
 
 def client(store: FakeStore, *, clock: Clock | None = None, model=None, peer: str = "203.0.113.9",
-           **overrides) -> httpx.AsyncClient:
+           daily: DailyCap | None = None, **overrides) -> httpx.AsyncClient:
     options = {"schools_assistant_rate_per_minute": 6, "schools_assistant_rate_burst": 2} | overrides
     settings = Settings(_env_file=None, **options)
     app = create_app(settings, store=store, embedder=FakeEmbedder(), model=model or answering_model(),
-                     clock=clock or Clock())
+                     clock=clock or Clock(), daily=daily)
     return httpx.AsyncClient(transport=httpx.ASGITransport(app=app, client=(peer, 5555)), base_url="http://test")
 
 
@@ -171,3 +172,75 @@ def test_openrouter_key_from_file(tmp_path: Path) -> None:
     key = tmp_path / "key"
     key.write_text("sk-test\n")
     assert Settings(_env_file=None, openrouter_api_key_file=key).openrouter_key == "sk-test"
+
+
+async def test_trusted_proxy_without_forwarded_for_uses_separate_bucket(store: FakeStore) -> None:
+    async with client(store, peer="127.0.0.1", schools_assistant_proxy_rate_burst=3) as c:
+        visitor = {"X-Forwarded-For": "198.51.100.7"}
+        assert [(await c.post("/v1/ask", json=ask(), headers=visitor)).status_code for _ in range(3)] == [200, 200, 429]
+        # Header-less requests from the proxy neither inherit the visitor's empty bucket nor share one with it.
+        assert [(await c.post("/v1/ask", json=ask())).status_code for _ in range(4)] == [200, 200, 200, 429]
+        # Exhausting the header-less bucket does not throttle other visitors.
+        other = {"X-Forwarded-For": "198.51.100.8"}
+        assert (await c.post("/v1/ask", json=ask(), headers=other)).status_code == 200
+
+
+async def test_spoofed_forwarded_chain_with_only_trusted_hops_is_not_a_visitor(store: FakeStore) -> None:
+    async with client(store, peer="127.0.0.1", schools_assistant_proxy_rate_burst=1) as c:
+        trusted_only = {"X-Forwarded-For": "127.0.0.1"}
+        codes = [(await c.post("/v1/ask", json=ask(), headers=trusted_only)).status_code for _ in range(2)]
+    assert codes == [200, 429]
+
+
+async def test_daily_cap_counts_model_questions_only(store: FakeStore) -> None:
+    today = {"day": date(2026, 10, 20)}
+    cap = DailyCap(2, today=lambda: today["day"])
+    async with client(store, daily=cap, schools_assistant_rate_burst=20) as c:
+        assert (await c.post("/v1/ask", json=ask())).status_code == 200
+        assert (await c.post("/v1/ask", json=ask("Which school should close?"))).json()["answer_kind"] == "declined"
+        assert (await c.post("/v1/ask", json=ask())).status_code == 200
+        busy = await c.post("/v1/ask", json=ask())
+        assert busy.status_code == 503 and busy.json() == {"error": "busy", "reason": "daily_limit"}
+        assert int(busy.headers["retry-after"]) >= 60
+        # Declines stay available after the cap.
+        assert (await c.post("/v1/ask", json=ask("Which school should close?"))).status_code == 200
+        ready = (await c.get("/ready")).json()
+        assert "daily_limit_reached" in ready["degraded"] and ready["daily"] == {"used": 2, "limit": 2}
+        today["day"] = date(2026, 10, 21)
+        assert (await c.post("/v1/ask", json=ask())).status_code == 200
+
+
+async def test_ready_reports_degraded_modes(store: FakeStore) -> None:
+    settings = Settings(_env_file=None)
+    app = create_app(settings, store=store, embedder=None, model=None)
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as c:
+        body = (await c.get("/ready")).json()
+    assert body["status"] == "ready" and body["degraded"] == ["extractive_only", "lexical_only"]
+
+
+def test_startup_fails_fast_without_leaking(tmp_path: Path, monkeypatch, caplog) -> None:
+    url = tmp_path / "url"
+    url.write_text("postgresql://schools_runtime:hunter2@db/x")
+    monkeypatch.setenv("SCHOOLS_DATABASE_URL_FILE", str(url))
+    monkeypatch.setenv("OPENROUTER_API_KEY_FILE", str(tmp_path / "missing-key"))
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    with pytest.raises(SystemExit) as exit_info:
+        load_settings()
+    assert exit_info.value.code == 2
+    details = lambda: " ".join(str(getattr(r, "detail", "")) for r in caplog.records)  # noqa: E731
+    assert "OPENROUTER_API_KEY_FILE is not readable" in details() and "hunter2" not in details()
+    monkeypatch.setenv("SCHOOLS_DATABASE_URL_FILE", str(tmp_path / "missing-url"))
+    monkeypatch.delenv("OPENROUTER_API_KEY_FILE")
+    with pytest.raises(SystemExit):
+        load_settings()
+    assert "SCHOOLS_DATABASE_URL_FILE is not readable" in details()
+
+
+def test_startup_without_key_is_degraded_not_fatal(tmp_path: Path, monkeypatch, caplog) -> None:
+    url = tmp_path / "url"
+    url.write_text("postgresql://schools_runtime:pw@db/x")
+    monkeypatch.setenv("SCHOOLS_DATABASE_URL_FILE", str(url))
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    monkeypatch.delenv("OPENROUTER_API_KEY_FILE", raising=False)
+    assert load_settings().openrouter_key is None
+    assert "startup_degraded" in caplog.text

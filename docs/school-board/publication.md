@@ -15,8 +15,13 @@ without memberships, superuser, role/database creation, replication, or RLS-bypa
 privileges. The migration creates the NOLOGIN/NOINHERIT `schools_owner` if absent.
 It creates no passwords and changes no other schema or database-wide grants.
 `db/schools/migrate.mjs` accepts `SCHOOLS_ADMIN_DATABASE_URL` only for loopback
-synthetic databases. Production must run the SQL through its approved privileged
-credential consumer, separately from the app and publisher.
+synthetic databases. In production, `scripts/school_board/migrate_production.mjs`
+pipes both files over pinned SSH into `docker exec -i openvalley-postgres psql`. It
+uses the container's own administrator environment, separately from the app and
+publisher. `--dry-run` runs only a read-only inspection. `--apply` (owner-approved)
+refuses while any blocker remains, applies 001 and 002 twice, and then verifies
+the exact runtime, publisher and `PUBLIC` grants with the effective-privilege
+audit. See the [deployment runbook](../DEPLOYMENT.md#2-migration-owner).
 
 The preflight inspects effective privileges, including PUBLIC and column grants.
 It refuses private-table/sequence access, unrelated schema creation, and executable
@@ -121,6 +126,19 @@ the same release ID. Concurrent publishers using one base cannot both win.
 
 Success prints only `{ "releaseId": "<uuid>" }`. Keep that non-sensitive receipt
 and verify readiness/public responses through the host's deployment process.
+
+### Production publication
+
+Publish from Rockefeller, where the collection lives, with
+`scripts/school_board/publish_production.mjs`. It builds the candidate, adds
+passages, and runs `publish.mjs` against `100.75.27.44:5434`. The server has
+`ssl=off`, so the path relies on Tailscale encryption; do not set `sslmode`.
+`--dry-run` builds the candidate and measures extraction only. The
+[deployment runbook](../DEPLOYMENT.md#publication-from-rockefeller) lists the
+exact registry and data-root writes, the measured timing, and the publisher
+credential gap on Rockefeller. With 7,343 passages, the worst 200-row stage call
+took 0.35 s and `attach_passages` took 2.0 s locally, well inside the 15 s
+statement timeout.
 
 ## Withdraw, then finish deletion
 
@@ -243,8 +261,13 @@ if this preview created them and no other local database uses them.
 
 ```bash
 SCHOOLS_TEST_DATABASE_URL=postgresql://postgres@127.0.0.1:55432/postgres \
-node --test scripts/school_board/test_publication.mjs
+node --test --test-concurrency=1 scripts/school_board/test_publication.mjs scripts/school_board/test_migrate_production.mjs
+node --test scripts/school_board/test_publish_production.mjs scripts/school_board/test_credentials.mjs
 ```
+
+`test_migrate_production.mjs` runs the production migrator's SQL on a disposable
+database. It checks the read-only dry run, the block on a `PUBLIC` leak, the
+double apply with exact grant verification, and detection of widened grants.
 
 After `npm run build --prefix web` and installing Playwright Chromium, run:
 

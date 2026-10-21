@@ -138,24 +138,43 @@ function databaseUrl(username, password) {
   return `postgresql://${username}:${encodeURIComponent(password)}@100.75.27.44:5434/openvalley`;
 }
 
+// Static consumer source in SSH argv; every secret travels as JSON on SSH stdin.
+function remote(execute, envelope) {
+  const code = readFileSync(new URL('./provision_credentials.py', import.meta.url), 'utf8');
+  const knownHosts = fileURLToPath(new URL('../../deploy/icculus-known-hosts', import.meta.url));
+  // SSH joins remote arguments through a shell; quote the static source, never the credentials.
+  const remoteCommand = `python3 -c '${code.replaceAll("'", "'\\''")}'`;
+  return execute('/usr/bin/ssh', [
+    '-F', '/dev/null', '-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=yes',
+    '-o', `UserKnownHostsFile=${knownHosts}`, '-o', 'GlobalKnownHostsFile=/dev/null',
+    '-o', 'UpdateHostKeys=no', '-o', 'ConnectTimeout=5', '-o', 'IdentityAgent=none',
+    '-o', 'IdentityFile=none', '-o', 'IdentitiesOnly=yes', '-o', 'ForwardAgent=no',
+    'root@100.75.27.44', remoteCommand,
+  ], { ...privateIO, timeout: 120_000, env: { ...childEnv }, input: JSON.stringify(envelope) });
+}
+
+// Assistant key delivery. The key arrives on this process's stdin (for example
+// piped from op read); no vault access, database change or other file write.
+export async function deliverOpenRouterKey({ readKey = () => readFileSync(0, 'utf8'), execute = execFileSync } = {}) {
+  const key = stage('OpenRouter key input failed.', () => {
+    const value = String(readKey()).replace(/\r?\n$/, '');
+    if (!/^[!-~]{20,512}$/.test(value)) throw new Error();
+    return value;
+  });
+  return stage('Remote OpenRouter key delivery failed.', () => {
+    const result = JSON.parse(remote(execute, { openrouter_api_key: key }));
+    if (Object.keys(result).join(',') !== 'delivery' || !['created', 'reused'].includes(result.delivery)) throw new Error();
+    return { operation: 'deliver-openrouter', delivery: result.delivery };
+  });
+}
+
 export async function provision(adapters) {
   const client = await access(adapters);
   // Resolve both titles before creating anything, so a duplicate cannot cause a partial create.
   const matches = inventory(client, identities, true);
   const passwords = Object.fromEntries(identities.map((identity, i) => [identity.username, credential(client, identity, matches[i])]));
   return stage('Remote credential provisioning failed.', () => {
-    const code = readFileSync(new URL('./provision_credentials.py', import.meta.url), 'utf8');
-    const knownHosts = fileURLToPath(new URL('../../deploy/icculus-known-hosts', import.meta.url));
-    // SSH joins remote arguments through a shell; quote the static source, never the credentials.
-    const remoteCommand = `python3 -c '${code.replaceAll("'", "'\\''")}'`;
-    const output = client.execute('/usr/bin/ssh', [
-      '-F', '/dev/null', '-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=yes',
-      '-o', `UserKnownHostsFile=${knownHosts}`, '-o', 'GlobalKnownHostsFile=/dev/null',
-      '-o', 'UpdateHostKeys=no', '-o', 'ConnectTimeout=5', '-o', 'IdentityAgent=none',
-      '-o', 'IdentityFile=none', '-o', 'IdentitiesOnly=yes', '-o', 'ForwardAgent=no',
-      'root@100.75.27.44', remoteCommand,
-    ], { ...privateIO, timeout: 120_000, env: { ...childEnv }, input: JSON.stringify(passwords) });
-    const result = JSON.parse(output);
+    const result = JSON.parse(remote(client.execute, passwords));
     if (Object.keys(result).sort().join(',') !== 'created,delivery' || !Array.isArray(result.created)
         || new Set(result.created).size !== result.created.length
         || result.created.some((role) => !identities.some((identity) => identity.username === role))
@@ -213,6 +232,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     const [operation, ...args] = process.argv.slice(2);
     let receipt;
     if (operation === 'provision' && !args.length) receipt = await provision();
+    else if (operation === 'deliver-openrouter' && !args.length) receipt = await deliverOpenRouterKey();
     else if (['publish', 'revoke'].includes(operation)) receipt = await runPublisher(operation, args);
     else throw new SafeError('Unsupported credential operation.');
     console.log(JSON.stringify(receipt));

@@ -5,7 +5,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
-import { provision, loadPublisherUrl, runPublisher } from './credentials.mjs';
+import { deliverOpenRouterKey, provision, loadPublisherUrl, runPublisher } from './credentials.mjs';
 
 const vault = 'uny5mihzmiw3xb3l2mycu6ipau';
 const token = 'SYNTHETIC_SERVICE_TOKEN_DO_NOT_PRINT';
@@ -339,8 +339,35 @@ test('publisher rejects arbitrary scripts/flags and redacts failing child output
   await assert.rejects(runPublisher('revoke', ['--root', '/tmp/test'], f.adapters), { message: 'Publisher command failed.' });
 });
 
+test('OpenRouter key travels only on SSH stdin and the receipt is reconstructed', async () => {
+  const key = 'sk-or-v1-SYNTHETIC_KEY_DO_NOT_PRINT_0123456789';
+  const calls = [];
+  const execute = (command, args, options) => {
+    calls.push({ command, args, options });
+    assert.deepEqual(JSON.parse(options.input), { openrouter_api_key: key });
+    return JSON.stringify({ delivery: 'created' });
+  };
+  const receipt = await deliverOpenRouterKey({ readKey: () => key + '\n', execute });
+  assert.deepEqual(receipt, { operation: 'deliver-openrouter', delivery: 'created' });
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].command, '/usr/bin/ssh');
+  assert.ok(calls[0].args.includes('StrictHostKeyChecking=yes'));
+  assertPrivate(calls, receipt, [key]);
+  for (const bad of ['short', 'has space in the synthetic key value', '']) {
+    await assert.rejects(deliverOpenRouterKey({ readKey: () => bad, execute: () => assert.fail('no SSH for a bad key') }),
+      { message: 'OpenRouter key input failed.' });
+  }
+  for (const hostile of [JSON.stringify({ delivery: 'created', key }), JSON.stringify({ delivery: 'replaced' }), `oops ${key}`]) {
+    await assert.rejects(deliverOpenRouterKey({ readKey: () => key, execute: () => hostile }), (error) => {
+      assert.equal(error.message, 'Remote OpenRouter key delivery failed.');
+      assert.ok(!JSON.stringify(error).includes(key));
+      return true;
+    });
+  }
+});
+
 test('unsupported CLI never attempts credential access or prints an exception', () => {
-  for (const args of [[], ['url'], ['provision', '--print-secret'], ['run', 'env']]) {
+  for (const args of [[], ['url'], ['provision', '--print-secret'], ['run', 'env'], ['deliver-openrouter', '--print']]) {
     let result;
     try { execFileSync(process.execPath, [fileURLToPath(new URL('./credentials.mjs', import.meta.url)), ...args], { stdio: 'pipe' }); }
     catch (error) { result = error; }
@@ -508,6 +535,27 @@ with ExitStack() as stack:
         except ValueError: pass
         else: raise AssertionError('unmanaged/unsafe delivery accepted')
         fs.nodes = saved
+
+    # The assistant key is a second managed file with identical ownership, mode and atomic install.
+    stack.enter_context(patch.object(g['os'], 'geteuid', return_value=0))
+    key = 'sk-or-v1-synthetic-key-0123456789'
+    assert m['deliver_openrouter'](key) == {'delivery': 'created'}
+    key_path = '/opt/openvalley-schools/credentials/openrouter-api-key'
+    assert fs.nodes[key_path][:4] == [stat.S_IFREG | 0o400, 1000, 1000, key.encode()]
+    assert m['deliver_openrouter'](key) == {'delivery': 'reused'}
+    handle = m['prepare_delivery'](url)
+    assert m['write_delivery'](handle, url) == 'reused'
+    for bad in [lambda: m['deliver_openrouter']('sk-or-v1-a-different-synthetic-key'),
+                lambda: m['deliver_openrouter']('short')]:
+        try: bad()
+        except ValueError: pass
+        else: raise AssertionError('mismatched or invalid key accepted')
+    saved = copy.deepcopy(fs.nodes)
+    fs.nodes[key_path][0] = stat.S_IFREG | 0o644
+    try: m['prepare_delivery'](url)
+    except ValueError: pass
+    else: raise AssertionError('unsafe sibling key file accepted')
+    fs.nodes = saved
 
 with patch.dict(g, {'provision': lambda value: (_ for _ in ()).throw(RuntimeError('synthetic-secret'))}), \
      patch.object(sys, 'stdin', io.StringIO(json.dumps(passwords))), \

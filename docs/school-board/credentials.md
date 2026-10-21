@@ -11,6 +11,11 @@ PostgreSQL school login, or runtime delivery copy was created. The owner chose
 to defer production credentials and continue local implementation. Resume only
 after the owner confirms the two items below are ready; do not widen grants.
 
+**Status, October 20:** nothing has been provisioned. A read-only check found no
+`schools_*` roles and no `/opt/openvalley-schools`. This release also needs the
+assistant key file and publisher access from Rockefeller; both are described
+below and both are owner-gated.
+
 ## Fixed identities and transport
 
 Vault: Squatch, `uny5mihzmiw3xb3l2mycu6ipau`.
@@ -110,6 +115,73 @@ Openship-managed app container running as UID/GID 1000 and configure its private
 database-file reader. Do not put it in an image, an environment example, a backup,
 an export, or a repository. The publisher credential has no delivery file.
 
+### Assistant reuse of the runtime mount
+
+> **Decided (October 20):** the assistant image runs as UID/GID 1000, the same
+> identity as the web image's `node` user. Both containers read the same
+> `1000:1000 0400` runtime file, and the OpenRouter key file uses the same
+> ownership. This consumer's checks are unchanged.
+
+The assistant container mounts the **same** runtime file read-only, at
+`/run/secrets/schools-database-url`, and sets
+`SCHOOLS_DATABASE_URL_FILE` to that path. It needs no second database identity
+and no second copy. The assistant refuses to start unless the connection
+authenticates as `schools_runtime`. Under the current consumer code, it must run, like the web container, as UID/GID
+`1000:1000` to read the 0400 file.
+
+### OpenRouter key for the assistant
+
+The assistant reads `OPENROUTER_API_KEY_FILE`. Deliver exactly one copy:
+
+```text
+/opt/openvalley-schools/credentials/openrouter-api-key   1000:1000, 0400, no trailing newline
+```
+
+Mount it read-only into the assistant container only, at
+`/run/secrets/openrouter-api-key`. The web container does not receive it.
+
+The owner chooses the key and its 1Password item. A dedicated, spend-capped key
+is recommended. Delivery uses the same pinned SSH consumer as the runtime URL:
+
+```bash
+op read "op://<approved vault>/<key item>/credential" \
+  | node scripts/school_board/credentials.mjs deliver-openrouter
+```
+
+The key enters through local stdin and travels as JSON on SSH stdin. The remote
+consumer applies the same directory checks (root-owned 0700, no symlinks, lock)
+and the same synced, non-replacing atomic link. An existing file must match
+exactly and is then reused. Success prints only
+`{"operation":"deliver-openrouter","delivery":"created|reused"}`. This operation
+reads no vault itself and does not touch the database, so it also runs from
+Rockefeller.
+
+The credentials directory now admits exactly two managed files,
+`runtime-database-url` and `openrouter-api-key`. Each must be a single-link
+regular file, `1000:1000` and 0400. Any other entry, including an interrupted
+`.<name>.new`, still fails delivery for review. Synthetic tests cover the
+coexistence of the two files, reuse, a mismatch, and an unsafe sibling mode.
+
+### Publisher access from Rockefeller
+
+The collection lives on Rockefeller, so production publication runs there with
+`scripts/school_board/publish_production.mjs`. As of October 20, Rockefeller's
+1Password service account can read only the `brigade-opencode` vault, and Squatch
+returns 403. `credentials.mjs publish` also needs this managed runtime's
+`/opt/coding/guards.mjs` and `/usr/local/bin/op`, which Rockefeller lacks. The
+owner must choose one of:
+
+- Make the publisher item readable by Rockefeller's service account, through a
+  vault it can read. Then supply it as
+  `SCHOOLS_PUBLISHER_PASSWORD_FILE=<(op read "op://…/password")`. Process
+  substitution leaves no copy on disk. The wrapper builds the fixed
+  `schools_publisher@100.75.27.44:5434/openvalley` URL in process and passes it
+  only to the `publish.mjs` child.
+- Publish from this managed runtime with `credentials.mjs publish`, if the
+  collection is reachable there under the same root.
+
+Do not store the publisher password in a file on Rockefeller.
+
 ### Receipts and partial failures
 
 Successful stdout contains only a JSON receipt: the fixed database/vault names,
@@ -168,7 +240,7 @@ This consumer changes no database, schema, or `PUBLIC` grants.
 node --test scripts/school_board/test_credentials.mjs
 ```
 
-The synthetic suite has 13 native Node tests. The create-boundary test runs the
+The synthetic suite has 14 native Node tests. The create-boundary test runs the
 actual inline Python source with its fixed `op` executable replaced by a temporary
 static fake executable. That child checks `S_ISFIFO` on stdin, exact template
 bytes, fixed arguments, and token placement. A failing child writes synthetic

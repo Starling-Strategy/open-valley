@@ -318,3 +318,16 @@ synthetic five-file candidate.
 ```bash
 python3 -B -m unittest discover -s scripts/school_board -p test_passages.py -v
 ```
+
+## Production migration and publication
+
+Owner approval is required for every non-dry-run command. The
+[deployment runbook](../../docs/DEPLOYMENT.md) gives the order.
+
+```bash
+node scripts/school_board/migrate_production.mjs --dry-run      # read-only inspection of Icculus
+node scripts/school_board/migrate_production.mjs --apply        # OWNER: 001+002, repeat, verify grants
+node scripts/school_board/publish_production.mjs --dry-run      # candidate + extraction stats only
+node scripts/school_board/publish_production.mjs --publish --expected-base none   # OWNER
+op read "op://…" | node scripts/school_board/credentials.mjs deliver-openrouter    # OWNER
+```

@@ -60,11 +60,32 @@ service at `SCHOOLS_ASSISTANT_URL=http://assistant:8787`.
 | --- | --- |
 | Cold index build (first `/ready`) | 2.96 s |
 | RSS idle → after index build | 96 MiB → 356 MiB (`mem_limit: 1g` covers two indexes during a release change) |
-| Latency over the 16 model-answered eval cases | p50 17.4 s, p95 30.7 s, max 36.6 s |
-| Model usage per answer | median 7.5 requests, ~117k input tokens; OpenRouter cost mean $0.27, median $0.24, max $0.58 |
+| Latency over the 16 model-answered eval cases (Sonnet 5.5) | p50 17.4 s, p95 30.7 s, max 36.6 s |
+| Model usage per answer (Sonnet 5.5) | median 7.5 requests, ~117k input tokens; OpenRouter cost mean $0.27, median $0.24, max $0.58 |
 
 Each `ask` log line carries `usage` (requests, input, output and cache-read
 tokens, OpenRouter-reported `cost_usd`). It never contains question or answer text.
+
+### Model choice
+
+The 23-case eval was run against each model on the same release on
+October 20, 2026. Costs are OpenRouter-reported, over the 16 cases that reach
+the model. "Fallbacks" are runs where the validator rejected the answer twice
+and the visitor got the extractive document list instead.
+
+| Model | Eval checks passed | Mean cost per answer | Latency p50 / p95 | Fallbacks |
+| --- | --- | --- | --- | --- |
+| `anthropic/claude-sonnet-5.5` | 94.8% | $0.27 | 17.4 s / 30.7 s | 0 |
+| **`anthropic/claude-haiku-5.5`** (default) | **96.9%** | **$0.0035** | **6.7 s / 18.9 s** | 2 (uncited numbers) |
+| `openai/gpt-6-luna` | 94.8% | $0.0015 | 8.9 s / 18.8 s | 0 |
+| `deepseek/deepseek-v4.1-flash` | 94.8% | $0.0030 | 9.6 s / 45.0 s | 3 (timeouts) |
+
+Haiku gave the most complete answers, with the definitional caveats this
+record needs (Early College inclusion, preliminary counts). Luna writes shorter
+answers and is a good alternative; set `SCHOOLS_ASSISTANT_MODEL` to switch.
+The remaining failed checks are the client-side excerpt heuristic, not
+invented figures: the service validator accepted those numbers against the
+full passages. Re-run the comparison after any prompt or retrieval change.
 
 ## Configuration
 
@@ -72,7 +93,7 @@ tokens, OpenRouter-reported `cost_usd`). It never contains question or answer te
 | --- | --- | --- |
 | `SCHOOLS_DATABASE_URL` or `SCHOOLS_DATABASE_URL_FILE` | required | Must log in as `schools_runtime`; startup refuses any other user. Every query also checks `current_user` and `session_user`. |
 | `OPENROUTER_API_KEY` or `OPENROUTER_API_KEY_FILE` | none | Without a key the service runs extractive-only and lexical-only. |
-| `SCHOOLS_ASSISTANT_MODEL` | `anthropic/claude-sonnet-5.5` | OpenRouter chat model. Requests use `data_collection: deny`, no fallbacks. |
+| `SCHOOLS_ASSISTANT_MODEL` | `anthropic/claude-haiku-5.5` | OpenRouter chat model. Requests use `data_collection: deny`, no fallbacks. See [model choice](#model-choice). |
 | `SCHOOLS_ASSISTANT_EMBEDDING_MODEL` | `baai/bge-m3` | Must equal `schools.current_retrieval.embedding_model`, with 1,024 dimensions. Otherwise the semantic branch is off and `/ready` reports `lexical_only`. |
 | `SCHOOLS_UNANSWERED_LOG_PATH` | unset | Private JSONL file (mode 0600) for redacted unanswered questions. |
 | `SCHOOLS_ASSISTANT_TRUSTED_PROXIES` | `127.0.0.1,::1` | IPs or CIDRs whose `X-Forwarded-For` is trusted for rate limiting. |

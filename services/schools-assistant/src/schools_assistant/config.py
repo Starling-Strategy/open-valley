@@ -40,7 +40,9 @@ class Settings(BaseSettings):
     openrouter_api_key_file: Path | None = None
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
 
-    schools_assistant_model: str = "anthropic/claude-sonnet-5.5"
+    # Chosen 2026-10-20 over Sonnet 5.5, GPT 6 Luna and DeepSeek V4.1 Flash on the 23-case eval:
+    # highest pass rate, ~$0.0035 per answer (Sonnet: ~$0.27), p50 6.7 s. See README "Model choice".
+    schools_assistant_model: str = "anthropic/claude-haiku-5.5"
     schools_assistant_embedding_model: str = DEFAULT_EMBEDDING_MODEL
     schools_unanswered_log_path: Path | None = None
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 import ipaddress
 from functools import cached_property
 from pathlib import Path
+from typing import Literal
 
 from psycopg.conninfo import conninfo_to_dict
 from pydantic import Field, SecretStr
@@ -40,9 +41,16 @@ class Settings(BaseSettings):
     openrouter_api_key_file: Path | None = None
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
 
-    # Chosen 2026-10-20 over Sonnet 5.5, GPT 6 Luna and DeepSeek V4.1 Flash on the 23-case eval:
-    # highest pass rate, ~$0.0035 per answer (Sonnet: ~$0.27), p50 6.7 s. See README "Model choice".
-    schools_assistant_model: str = "anthropic/claude-haiku-5.5"
+    # Open-weight (MIT) model chosen 2026-10-20 from 14 open models on the 23-case eval, with the
+    # provider sort, reasoning and tool budget below: p50 6.3 s, p95 9.9 s, ~$0.005 per answer.
+    # See README "Model choice". These four settings were tuned together; change them together.
+    schools_assistant_model: str = "deepseek/deepseek-v4.1-flash"
+    # OpenRouter provider ordering for chat: "throughput", "latency", "price", or empty for its default.
+    schools_assistant_provider_sort: Literal["throughput", "latency", "price", ""] = "throughput"
+    # Reasoning effort sent to OpenRouter; "" leaves the model's default, "none" turns reasoning off.
+    schools_assistant_reasoning: Literal["", "none", "minimal", "low", "medium", "high"] = "none"
+    # Evidence tool calls per answer before the model must answer (bounds latency and tokens).
+    schools_assistant_tool_budget: int = Field(default=4, ge=1, le=16)
     schools_assistant_embedding_model: str = DEFAULT_EMBEDDING_MODEL
     schools_unanswered_log_path: Path | None = None
 

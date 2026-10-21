@@ -161,6 +161,15 @@ test("a heading line followed by bullets in one block renders as a paragraph the
   ]);
 });
 
+test("Markdown headings render as bold paragraphs, never as literal hashes", () => {
+  assert.deepEqual(parseAnswerText("## Short answer\nNo closure has been decided [1].\n- Feasibility study only [1]", new Set([1])), [
+    { type: "paragraph", inlines: [{ type: "text", text: "Short answer", bold: true }] },
+    { type: "paragraph", inlines: [{ type: "text", text: "No closure has been decided ", bold: false }, { type: "cite", marker: 1 },
+      { type: "text", text: ".", bold: false }] },
+    { type: "list", items: [[{ type: "text", text: "Feasibility study only ", bold: false }, { type: "cite", marker: 1 }]] },
+  ]);
+});
+
 test("dataset fact citations have no passage and are accepted", () => {
   const fact = { ...response().citations[0], passage_id: null, page_start: null, page_end: null, document_date: null };
   assert.ok(isAskResponse(response({ citations: [fact] })));

@@ -72,25 +72,31 @@ export type AnswerInline = { type: "text"; text: string; bold: boolean } | { typ
 export type AnswerBlock = { type: "paragraph"; inlines: AnswerInline[] } | { type: "list"; items: AnswerInline[][] };
 
 const LIST_ITEM = /^\s*(?:[-*•]|\d+[.)])\s+/;
+const HEADING = /^#{1,6}\s+/;
+
+type LineKind = "list" | "heading" | "text";
 
 /**
  * Parse the small Markdown subset the service emits: paragraphs, bullet
- * lists, **bold** and [n] markers. Markers without a citation stay as text.
+ * lists, headings (shown as bold paragraphs), **bold** and [n] markers.
+ * Markers without a citation stay as text.
  */
 export function parseAnswerText(text: string, markers: ReadonlySet<number>): AnswerBlock[] {
   // A heading line followed by bullets is common, so group consecutive lines by kind.
-  const runs: Array<{ list: boolean; lines: string[] }> = [];
+  const runs: Array<{ kind: LineKind; lines: string[] }> = [];
   for (const block of text.replace(/\r\n?/g, "\n").split(/\n\s*\n/)) {
-    let previous: { list: boolean; lines: string[] } | undefined;
+    let previous: { kind: LineKind; lines: string[] } | undefined;
     for (const line of block.split("\n").map(value => value.trim()).filter(Boolean)) {
-      const list = LIST_ITEM.test(line);
-      if (previous?.list !== list) runs.push(previous = { list, lines: [] });
+      const kind: LineKind = HEADING.test(line) ? "heading" : LIST_ITEM.test(line) ? "list" : "text";
+      if (previous?.kind !== kind || kind === "heading") runs.push(previous = { kind, lines: [] });
       previous.lines.push(line);
     }
   }
-  return runs.map((run): AnswerBlock => run.list
-    ? { type: "list", items: run.lines.map(line => parseInline(line.replace(LIST_ITEM, ""), markers)) }
-    : { type: "paragraph", inlines: parseInline(run.lines.join(" "), markers) });
+  return runs.map((run): AnswerBlock => {
+    if (run.kind === "list") return { type: "list", items: run.lines.map(line => parseInline(line.replace(LIST_ITEM, ""), markers)) };
+    if (run.kind === "heading") return { type: "paragraph", inlines: parseInline(`**${run.lines[0].replace(HEADING, "").replace(/\*\*/g, "")}**`, markers) };
+    return { type: "paragraph", inlines: parseInline(run.lines.join(" "), markers) };
+  });
 }
 
 function parseInline(text: string, markers: ReadonlySet<number>): AnswerInline[] {

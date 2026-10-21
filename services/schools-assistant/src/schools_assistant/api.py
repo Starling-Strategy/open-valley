@@ -197,7 +197,8 @@ def create_app(settings: Settings, *, store: PublicationStore | None = None, emb
     retriever = Retriever(embedder)
     service = AnswerService(retriever=retriever, model=model, model_settings=model_settings,
                             unanswered=UnansweredLog(settings.schools_unanswered_log_path),
-                            timeout_seconds=settings.schools_assistant_answer_timeout_seconds)
+                            timeout_seconds=settings.schools_assistant_answer_timeout_seconds,
+                            tool_budget=settings.schools_assistant_tool_budget)
     limiter = TokenBucketLimiter(rate_per_minute=settings.schools_assistant_rate_per_minute,
                                  burst=settings.schools_assistant_rate_burst, clock=clock)
     proxy_limiter = TokenBucketLimiter(rate_per_minute=settings.schools_assistant_proxy_rate_per_minute,
@@ -311,6 +312,20 @@ def load_settings(*, report_degraded: bool = True) -> Settings:
     return settings
 
 
+def chat_provider_routing(settings: Settings) -> dict[str, Any]:
+    """OpenRouter provider preferences for chat requests.
+
+    Open models are served by many providers whose speed differs tenfold, so
+    requests go to the fastest provider by `sort` and may fall back to another
+    provider of the same model (never another model). Providers must support
+    every request parameter, including tool calling, and must not collect data.
+    """
+    routing: dict[str, Any] = {"data_collection": "deny", "allow_fallbacks": True, "require_parameters": True}
+    if settings.schools_assistant_provider_sort:
+        routing["sort"] = settings.schools_assistant_provider_sort
+    return routing
+
+
 def production_app() -> FastAPI:
     """Factory for `uvicorn --factory schools_assistant.api:production_app`."""
     os.environ.setdefault("PYDANTIC_AI_NO_BANNER", "1")
@@ -328,8 +343,12 @@ def production_app() -> FastAPI:
         model_settings = {
             "temperature": 0.1, "max_tokens": 2500, "openrouter_usage": {"include": True},
             "timeout": settings.schools_assistant_model_request_timeout_seconds,
-            "openrouter_provider": {"data_collection": "deny", "allow_fallbacks": False},
+            "openrouter_provider": chat_provider_routing(settings),
         }
+        if settings.schools_assistant_reasoning == "none":
+            model_settings["openrouter_reasoning"] = {"enabled": False}
+        elif settings.schools_assistant_reasoning:
+            model_settings["openrouter_reasoning"] = {"effort": settings.schools_assistant_reasoning}
         embedder = OpenRouterEmbedder(api_key=key, model=settings.schools_assistant_embedding_model,
                                       dims=DEFAULT_EMBEDDING_DIMS, base_url=settings.openrouter_base_url,
                                       timeout=settings.schools_assistant_embedding_timeout_seconds)

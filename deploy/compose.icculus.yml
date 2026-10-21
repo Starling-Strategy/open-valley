@@ -38,7 +38,10 @@ services:
       SCHOOLS_DATABASE_URL_FILE: /run/secrets/schools-database-url
       OPENROUTER_API_KEY_FILE: /run/secrets/openrouter-api-key
       SCHOOLS_UNANSWERED_LOG_PATH: /var/lib/schools-assistant/unanswered.jsonl
-      SCHOOLS_ASSISTANT_MODEL: anthropic/claude-haiku-5.5
+      SCHOOLS_ASSISTANT_MODEL: deepseek/deepseek-v4.1-flash
+      SCHOOLS_ASSISTANT_PROVIDER_SORT: throughput
+      SCHOOLS_ASSISTANT_REASONING: none
+      SCHOOLS_ASSISTANT_TOOL_BUDGET: "4"
       SCHOOLS_ASSISTANT_EMBEDDING_MODEL: baai/bge-m3
       # Only `web` forwards visitors; its X-Forwarded-For is trusted from this subnet alone.
       SCHOOLS_ASSISTANT_TRUSTED_PROXIES: 172.31.87.0/29

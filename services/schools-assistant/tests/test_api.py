@@ -6,7 +6,7 @@ import pytest
 from pydantic_ai.messages import ModelResponse, ToolCallPart
 from pydantic_ai.models.function import FunctionModel
 
-from schools_assistant.api import DailyCap, TokenBucketLimiter, create_app, load_settings
+from schools_assistant.api import DailyCap, TokenBucketLimiter, chat_provider_routing, create_app, load_settings
 from schools_assistant.config import ConfigError, Settings
 
 from .conftest import FakeEmbedder, FakeStore
@@ -244,3 +244,11 @@ def test_startup_without_key_is_degraded_not_fatal(tmp_path: Path, monkeypatch, 
     monkeypatch.delenv("OPENROUTER_API_KEY_FILE", raising=False)
     assert load_settings().openrouter_key is None
     assert "startup_degraded" in caplog.text
+
+
+def test_chat_routing_prefers_fast_tool_capable_providers_without_data_collection() -> None:
+    routing = chat_provider_routing(Settings(_env_file=None))
+    assert routing == {"data_collection": "deny", "allow_fallbacks": True, "require_parameters": True,
+                       "sort": "throughput"}
+    unsorted = chat_provider_routing(Settings(_env_file=None, schools_assistant_provider_sort=""))
+    assert "sort" not in unsorted and unsorted["data_collection"] == "deny"

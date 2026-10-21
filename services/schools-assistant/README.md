@@ -68,24 +68,54 @@ tokens, OpenRouter-reported `cost_usd`). It never contains question or answer te
 
 ### Model choice
 
-The 23-case eval was run against each model on the same release on
-October 20, 2026. Costs are OpenRouter-reported, over the 16 cases that reach
-the model. "Fallbacks" are runs where the validator rejected the answer twice
-and the visitor got the extractive document list instead.
+The assistant uses an open-weight model. On October 20, 2026, the 23-case eval
+was run against 14 open-weight models on OpenRouter, with Claude models as a
+reference, all on the same release. Costs are OpenRouter-reported means over
+the 16 cases that reach the model. "Fallbacks" are runs that ended in the
+extractive document list: the validator rejected the answer twice, the model
+errored, or the 45 s answer timeout passed. Quality was judged by reading
+answers to the same hard questions side by side; the eval's check percentage
+barely separates models.
 
-| Model | Eval checks passed | Mean cost per answer | Latency p50 / p95 | Fallbacks |
+**Default** (`deepseek/deepseek-v4.1-flash`, MIT licence), tuned with
+`PROVIDER_SORT=throughput`, `REASONING=none`, `TOOL_BUDGET=4` and a prompt rule to
+check the last twelve months for decision questions:
+
+| Configuration | Latency p50 / p95 | Fallbacks (of 16) | Mean cost |
+| --- | --- | --- | --- |
+| DeepSeek V4.1 Flash, untuned (default routing, 8 tool calls) | 9.6 s / 45.0 s | 3 (timeouts) | $0.0030 |
+| DeepSeek V4.1 Flash, fastest provider only | 18.1 s / 45.0 s | 3 | $0.0029 |
+| DeepSeek V4.1 Flash, budget 4, reasoning low | 8.2 s / 16.2 s | 0 | $0.0017 |
+| **DeepSeek V4.1 Flash, budget 4, reasoning off (default)** | **6.3 s / 9.9 s** | **2 (uncited numbers blocked)** | **$0.0047** |
+
+DeepSeek gave the best answers of the open models: it separates votes from
+proposals and drafts, flags unapproved minutes, and leads with the most recent
+action. Its two fallbacks were the validator refusing figures that were not in
+the evidence.
+
+**Other open-weight models** (fastest provider, default reasoning, 8 tool calls):
+
+| Model | Latency p50 / p95 | Fallbacks | Mean cost | Notes |
 | --- | --- | --- | --- | --- |
-| `anthropic/claude-sonnet-5.5` | 94.8% | $0.27 | 17.4 s / 30.7 s | 0 |
-| **`anthropic/claude-haiku-5.5`** (default) | **96.9%** | **$0.0035** | **6.7 s / 18.9 s** | 2 (uncited numbers) |
-| `openai/gpt-6-luna` | 94.8% | $0.0015 | 8.9 s / 18.8 s | 0 |
-| `deepseek/deepseek-v4.1-flash` | 94.8% | $0.0030 | 9.6 s / 45.0 s | 3 (timeouts) |
+| `z-ai/glm-5.3-flash` (MIT) | 6.2 s / 17.4 s | 1 | $0.0009 | Close to DeepSeek in quality; best open alternative. Errors with reasoning off. |
+| `google/gemma-4-31b-it` | 2.2 s / 7.7 s | 0 | $0.0116 | Fastest, but missed the 2026 Cabot RFP and committee votes. Gemma licence. |
+| `meta-llama/llama-4-maverick` | 5.7 s / 14.3 s | 0 | $0.0043 | Overstated a committee note as a recommendation; missed 2026 votes. Llama licence. |
+| `moonshotai/kimi-k2.6` | 6.8 s / 29.6 s | 1 | $0.0206 | |
+| `minimax/minimax-m3` | 5.9 s / 12.1 s | 4 | $0.0052 | |
+| `xiaomi/mimo-v2.6-flash` | 4.9 s / 20.4 s | 2 | $0.0031 | |
+| `deepseek/deepseek-v4-pro` | 8.4 s / 27.8 s | 2 | $0.0486 | |
+| `z-ai/glm-5.3` | 13.3 s / 21.4 s | 6 | $0.0182 | |
+| `xiaomi/mimo-v2.6-pro` | 29.1 s / 45.0 s | 6 | $0.0040 | Errors and timeouts |
+| `qwen/qwen3.6-35b-a3b` | 45.0 s / 45.0 s | 10 | $0.0024 | Mostly timeouts |
+| `openai/gpt-oss-120b` | 1.8 s / 4.5 s | 12 | $0.0111 | Answers mostly rejected by the validator |
+| `meituan/longcat-2.0`, `mistralai/mistral-small-2603` | — | 16 | — | Every request errored under these routing rules |
 
-Haiku gave the most complete answers, with the definitional caveats this
-record needs (Early College inclusion, preliminary counts). Luna writes shorter
-answers and is a good alternative; set `SCHOOLS_ASSISTANT_MODEL` to switch.
-The remaining failed checks are the client-side excerpt heuristic, not
-invented figures: the service validator accepted those numbers against the
-full passages. Re-run the comparison after any prompt or retrieval change.
+**Closed reference models:** `anthropic/claude-haiku-5.5` 6.7 s / 18.9 s, 2 fallbacks,
+$0.0035; `openai/gpt-6-luna` 8.9 s / 18.8 s, 0 fallbacks, $0.0015;
+`anthropic/claude-sonnet-5.5` 17.4 s / 30.7 s, 0 fallbacks, $0.27.
+
+Re-run the comparison after any prompt, retrieval or routing change: these
+numbers depend on all of them, and provider speeds change over time.
 
 ## Configuration
 
@@ -93,7 +123,10 @@ full passages. Re-run the comparison after any prompt or retrieval change.
 | --- | --- | --- |
 | `SCHOOLS_DATABASE_URL` or `SCHOOLS_DATABASE_URL_FILE` | required | Must log in as `schools_runtime`; startup refuses any other user. Every query also checks `current_user` and `session_user`. |
 | `OPENROUTER_API_KEY` or `OPENROUTER_API_KEY_FILE` | none | Without a key the service runs extractive-only and lexical-only. |
-| `SCHOOLS_ASSISTANT_MODEL` | `anthropic/claude-haiku-5.5` | OpenRouter chat model. Requests use `data_collection: deny`, no fallbacks. See [model choice](#model-choice). |
+| `SCHOOLS_ASSISTANT_MODEL` | `deepseek/deepseek-v4.1-flash` | OpenRouter chat model. See [model choice](#model-choice). |
+| `SCHOOLS_ASSISTANT_PROVIDER_SORT` | `throughput` | OpenRouter provider order (`throughput`, `latency`, `price`, or empty). Chat requests deny data collection, require providers that support every parameter (tool calls), and may fall back only to another provider of the same model. |
+| `SCHOOLS_ASSISTANT_REASONING` | `none` | Reasoning effort sent to OpenRouter (`none`, `minimal`, `low`, `medium`, `high`, or empty for the model default). |
+| `SCHOOLS_ASSISTANT_TOOL_BUDGET` | `4` | Evidence tool calls per answer before the model must answer. Each model round trip resends all evidence gathered so far, so this bounds latency and tokens. |
 | `SCHOOLS_ASSISTANT_EMBEDDING_MODEL` | `baai/bge-m3` | Must equal `schools.current_retrieval.embedding_model`, with 1,024 dimensions. Otherwise the semantic branch is off and `/ready` reports `lexical_only`. |
 | `SCHOOLS_UNANSWERED_LOG_PATH` | unset | Private JSONL file (mode 0600) for redacted unanswered questions. |
 | `SCHOOLS_ASSISTANT_TRUSTED_PROXIES` | `127.0.0.1,::1` | IPs or CIDRs whose `X-Forwarded-For` is trusted for rate limiting. |

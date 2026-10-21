@@ -11,10 +11,16 @@ PostgreSQL school login, or runtime delivery copy was created. The owner chose
 to defer production credentials and continue local implementation. Resume only
 after the owner confirms the two items below are ready; do not widen grants.
 
-**Status, October 20:** nothing has been provisioned. A read-only check found no
-`schools_*` roles and no `/opt/openvalley-schools`. This release also needs the
-assistant key file and publisher access from Rockefeller; both are described
-below and both are owner-gated.
+**Status, October 20 (evening):** the assistant OpenRouter key file is delivered
+and verified (see below); `/opt/openvalley-schools/credentials` exists on Icculus.
+A read-only check found no `schools_*` roles, and `runtime-database-url` is not
+delivered. Provision remains blocked from Rockefeller by design: Rockefeller has
+neither `/opt/coding/guards.mjs` nor a Squatch-readable service account
+(`op vault list` returns only `brigade-opencode`; Squatch answers 403), and
+Icculus has neither `/opt/coding/guards.mjs` nor `/usr/local/bin/op`. No grants
+were widened. The remaining steps stay owner-gated: provision from the managed
+coding runtime that holds the Squatch service-account token, and publisher
+access for publication.
 
 ## Fixed identities and transport
 
@@ -155,6 +161,21 @@ exactly and is then reused. Success prints only
 `{"operation":"deliver-openrouter","delivery":"created|reused"}`. This operation
 reads no vault itself and does not touch the database, so it also runs from
 Rockefeller.
+
+> **Delivered (October 20, evening):** the key file exists on Icculus. The key
+> is the `brigade-opencode` agent item `OpenRouter API Key -
+> opencode-rockefeller` (`kaf7gccsvqbv6ogodo6qbwuxr4`), the $250/day-cap key
+> this project's agent had been pasting; it was identified through a live
+> `openrouter.ai/api/v1/key` metadata check (total limit 250, no secret value
+> read into chat). Delivery ran from Rockefeller with `op read` piped into
+> `credentials.mjs deliver-openrouter`; receipts were `created` and, on a
+> re-run, `reused`. A host check confirmed the root-owned `0700` directory and
+> the `1000:1000 0400` file. A dedicated, spend-capped key is still the
+> recommendation before public launch. Because a mismatching re-delivery is
+> refused rather than overwritten, rotating keys later requires an
+> owner-reviewed removal of the delivered file, then re-delivery from the new
+> item. The assistant container still needs its read-only
+> `/run/secrets/openrouter-api-key` mount when it deploys.
 
 The credentials directory now admits exactly two managed files,
 `runtime-database-url` and `openrouter-api-key`. Each must be a single-link

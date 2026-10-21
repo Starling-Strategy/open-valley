@@ -1,9 +1,14 @@
-import type { SchoolsPayload } from "../../lib/schools";
+"use client";
+
+import { useMemo } from "react";
+import { unpackClientPayload, type ClientPayload } from "../../lib/schools-pack";
 import { buildOutlookView, entityLabel } from "./enrollment-display";
 import { chartMaximum, EnrollmentFigure, EnrollmentTable, ForecastMetadata } from "./EnrollmentTable";
 import styles from "./enrollment.module.css";
 
-export function EnrollmentOutlook({ payload }: { payload: SchoolsPayload }) {
+/** A client component so its data crosses as packed props rather than as a rendered server tree. */
+export function EnrollmentOutlook({ packed }: { packed: ClientPayload }) {
+  const payload = useMemo(() => unpackClientPayload(packed), [packed]);
   const view = buildOutlookView(payload);
   return (
     <section className={`${styles.section} ${styles.outlook}`} aria-labelledby="enrollment-outlook-heading">

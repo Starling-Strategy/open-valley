@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { PublicSource, SchoolsPayload, SourceLibrary } from "../../lib/schools";
-import { buildLibraryCatalog, isFeaturedDocument, isPinnedDocument, payloadReferences, searchLibraryDocuments } from "../../lib/schools-library";
+import { buildLibraryCatalog, isFeaturedDocument, isPinnedDocument, librarySummary, pagePayload, parseLibraryQuery, payloadReferences, queryLibrary, searchLibraryDocuments } from "../../lib/schools-library";
+import { packClientPayload, packRows, unpackClientPayload, unpackRows } from "../../lib/schools-pack";
 import { isAskResponse, pageLabel, parseAnswerText, validateAskRequest, type AskResponse } from "../../lib/schools-ask";
 import { clientAddress, TokenBucketLimiter } from "../../lib/rate-limit";
 import { NextRequest } from "next/server";
@@ -60,6 +61,62 @@ test("featured and pinned rules use collections and categories, not titles", () 
   assert.deepEqual(ids(isPinnedDocument), ["history", "options"]);
   const cited = buildLibraryCatalog(payload.sources, [{ source_id: "capital", source_locator: "p. 2" }]);
   assert.ok(isPinnedDocument(cited.documents.find(d => d.source_id === "capital")!));
+});
+
+test("client components get only cited sources, and the library summary only pinned records", () => {
+  const payload = fixture();
+  const page = pagePayload(payload);
+  assert.deepEqual(page.sources.map(s => s.source_id), ["history"]);
+  assert.equal("library" in page.sources[0], false);
+  assert.equal(payload.sources.length, 5, "the input payload is unchanged");
+  const summary = librarySummary(buildLibraryCatalog(payload.sources, payloadReferences(payload)));
+  assert.deepEqual(summary.pinned.map(d => d.source_id).sort(), ["history", "options"]);
+  assert.deepEqual(Object.keys(summary.pinned[0]).sort(), ["body", "category", "cited_by_count", "kind", "locators", "meetings", "published_at", "school_year", "source_id", "title", "url"]);
+  assert.deepEqual(summary.counts, { total: 5, buildingUse: 2, meetings: 1, featured: 3 });
+  assert.deepEqual(summary.facets.meetingBodies, ["HUUSD Board"]);
+});
+
+test("library queries are strictly validated and paged", () => {
+  const params = (value: string) => parseLibraryQuery(new URLSearchParams(value));
+  for (const bad of ["limit=51", "limit=0", "offset=-1", "offset=1.5", "q=a&q=b", "unknown=1", "collection=private", "view=meetings&q=x",
+    "view=other", "source_id=a&q=b", "source_id=../x", "view=meetings&meeting_date=2025-1-1", `q=${"x".repeat(201)}`]) {
+    assert.equal(params(bad).ok, false, bad);
+  }
+  const catalog = buildLibraryCatalog(fixture().sources, payloadReferences(fixture()));
+  const run = (value: string) => { const parsed = params(value); assert.ok(parsed.ok); return queryLibrary(catalog, parsed.query); };
+  const featured = run("collection=featured") as { documents: unknown[] };
+  assert.deepEqual(run("collection=featured&limit=2"), { total: 3, offset: 0, documents: featured.documents.slice(0, 2) });
+  assert.equal((run("collection=building_use_visioning") as { total: number }).total, 2);
+  assert.deepEqual((run("q=capacity") as { documents: Array<{ source_id: string }> }).documents.map(d => d.source_id), ["options"]);
+  assert.deepEqual(Object.keys((run("limit=1") as { documents: object[] }).documents[0]).sort(), ["body", "category", "kind", "published_at", "school_year", "source_id", "title", "url"]);
+  const meetings = run("view=meetings&meeting_body=HUUSD+Board&meeting_date=2025-03-12") as { total: number; meetings: Array<{ documents: Array<{ source_id: string }> }> };
+  assert.equal(meetings.total, 1);
+  assert.deepEqual(meetings.meetings[0].documents.map(d => d.source_id), ["options"]);
+  assert.equal((run("view=meetings&offset=5") as { meetings: unknown[] }).meetings.length, 0);
+  assert.deepEqual((run("source_id=history") as { document: { locators: string[] } }).document.locators, ["October attending counts", "Table A, row 3"]);
+  assert.equal(run("source_id=absent"), null);
+});
+
+test("packed client payloads round-trip exactly, deriving identifiers only when they match", () => {
+  assert.deepEqual(unpackRows(packRows([{ a: "x", b: [1] }, { a: "x", b: [2] }, { a: "y", b: [] }])), [{ a: "x", b: [1] }, { a: "x", b: [2] }, { a: "y", b: [] }]);
+  assert.throws(() => packRows([{ a: 1 }, { b: 1 }]));
+  const row = (school_year: string, reference_date: string | null, observation_id?: string) => ({ ...fixture().enrollment[0], school_year, reference_date,
+    reference_date_status: reference_date ? "known" as const : "unknown" as const,
+    observation_id: observation_id ?? `attending|huusd|${school_year}|${reference_date ?? "unknown"}|K-12|attending|reported_headcount` });
+  const payload = fixture();
+  payload.enrollment = [row("2024-25", "2024-10-01"), row("2025-26", null)];
+  payload.series = [{ series_key: "attending|huusd|K-12|attending|reported_headcount", series_id: "attending", entity_id: "huusd", grade_scope: "K-12",
+    population_basis: "attending", count_basis: "reported_headcount", kind: "history", connect_points: true, description: "Synthetic.", observation_ids: payload.enrollment.map(r => r.observation_id) }];
+  const packed = packClientPayload(payload);
+  assert.deepEqual(packed.derived, { observation_id: true, series_key: true, observation_positions: true });
+  assert.ok(!JSON.stringify(packed).includes("attending|huusd|2024-25"));
+  assert.deepEqual(unpackClientPayload(packed), { ...payload, notes: [] });
+  payload.enrollment[1] = row("2025-26", null, "publisher-chosen-id");
+  payload.series[0].observation_ids[1] = "publisher-chosen-id";
+  payload.series[0].series_key = "custom";
+  const kept = packClientPayload(payload);
+  assert.deepEqual(kept.derived, { observation_id: false, series_key: false, observation_positions: true });
+  assert.deepEqual(unpackClientPayload(kept), { ...payload, notes: [] });
 });
 
 test("ask requests are validated against the service contract", () => {
@@ -150,8 +207,12 @@ test("ask route proxies validated messages only, and fails closed", async () => 
     assert.equal(seen!.url, "http://127.0.0.1:9/base/v1/ask");
     assert.equal(seen!.init!.body, JSON.stringify(body));
     assert.ok(seen!.init!.signal);
-    const forwarded = JSON.stringify(seen!.init!.headers).toLowerCase();
-    assert.doesNotMatch(forwarded, /cookie|authorization|secret|cf-connecting-ip/);
+    // Only the derived client address crosses, as X-Forwarded-For; never cookies or other client headers.
+    assert.deepEqual(seen!.init!.headers, { "Content-Type": "application/json", Accept: "application/json", "X-Forwarded-For": "192.0.2.12" });
+    seen = undefined;
+    await POST(new Request("https://example.org/api/schools/ask", { method: "POST", body: JSON.stringify(body),
+      headers: { "Content-Type": "application/json", Cookie: "session=secret" } }));
+    assert.deepEqual(seen!.init!.headers, { "Content-Type": "application/json", Accept: "application/json" });
 
     globalThis.fetch = async () => Response.json({ release_id: "x", answer: "wrong shape" });
     assert.equal((await ask(body, "192.0.2.13")).status, 503);
@@ -173,12 +234,12 @@ test("ask route proxies validated messages only, and fails closed", async () => 
 });
 
 test("proxy permits only the public schools endpoints and keeps legacy AI and admin paths closed", () => {
-  for (const path of ["/schools", "/api/schools", "/api/schools/ask"]) {
+  for (const path of ["/schools", "/api/schools", "/api/schools/ask", "/api/schools/library"]) {
     const result = proxy(new NextRequest(`https://example.org${path}`));
     assert.equal(result.status, 200);
     assert.equal(result.headers.get("Cache-Control"), "private, no-store, max-age=0, must-revalidate");
   }
-  for (const path of ["/admin/users", "/api/admin", "/awp", "/api/awp", "/chat/test", "/api/chat/test", "/copilotkit", "/api/copilotkit", "/api/schools/ask/private"]) {
+  for (const path of ["/admin/users", "/api/admin", "/awp", "/api/awp", "/chat/test", "/api/chat/test", "/copilotkit", "/api/copilotkit", "/api/schools/ask/private", "/api/schools/library/private"]) {
     assert.equal(proxy(new NextRequest(`https://example.org${path}`)).status, 404);
   }
 });

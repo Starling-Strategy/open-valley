@@ -7,6 +7,8 @@ import { SourceNotes } from "@/components/schools/SourceNotes";
 import { SchoolsAssistant } from "@/components/schools/SchoolsAssistant";
 import { SchoolsRefresh } from "@/components/schools/SchoolsRefresh";
 import { dateLabel } from "@/components/schools/school-overview-utils";
+import { pagePayload } from "@/lib/schools-library";
+import { packClientPayload } from "@/lib/schools-pack";
 import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
@@ -33,6 +35,9 @@ export default async function SchoolsPage() {
     </div>;
   }
   const { payload } = publication;
+  // Client components serialize their props into the HTML and every refresh: pass only cited sources, column-packed.
+  const cited = pagePayload(payload);
+  const packed = packClientPayload(cited);
   return <div className="site-container" data-release-id={publication.releaseId}>
     <SchoolsRefresh />
     <header className={`editorial-hero ${styles.hero}`}>
@@ -48,9 +53,9 @@ export default async function SchoolsPage() {
       <a href="#ask-the-record"><span aria-hidden="true">04</span> Ask the record</a>
       <a href="#sources"><span aria-hidden="true">05</span> Library &amp; sources</a>
     </nav>
-    <div id="school-directory" className={styles.chapter}><SchoolOverview key={publication.releaseId} releaseId={publication.releaseId} payload={payload} /></div>
-    <div id="enrollment-history" className={styles.chapter}><EnrollmentHistory payload={payload} /></div>
-    <div id="enrollment-outlook" className={styles.chapter}><EnrollmentOutlook payload={payload} /></div>
+    <div id="school-directory" className={styles.chapter}><SchoolOverview key={publication.releaseId} releaseId={publication.releaseId} packed={packed} /></div>
+    <div id="enrollment-history" className={styles.chapter}><EnrollmentHistory packed={packed} /></div>
+    <div id="enrollment-outlook" className={styles.chapter}><EnrollmentOutlook packed={packed} /></div>
     <aside className={styles.perspective} aria-labelledby="perspective-title">
       <p className="eyebrow">Reading the evidence</p>
       <h2 id="perspective-title">Enrollment is one part of the picture.</h2>
@@ -58,6 +63,6 @@ export default async function SchoolsPage() {
       <p>This first account describes the district and its enrollment record. It is a foundation for those conversations.</p>
     </aside>
     <div id="ask-the-record" className={styles.chapter}><SchoolsAssistant key={publication.releaseId} releaseId={publication.releaseId} /></div>
-    <div id="sources" className={styles.chapter}><SourceNotes payload={payload} /></div>
+    <div id="sources" className={styles.chapter}><SourceNotes payload={payload} releaseId={publication.releaseId} /></div>
   </div>;
 }

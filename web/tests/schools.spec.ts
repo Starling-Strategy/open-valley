@@ -35,6 +35,36 @@ test("public library filters, meeting archive and proof inspector work", async (
   await expect(library.getByText("No documents match these filters.")).toBeVisible();
 });
 
+test("the library API serves strict, release-bound pages and the inspector loads unpinned records", async ({ page, request }) => {
+  const { releaseId } = await schoolsPage(page);
+  const { payload } = await (await request.get("/api/schools")).json();
+  const catalog = buildLibraryCatalog(payload.sources, payloadReferences(payload));
+  const pageHtml = await (await request.get("/schools")).text();
+  const unpinned = catalog.documents.find(d => !isPinnedDocument(d));
+  if (unpinned) expect(pageHtml).not.toContain(`id="source-${unpinned.source_id}"`);
+  for (const bad of ["limit=51", "offset=-1", "q=a&q=b", "unknown=1", "collection=private", "view=meetings&q=x", "source_id=a&q=b"]) {
+    const response = await request.get(`/api/schools/library?${bad}`);
+    expect(response.status(), bad).toBe(400);
+    expect(response.headers()["cache-control"]).toContain("no-store");
+  }
+  const first = await request.get("/api/schools/library?limit=50");
+  expect(first.headers()["cache-control"]).toContain("no-store");
+  const body = await first.json();
+  expect(body.release_id).toBe(releaseId);
+  expect(body.total).toBe(catalog.counts.total);
+  expect(body.documents.length).toBe(Math.min(50, catalog.counts.total));
+  expect(Object.keys(body.documents[0]).sort()).toEqual(["body", "category", "kind", "published_at", "school_year", "source_id", "title", "url"]);
+  const meetings = await (await request.get("/api/schools/library?view=meetings&limit=5")).json();
+  expect(meetings.total).toBe(catalog.counts.meetings);
+  expect((await request.get("/api/schools/library?source_id=no-such-record")).status()).toBe(404);
+  const target = unpinned ?? catalog.documents[0];
+  const record = await (await request.get(`/api/schools/library?source_id=${target.source_id}`)).json();
+  expect(record.document.title).toBe(target.title);
+  await page.goto(`/schools#source-${target.source_id}`);
+  await expect(page.getByRole("region", { name: "Source record" })).toContainText(target.title);
+  await expect(page.locator(`[id="source-${target.source_id}"]`)).toHaveCount(1);
+});
+
 type Reply = { status: number; json: unknown };
 
 /** Serve contract-shaped replies from a queue; the assistant service is not started in browser tests. */
@@ -170,7 +200,7 @@ test("school-first navigation reaches the database-backed reading page", async (
 });
 
 test("school responses are request-time and private routes stay unavailable", async ({ request }) => {
-  for (const path of ["/schools", "/api/schools"]) {
+  for (const path of ["/schools", "/api/schools", "/api/schools/library"]) {
     const response = await request.get(path);
     expect(response.status()).toBe(200);
     expect(response.headers()["cache-control"]).toContain("no-store");

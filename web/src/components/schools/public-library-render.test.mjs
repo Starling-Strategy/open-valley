@@ -24,7 +24,7 @@ test("large library renders cited, core and reviewed-report anchors in initial H
     grade_scope: "K-12", reference_date: null, reference_date_status: "unknown", population_basis: "synthetic",
     count_basis: "reported_headcount", value: 10, value_state: "observed", status: "observed", source_id: "synthetic-1000", source_locator: "Synthetic table, row 1", notes: "Synthetic fixture only" });
   const before = JSON.stringify(payload);
-  const html = renderToStaticMarkup(createElement(SourceNotes, { payload }));
+  const html = renderToStaticMarkup(createElement(SourceNotes, { payload, releaseId: "synthetic-release" }));
   assert.equal(JSON.stringify(payload), before, "rendering must not mutate the payload");
   for (const i of [...Array.from({ length: 32 }, (_, i) => i), 1000]) {
     assert.equal(html.split(`id="source-synthetic-${i}"`).length - 1, 1, `source ${i}`);
@@ -34,4 +34,7 @@ test("large library renders cited, core and reviewed-report anchors in initial H
   assert.match(html, /Synthetic table, row 1/);
   assert.match(html, /1,157/);
   assert.doesNotMatch(html, /Reviewed/);
+  // Browsing views load from /api/schools/library; no unpinned record is rendered up front.
+  assert.ok(!html.includes("Synthetic public record 1001"));
+  assert.match(html, /Loading…/);
 });

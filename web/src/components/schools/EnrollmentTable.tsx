@@ -29,6 +29,9 @@ function ReferenceDate({ row }: { row: EnrollmentRow }) {
 export function EnrollmentTable({ payload, groups, caption, id }: TableProps) {
   const rows = groups.flatMap(group => group.rows.map(row => ({ row, series: group.series })))
     .sort((a, b) => a.row.school_year.localeCompare(b.row.school_year));
+  // State each series' definition and forecast edition once, on its earliest row.
+  const firstRows = new Map<string, EnrollmentRow>();
+  rows.forEach(({ row, series }) => { if (!firstRows.has(series.series_key)) firstRows.set(series.series_key, row); });
   return (
     <div className={styles.tableScroll} role="region" aria-label={`${caption}: scrollable data table`} tabIndex={0} id={id}>
       <table className={styles.table}>
@@ -40,19 +43,21 @@ export function EnrollmentTable({ payload, groups, caption, id }: TableProps) {
           <th scope="col">Notes / forecast edition</th>
           <th scope="col">Public source / locator</th>
         </tr></thead>
-        <tbody>{rows.map(({ row, series }) => (
-          <tr key={row.observation_id}>
+        <tbody>{rows.map(({ row, series }) => {
+          const first = firstRows.get(series.series_key)!;
+          const repeated = first !== row ? <span className={styles.cellNote}>As stated for {yearLabel(first.school_year)}.</span> : null;
+          return <tr key={row.observation_id}>
             <th scope="row"><span className={styles.year}>{yearLabel(row.school_year)}</span><span className={styles.cellNote}><ReferenceDate row={row} /></span></th>
             <td><strong className={row.status === "projection" ? styles.forecastValue : styles.value}>{displayValue(row)}</strong><span className={styles.cellNote}>{statusLabel(row)}</span></td>
-            <td><strong>{entityLabel(payload, row.entity_id)} · {row.grade_scope.replaceAll("-", "–")}</strong><span className={styles.cellNote}>{countLabel(row.count_basis)}</span><p>{seriesDescription(series)}</p></td>
-            <td>{row.notes && <p>{recordNote(payload, row.notes)}</p>}{row.status === "projection" && <>
+            <td><strong>{entityLabel(payload, row.entity_id)} · {row.grade_scope.replaceAll("-", "–")}</strong><span className={styles.cellNote}>{countLabel(row.count_basis)}</span>{repeated ?? <p>{seriesDescription(series)}</p>}</td>
+            <td>{row.notes && <p>{recordNote(payload, row.notes)}</p>}{row.status === "projection" && (repeated ?? <>
               <p>{row.author} · {row.forecast_vintage}</p>
               <p>Base: {yearLabel(row.base_year)}. Horizon: {row.horizon}.</p>
               <p>Assumptions: {row.assumptions}</p>
-            </>}{!row.notes && row.status !== "projection" && <span className={styles.cellNote}>No additional row note.</span>}</td>
+            </>)}{!row.notes && row.status !== "projection" && <span className={styles.cellNote}>No additional row note.</span>}</td>
             <td><SourceCitation payload={payload} reference={row} /></td>
-          </tr>
-        ))}</tbody>
+          </tr>;
+        })}</tbody>
       </table>
     </div>
   );

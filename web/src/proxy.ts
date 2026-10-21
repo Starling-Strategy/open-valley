@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 export function proxy(request: NextRequest) {
-  if (["/schools", "/api/schools", "/api/schools/ask"].includes(request.nextUrl.pathname)) {
+  if (["/schools", "/api/schools", "/api/schools/ask", "/api/schools/library"].includes(request.nextUrl.pathname)) {
     const response = NextResponse.next();
     response.headers.set("Cache-Control", "private, no-store, max-age=0, must-revalidate");
     response.headers.set("Pragma", "no-cache");
@@ -20,6 +20,7 @@ export const config = {
     "/schools",
     "/api/schools",
     "/api/schools/ask",
+    "/api/schools/library",
     "/admin/:path*",
     "/api/admin/:path*",
     "/awp(.*)",

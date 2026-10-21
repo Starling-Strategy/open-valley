@@ -8,9 +8,10 @@ const headers = { "Cache-Control": "private, no-store, max-age=0, must-revalidat
 const TIMEOUT_MS = 45_000;
 const limiter = new TokenBucketLimiter({ burst: 5, perMinute: 10 });
 
-/** Thin proxy to services/schools-assistant. Only the validated messages cross; never cookies or client headers. */
+/** Thin proxy to services/schools-assistant. Only the validated messages and client address cross; never cookies or other client headers. */
 export async function POST(request: Request) {
-  const retryAfter = limiter.take(clientAddress(request.headers));
+  const address = clientAddress(request.headers);
+  const retryAfter = limiter.take(address);
   if (retryAfter) {
     return Response.json({ status: "rate_limited" }, { status: 429, headers: { ...headers, "Retry-After": String(retryAfter) } });
   }
@@ -24,7 +25,8 @@ export async function POST(request: Request) {
   try {
     const upstream = await fetch(new URL("v1/ask", service.endsWith("/") ? service : `${service}/`), {
       method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      // The service rate-limits per visitor. Only this derived address crosses, never the client's headers.
+      headers: { "Content-Type": "application/json", Accept: "application/json", ...(address === "unknown" ? {} : { "X-Forwarded-For": address }) },
       body: JSON.stringify({ messages: validation.messages }),
       signal: AbortSignal.timeout(TIMEOUT_MS),
       cache: "no-store",

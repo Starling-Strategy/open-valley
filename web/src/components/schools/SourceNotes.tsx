@@ -1,11 +1,11 @@
 import type { SchoolsPayload } from "../../lib/schools";
 import { dateLabel } from "./enrollment-display";
 import styles from "./enrollment.module.css";
-import { buildLibraryCatalog, payloadReferences } from "../../lib/schools-library";
+import { buildLibraryCatalog, librarySummary, payloadReferences } from "../../lib/schools-library";
 import { PublicLibrary } from "./PublicLibrary";
 
-export function SourceNotes({ payload }: { payload: SchoolsPayload }) {
-  const catalog = buildLibraryCatalog(payload.sources, payloadReferences(payload));
+export function SourceNotes({ payload, releaseId }: { payload: SchoolsPayload; releaseId: string }) {
+  const summary = librarySummary(buildLibraryCatalog(payload.sources, payloadReferences(payload)));
   return (
     <section className={styles.section} aria-labelledby="school-sources-heading" id="school-sources">
       <header className={styles.sectionHeader}>
@@ -24,7 +24,7 @@ export function SourceNotes({ payload }: { payload: SchoolsPayload }) {
         </dl>
       </details>
       {payload.notes.length > 0 && <div className={styles.releaseNotes}><h3>Release notes and known limits</h3><ul>{payload.notes.map((note, index) => <li key={index}>{note}</li>)}</ul></div>}
-      <PublicLibrary key={payload.content_digest} catalog={catalog} />
+      <PublicLibrary key={payload.content_digest} releaseId={releaseId} summary={summary} />
     </section>
   );
 }

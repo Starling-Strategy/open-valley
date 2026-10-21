@@ -1,12 +1,13 @@
 "use client";
 
-import { useId, useState } from "react";
-import type { SchoolsPayload } from "../../lib/schools";
+import { useId, useMemo, useState } from "react";
+import { unpackClientPayload, type ClientPayload } from "../../lib/schools-pack";
 import { buildHistoryView, chartYears, countLabel, dateLabel, displayValue, seriesDescription, seriesLabel, statusLabel, yearLabel } from "./enrollment-display";
 import { chartMaximum, EnrollmentFigure, EnrollmentTable, SourceCitation } from "./EnrollmentTable";
 import styles from "./enrollment.module.css";
 
-export function EnrollmentHistory({ payload }: { payload: SchoolsPayload }) {
+export function EnrollmentHistory({ packed }: { packed: ClientPayload }) {
+  const payload = useMemo(() => unpackClientPayload(packed), [packed]);
   const id = useId();
   const [entity, setEntity] = useState("huusd");
   const [grade, setGrade] = useState("totals");

@@ -55,6 +55,8 @@ The web runtime accepts one of these server-only inputs:
 "Ask the record" also reads `SCHOOLS_ASSISTANT_URL`, the server-only base URL of
 the [schools assistant service](docs/school-board/assistant.md). When it is unset
 or unreachable, `/api/schools/ask` returns 503 and the rest of `/schools` works.
+The library browser needs no extra input: `/api/schools/library` reads the same
+publication as `/schools`.
 
 Use the restricted `schools_runtime` identity. Publisher and administrator
 access belong to separate commands, never the web process. Production delivery

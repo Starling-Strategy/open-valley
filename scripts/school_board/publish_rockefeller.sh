@@ -17,7 +17,8 @@ if [[ -f "$HOME/.config/op/sa.env" ]]; then
 fi
 export OP_ACCOUNT="${OP_ACCOUNT:-starlingstrategy.1password.com}"
 export OPENVALLEY_DATA_ROOT="${OPENVALLEY_DATA_ROOT:-/srv/storage/files/coding-storage/open-valley}"
-key_ref="${SCHOOLS_OPENROUTER_OP_REF:-op://brigade-opencode/kaf7gccsvqbv6ogodo6qbwuxr4/credential}"
+# The dedicated Open Valley key ("OpenRouter API Key - open valley"), the same key the assistant uses.
+key_ref="${SCHOOLS_OPENROUTER_OP_REF:-op://brigade-opencode/7dind5dojcfsvv3uzcj2fgokye/credential}"
 node="${SCHOOLS_NODE:-node}"
 
 if [[ "${1:-}" == "--publish" ]]; then

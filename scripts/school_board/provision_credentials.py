@@ -9,6 +9,7 @@ import hashlib
 import hmac
 import json
 import os
+import re
 import secrets
 import stat
 import subprocess
@@ -57,17 +58,44 @@ def scram_verifier(password):
     return f'SCRAM-SHA-256$4096:{encode(salt)}${encode(stored)}:{encode(server)}'
 
 
-def authenticate(role, password):
-    # psql is already in the DB container. Use the canonical TCP endpoint, not a trust-auth local socket.
+def database_image():
+    # The probe uses psql from the database container's own image, so no client is installed on the host.
+    result = subprocess.run(
+        ['docker', 'inspect', '--format', '{{.Config.Image}}', 'openvalley-postgres'],
+        text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=ENV, timeout=15, check=False,
+    )
+    image = result.stdout.strip()
+    if result.returncode != 0 or not re.fullmatch(r'[a-z0-9][a-z0-9._/-]*(:[A-Za-z0-9._-]+)?(@sha256:[0-9a-f]{64})?', image):
+        raise ValueError('Database image not found')
+    return image
+
+
+def probe_run(image, command, payload):
+    # Host network: the published Tailscale endpoint is not reachable from inside the database
+    # container itself, but it is from the host, as from the application containers.
+    return subprocess.run(
+        ['docker', 'run', '--rm', '-i', '--network', 'host', '--user', 'postgres', '--read-only',
+         '--cap-drop', 'ALL', '--entrypoint', 'sh', image, '-c', command],
+        input=payload, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        env=ENV, timeout=45, check=False,
+    )
+
+
+def authenticate(role, password, image):
+    # The canonical TCP endpoint the applications use, never a trust-auth local socket or loopback.
     command = (
         'IFS= read -r PGPASSWORD; export PGPASSWORD; export PGCONNECT_TIMEOUT=5; '
         f'exec psql -h 100.75.27.44 -p 5434 -U {role} -d openvalley '
         '-X -q -A -t -w -v ON_ERROR_STOP=1 -c "SELECT current_user, current_database()"'
     )
-    # A successful wrong-password probe would mean this path did not prove credential authentication.
-    if checked_run(command, secrets.token_urlsafe(32) + '\n').returncode == 0:
+    # A wrong password must be refused by PostgreSQL itself. Success would mean trust authentication;
+    # any other failure (timeout, refused connection) proves nothing about the password.
+    wrong = probe_run(image, command, secrets.token_urlsafe(32) + '\n')
+    if wrong.returncode == 0:
         raise ValueError('Password authentication required')
-    result = checked_run(command, password + '\n')
+    if f'password authentication failed for user "{role}"' not in wrong.stderr:
+        raise ValueError('Authentication endpoint unreachable')
+    result = probe_run(image, command, password + '\n')
     if result.returncode != 0 or result.stdout.strip() != f'{role}|openvalley':
         raise ValueError('Saved credential authentication failed')
 
@@ -221,9 +249,10 @@ def provision(passwords):
            or any(not 33 <= ord(char) <= 126 for char in value) for value in passwords.values()):
         raise ValueError('Unsupported password')
     found = inspect_roles()
+    image = database_image()
     for role in ROLES:
         if role in found:
-            authenticate(role, passwords[role])
+            authenticate(role, passwords[role], image)
     url = f"postgresql://schools_runtime:{quote(passwords['schools_runtime'], safe='')}@100.75.27.44:5434/openvalley"
     handle = prepare_delivery(url)
     try:
@@ -232,7 +261,7 @@ def provision(passwords):
         if inspect_roles() != set(ROLES):
             raise ValueError('Missing schools role')
         for role in ROLES:
-            authenticate(role, passwords[role])
+            authenticate(role, passwords[role], image)
     except BaseException:
         os.close(handle)
         raise

@@ -428,11 +428,14 @@ def exercise(existing, failure=None):
         assert kwargs['stdout'] == -1 and kwargs['stderr'] == -1
         assert 'PGPASSWORD' not in kwargs['env']
         assert all(password not in str(argv) for password in passwords.values())
+        if argv[:2] == ['docker', 'inspect']:
+            assert argv[-1] == 'openvalley-postgres'
+            return SimpleNamespace(returncode=0, stdout='local/postgis-pgvector:16\n', stderr='')
         body = kwargs.get('input', '')
         if 'pg_roles' in body and 'BEGIN;' not in body:
             return SimpleNamespace(returncode=0, stdout=json.dumps(existing), stderr='')
         if 'BEGIN;' in body:
-            assert failure not in ('auth', 'trust'), 'Mutation before existing credential verified'
+            assert failure not in ('auth', 'trust', 'unreachable'), 'Mutation before existing credential verified'
             assert 'ALTER ROLE' not in body and 'GRANT ' not in body
             assert body.count('BEGIN;') == 1 and body.count('COMMIT;') == 1
             assert body.index("log_statement = 'none'") < body.index('SCRAM-SHA-256$')
@@ -450,12 +453,19 @@ def exercise(existing, failure=None):
             existing[:] = [safe(role) for role in roles]
             return SimpleNamespace(returncode=0, stdout='', stderr='')
         role = next(role for role in roles if role in argv[-1])
+        # The probe runs psql from the database image on the host network, against the published endpoint.
+        assert argv[:2] == ['docker', 'run'] and argv[argv.index('--network') + 1] == 'host'
+        assert argv[argv.index('--user') + 1] == 'postgres' and '--read-only' in argv
+        assert argv[-3:-1] == ['local/postgis-pgvector:16', '-c']
         assert '-h 100.75.27.44 -p 5434' in argv[-1]
         assert 'PGPASSWORD="$POSTGRES_PASSWORD"' not in argv[-1]
         if failure == 'trust':
             return SimpleNamespace(returncode=0, stdout=role + '|openvalley\n', stderr='')
+        if failure == 'unreachable':
+            return SimpleNamespace(returncode=2, stdout='', stderr='psql: error: connection ... failed: timeout expired')
         if body.strip() != passwords[role] or failure == 'auth':
-            return SimpleNamespace(returncode=1, stdout='', stderr='synthetic secret error')
+            return SimpleNamespace(returncode=2, stdout='',
+                                   stderr='psql: error: FATAL:  password authentication failed for user "%s"' % role)
         return SimpleNamespace(returncode=0, stdout=role + '|openvalley\n', stderr='')
     with patch.dict(g, {'prepare_delivery': lambda url: 'synthetic-handle',
                         'write_delivery': lambda handle, url: writes.append(url) or 'created'}), \
@@ -479,7 +489,8 @@ for bad in [dict(safe(roles[0]), superuser=True), dict(safe(roles[0]), membershi
     except ValueError as error: assert str(error) == 'Unsafe existing role'
     else: raise AssertionError('unsafe existing role accepted')
 for failure, message in [('auth', 'Saved credential authentication failed'),
-                         ('trust', 'Password authentication required'), ('transaction', 'Database step failed')]:
+                         ('trust', 'Password authentication required'), ('transaction', 'Database step failed'),
+                         ('unreachable', 'Authentication endpoint unreachable')]:
     try: exercise([safe(roles[0])], failure=failure)
     except ValueError as error: assert str(error) == message
     else: raise AssertionError('failed authentication/transaction accepted')

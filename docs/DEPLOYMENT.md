@@ -206,11 +206,11 @@ From the operator Mac, run `revoke` with the unchanged policy and the publisher 
 ## Open items and accepted gaps
 
 - **Superseded instances:** removal and final service inventory remain pending, including the stopped preview and OpenShip project identified in step 5. Disable superseded redeploy controllers as part of owner cleanup; preserve the rollback fallback until intentionally retired.
-- **Legacy URLs:** the previous public site exposed `/library`, `/meetings`, `/district`, `/ask`, `/updates`, and `/about`; all return 404 on this release. Current navigation is `/`, `/schools`, `/homes`, `/data`, `/learn`. Redirects are undecided.
+- **Previous URLs:** the earlier site's routes (`/library`, `/meetings`, `/district`, `/ask`, `/updates`, `/about`) return 404 by owner decision on 2026-10-22: the site is new and keeps no redirects. Current navigation is `/`, `/schools`, `/homes`, `/data`, `/learn`.
 - **Withdrawals:** the owner accepted manual `revoke` from the operator Mac on this line. There is no automatic path watcher like the Rockefeller stack's. The outstanding no-op drill is step 8.1.
 - **Backups:** owner decision on 2026-10-22: no off-host backup for now. This does not waive deletion of prohibited content and derived copies under the project's privacy rules.
 - **Tunnel dependency:** public ingress still depends on Rockefeller's connector. Moving it to Icculus requires a Cloudflare credential and remains open.
-- **Branch reconciliation:** `deploy/icculus-compose-cutover` has diverged from `main`, the Rockefeller rebuild line. Reconciliation remains open; assistant-line commits are also preserved at `backup/assistant-line-20261022`.
+- **Code line:** on 2026-10-22 the assistant line became `main`; the Rockefeller rebuild line's code was superseded (history kept through the merge; its research-library privacy-deletion fix was carried forward). The Rockefeller fallback stack still runs that older code from its own checkout until it is retired.
 
 ## Publication from Rockefeller
 

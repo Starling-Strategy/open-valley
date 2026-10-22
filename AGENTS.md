@@ -4,9 +4,9 @@ Purpose: Keep prohibited closed-session content out of the school-board collecti
 Audience: Contributors and coding agents.
 Status: canonical
 Owner: Open Valley
-Last updated: 2026-10-03
+Last updated: 2026-10-22
 
-School-board materials are stored at `/rocky/open-valley/school-board`.
+School-board materials are stored on Rockefeller at `/srv/storage/files/coding-storage/open-valley/school-board` (`/rocky/open-valley/school-board` inside the older coding container). Production runs on Icculus; see [Deployment](docs/DEPLOYMENT.md), which also owns the withdrawal procedure.
 
 ## Executive sessions and individual students
 

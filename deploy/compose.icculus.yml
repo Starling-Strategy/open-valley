@@ -1,5 +1,7 @@
-# Reference configuration for the existing Openship-managed project.
-# Provision the credential mount and an eligible database release before applying.
+# Plain Docker Compose production on Icculus; cut over 2026-10-22 (not OpenShip).
+# Copied from 4bf02c1 to /opt/openvalley-schools/compose.yml; release.env pins image digests.
+# Public ingress: Rockefeller Cloudflare Tunnel to 100.75.27.44:3400; see docs/DEPLOYMENT.md.
+# Provision the credential mounts and an eligible database release before applying.
 services:
   web:
     image: ${OPENVALLEY_WEB_IMAGE:?Set the reviewed image tag or digest}

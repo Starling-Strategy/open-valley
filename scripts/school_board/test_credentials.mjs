@@ -1,19 +1,26 @@
-// Synthetic only: never execute op, ssh, a publisher, or a credential reader.
+// Synthetic only: never execute the real op, ssh to Icculus, or read a real credential.
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { chmodSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
-import { deliverOpenRouterKey, provision, loadPublisherUrl, runPublisher } from './credentials.mjs';
+import { deliverOpenRouterKey, executablePath, preflight, provision, resolveExecutable,
+  streamPublisherPassword } from './credentials.mjs';
 
 const vault = 'uny5mihzmiw3xb3l2mycu6ipau';
 const token = 'SYNTHETIC_SERVICE_TOKEN_DO_NOT_PRINT';
+const OP = '/opt/homebrew/bin/op';
+const tools = { op: OP, sh: '/bin/sh', cat: '/bin/cat', ssh: '/usr/bin/ssh' };
 const identities = [
   ['schools_runtime', 'Open Valley Schools — Runtime (Icculus)'],
   ['schools_publisher', 'Open Valley Schools — Publisher (Icculus)'],
 ];
 const syntheticPassword = 'synthetic-only-password-1234567890_ABC';
+// The operator's environment: op may see its sign-in variables, never unrelated ones.
+const operatorEnv = { HOME: '/Users/operator', USER: 'operator', PATH: '/opt/homebrew/bin:/usr/bin:/bin',
+  OP_ACCOUNT: 'starlingstrategy.1password.com', OP_SERVICE_ACCOUNT_TOKEN: token,
+  NODE_OPTIONS: '--require /tmp/hostile.js', AWS_SECRET_ACCESS_KEY: 'unrelated-secret', PGPASSWORD: 'unrelated-secret' };
 const itemId = (i) => String(i + 1).padStart(26, 'a');
 function item(i, password = syntheticPassword) {
   return { id: itemId(i), title: identities[i][1], category: 'DATABASE', vault: { id: vault }, fields: [
@@ -25,40 +32,39 @@ function item(i, password = syntheticPassword) {
 function fixture(initial = []) {
   const items = structuredClone(initial);
   const calls = [];
-  let tokenReads = 0;
   const adapters = {
-    readToken: async () => { tokenReads++; return token; },
+    env: operatorEnv,
+    resolve: (name) => tools[name],
     execute(command, args, options) {
       calls.push({ command, args, options });
-      if (command === '/usr/local/bin/op') {
-        assert.equal(options.env.OP_SERVICE_ACCOUNT_TOKEN, token);
+      if (command === OP) {
+        assert.deepEqual(Object.keys(options.env).sort(), ['HOME', 'LANG', 'OP_ACCOUNT', 'OP_SERVICE_ACCOUNT_TOKEN', 'PATH', 'USER']);
+        assert.equal(options.env.PATH, '/opt/homebrew/bin:/usr/bin:/bin');
+        if (args[0] === '--version') return '2.40.0\n';
+        if (args[0] === 'whoami') return JSON.stringify({ url: 'https://starlingstrategy.1password.com', user_type: 'HUMAN', email: 'x@y' });
+        if (args[0] === 'vault') return JSON.stringify({ id: vault, name: 'Squatch' });
         assert.deepEqual(args.slice(-3), ['--vault', vault, '--format=json']);
         if (args[1] === 'list') return JSON.stringify(items.map(({ fields, ...metadata }) => metadata));
         if (args[1] === 'get') return JSON.stringify(items.find(({ id }) => id === args[2]));
         assert.fail('Direct op invocation is limited to list/get; create needs a true pipe');
       }
-      assert.equal(options.env.OP_SERVICE_ACCOUNT_TOKEN, undefined);
-      if (command === '/usr/bin/python3') {
-        assert.deepEqual(args.slice(0, -1), ['-I', '-B', '-c']);
-        const envelope = JSON.parse(options.input);
-        assert.deepEqual(Object.keys(envelope).sort(), ['template', 'token']);
-        assert.equal(envelope.token, token);
-        const created = { ...JSON.parse(envelope.template), id: itemId(items.length), vault: { id: vault } };
+      if (command === '/bin/sh') {
+        assert.deepEqual(args.slice(2), [OP, '/bin/cat', vault]);
+        assert.equal(options.env.OP_SERVICE_ACCOUNT_TOKEN, token);
+        const created = { ...JSON.parse(options.input), id: itemId(items.length), vault: { id: vault } };
         items.push(created);
         return JSON.stringify(created);
       }
-      if (command === '/usr/bin/ssh') {
-        const payload = JSON.parse(options.input);
-        assert.deepEqual(Object.keys(payload), ['schools_runtime', 'schools_publisher']);
-        assert.ok(Object.values(payload).every((password) => password.length >= 32));
-        return JSON.stringify({ created: ['schools_runtime', 'schools_publisher'], delivery: 'created' });
-      }
-      assert.equal(command, process.execPath);
-      assert.ok(options.env.SCHOOLS_PUBLISHER_DATABASE_URL.startsWith('postgresql://schools_publisher:'));
-      return `Untrusted publisher output: ${options.env.SCHOOLS_PUBLISHER_DATABASE_URL}`;
+      assert.equal(command, '/usr/bin/ssh');
+      assert.deepEqual(Object.keys(options.env).sort(), ['HOME', 'LANG', 'PATH']);
+      if (args.at(-1) === 'true') return '';
+      const payload = JSON.parse(options.input);
+      assert.deepEqual(Object.keys(payload), ['schools_runtime', 'schools_publisher']);
+      assert.ok(Object.values(payload).every((password) => password.length >= 32));
+      return JSON.stringify({ created: ['schools_runtime', 'schools_publisher'], delivery: 'created' });
     },
   };
-  return { adapters, calls, items, tokenReads: () => tokenReads };
+  return { adapters, calls, items };
 }
 
 function assertPrivate(calls, receipt, passwords) {
@@ -66,11 +72,11 @@ function assertPrivate(calls, receipt, passwords) {
     assert.ok(!JSON.stringify(receipt).includes(secret));
     for (const call of calls) assert.ok(!JSON.stringify([call.command, call.args]).includes(secret));
   }
-  for (const { options } of calls) {
+  for (const { command, options } of calls) {
     assert.deepEqual(options.stdio, ['pipe', 'pipe', 'pipe']);
     assert.ok(options.timeout > 0);
-    assert.equal(options.env.NODE_OPTIONS, undefined);
-    assert.equal(options.env.PGPASSWORD, undefined);
+    for (const unrelated of ['NODE_OPTIONS', 'PGPASSWORD', 'AWS_SECRET_ACCESS_KEY']) assert.equal(options.env[unrelated], undefined);
+    if (command === '/usr/bin/ssh') assert.equal(options.env.OP_SERVICE_ACCOUNT_TOKEN, undefined);
   }
 }
 
@@ -78,7 +84,7 @@ test('creates exactly two vault identities, reads them back, delivers privately 
   const f = fixture();
   const receipt = await provision(f.adapters);
   assert.deepEqual(f.items.map((value) => [value.fields[0].value, value.title]), identities);
-  assert.equal(f.calls.filter((call) => call.command === '/usr/bin/python3').length, 2);
+  assert.equal(f.calls.filter((call) => call.command === '/bin/sh').length, 2);
   assert.equal(f.calls.filter((call) => call.args[1] === 'get').length, 2);
   const passwords = f.items.map((value) => value.fields[1].value);
   assert.ok(passwords.every((value) => /^[A-Za-z0-9_-]{43}$/.test(value)));
@@ -92,115 +98,97 @@ test('creates exactly two vault identities, reads them back, delivers privately 
   assert.match(ssh.args.at(-1), /^python3 -c /);
   assertPrivate(f.calls, receipt, passwords);
   assert.equal(receipt.database, 'openvalley');
-  assert.deepEqual(receipt.roles.map((role) => role.username), identities.map(([username]) => username));
+  assert.deepEqual(receipt.roles.map((role) => [role.username, role.vaultItem]),
+    [['schools_runtime', 'created'], ['schools_publisher', 'created']]);
   const knownHosts = readFileSync(new URL('../../deploy/icculus-known-hosts', import.meta.url), 'utf8');
   assert.equal(knownHosts.trim(), '100.75.27.44 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKRPJNviwryxqYMqNMm/DUPPitsvbNOFHP0aEnUvku5B');
 });
 
+// A synthetic op executable checks what the real one would see: its stdin type, argv and environment.
 function realPipeFixture(t, mode = 'success') {
   const directory = mkdtempSync(join(process.env.RUNNER_TEMP || '/tmp/opencode', 'schools-pipe-test-'));
   t.after(() => rmSync(directory, { recursive: true, force: true }));
-  const fakeOp = join(directory, 'fake-op');
-  // Only static fixture source is on disk. Envelopes and templates remain in process/pipe memory.
+  const fakeOp = join(directory, 'op');
   writeFileSync(fakeOp, `#!/usr/bin/python3
 import json, os, stat, sys
 fifo = stat.S_ISFIFO(os.fstat(0).st_mode)
-if not fifo:
-    print(json.dumps({'probe': {'fifo': False}}))
-    sys.exit(0)
 raw = sys.stdin.read()
-template = json.loads(raw)
 if ${JSON.stringify(mode)} == 'failure':
     sys.stdout.write(raw)
-    sys.stderr.write(os.environ['OP_SERVICE_ACCOUNT_TOKEN'] + raw)
+    sys.stderr.write(os.environ.get('OP_SERVICE_ACCOUNT_TOKEN', '') + raw)
     sys.exit(17)
+template = json.loads(raw)
 role = template['fields'][0]['value']
-template.update(id=('a' * 25) + ('1' if role == 'schools_runtime' else '2'),
-                vault={'id': 'uny5mihzmiw3xb3l2mycu6ipau'},
-                probe={'fifo': fifo, 'template': raw, 'argv': sys.argv[1:], 'env': dict(os.environ)})
+template.update(id=('a' * 25) + ('1' if role == 'schools_runtime' else '2'), vault={'id': ${JSON.stringify(vault)}},
+                probe={'fifo': fifo, 'template': raw, 'argv': sys.argv[1:], 'env': sorted(os.environ)})
 print(json.dumps(template))
-`, { mode: 0o700 });
+`);
+  chmodSync(fakeOp, 0o700);
   const f = fixture();
   const execute = f.adapters.execute;
   const probes = [];
   const failures = [];
+  f.adapters.resolve = (name) => (name === 'op' ? fakeOp : tools[name]);
   f.adapters.execute = (command, args, options) => {
-    const directCreate = command === '/usr/local/bin/op' && args[1] === 'create';
-    if (!directCreate && command !== '/usr/bin/python3') return execute(command, args, options);
+    if (command === fakeOp) return execute(OP, args, { ...options, env: { ...options.env, PATH: '/opt/homebrew/bin:/usr/bin:/bin' } });
+    if (command !== '/bin/sh') return execute(command, args, options);
     f.calls.push({ command, args, options });
-    let executable = fakeOp;
-    let childArgs = args;
-    let input = options.input;
-    if (!directCreate) {
-      assert.equal(options.env.OP_SERVICE_ACCOUNT_TOKEN, undefined);
-      assert.deepEqual(args.slice(0, -1), ['-I', '-B', '-c']);
-      const source = args.at(-1);
-      assert.equal(source.split('/usr/local/bin/op').length, 2, 'Replace the sole fixed op executable before executing Python');
-      childArgs = [...args.slice(0, -1), source.replace('/usr/local/bin/op', fakeOp)];
-      executable = command;
-      if (mode === 'malformed') {
-        const envelope = JSON.parse(input);
-        envelope.template = JSON.stringify({ ...JSON.parse(envelope.template), category: 'LOGIN' });
-        input = JSON.stringify(envelope);
-      }
-    }
+    assert.deepEqual(args.slice(2), [fakeOp, '/bin/cat', vault]);
     let output;
-    try { output = execFileSync(executable, childArgs, { ...options, input }); }
+    try { output = execFileSync(command, args, options); } // The real shell, cat and pipe.
     catch (error) {
       failures.push({ status: error.status, stdout: error.stdout, stderr: error.stderr });
       throw error;
     }
     const { probe, ...created } = JSON.parse(output);
     probes.push(probe);
-    if (created.id) f.items.push(created);
+    f.items.push(created);
     return JSON.stringify(created);
   };
-  return { ...f, probes, failures };
+  return { ...f, probes, failures, fakeOp };
 }
 
-test('create boundary delivers the exact template over a real OS pipe with token only in the op child env', async (t) => {
+test('create sends the exact template to op over a real OS pipe, with only sign-in variables in its env', async (t) => {
   const f = realPipeFixture(t);
-  let error;
-  let receipt;
-  try { receipt = await provision(f.adapters); }
-  catch (caught) { error = caught; }
-  assert.ok(f.probes.length > 0, 'The synthetic child must inspect actual stdin');
-  assert.equal(f.probes[0].fifo, true, 'op must receive a FIFO/pipe, not Node socketpair stdin');
-  if (error) throw error;
+  const receipt = await provision(f.adapters);
   assert.equal(f.probes.length, 2);
-  const relays = f.calls.filter((call) => call.command === '/usr/bin/python3');
-  assert.equal(relays.length, 2);
+  const creates = f.calls.filter((call) => call.command === '/bin/sh');
   for (const [i, probe] of f.probes.entries()) {
-    assert.equal(probe.template, JSON.parse(relays[i].options.input).template);
+    assert.equal(probe.fifo, true, 'op must receive a FIFO/pipe, not Node socketpair stdin');
+    assert.equal(probe.template, creates[i].options.input);
     assert.deepEqual(probe.argv, ['item', 'create', '-', '--vault', vault, '--format=json']);
-    assert.deepEqual(Object.keys(probe.env).sort(), ['HOME', 'LANG', 'OP_SERVICE_ACCOUNT_TOKEN', 'PATH']);
-    assert.equal(probe.env.OP_SERVICE_ACCOUNT_TOKEN, token);
-    assert.equal(JSON.parse(probe.template).category, 'DATABASE');
-    assert.equal(JSON.parse(probe.template).title, identities[i][1]);
-    assert.equal(JSON.parse(probe.template).fields[0].value, identities[i][0]);
+    assert.deepEqual(probe.env.filter((key) => !['PWD', 'SHLVL', '_', '__CF_USER_TEXT_ENCODING'].includes(key)),
+      ['HOME', 'LANG', 'OP_ACCOUNT', 'OP_SERVICE_ACCOUNT_TOKEN', 'PATH', 'USER']);
+    const template = JSON.parse(probe.template);
+    assert.equal(template.category, 'DATABASE');
+    assert.equal(template.title, identities[i][1]);
+    assert.equal(template.fields[0].value, identities[i][0]);
   }
   assertPrivate(f.calls, receipt, f.items.map((value) => value.fields[1].value));
 });
 
-test('create relay suppresses failing child stdout/stderr and rejects unexpected template structure', async (t) => {
-  for (const mode of ['failure', 'malformed']) {
-    const f = realPipeFixture(t, mode);
-    await assert.rejects(provision(f.adapters), { message: 'Vault credential creation failed.' });
-    assert.deepEqual(f.failures, [{ status: 1, stdout: '', stderr: 'Vault credential creation failed.\n' }]);
-    assert.equal(f.items.length, 0);
-    assert.ok(!f.calls.some((call) => call.command === '/usr/bin/ssh'));
-  }
+test('a failing create suppresses child output and creates nothing remote', async (t) => {
+  const f = realPipeFixture(t, 'failure');
+  await assert.rejects(provision(f.adapters), (error) => {
+    assert.equal(error.message, 'Vault credential creation failed.');
+    assert.ok(!JSON.stringify(error).includes(token));
+    return true;
+  });
+  assert.equal(f.failures.length, 1);
+  assert.equal(f.items.length, 0);
+  assert.ok(!f.calls.some((call) => call.command === '/usr/bin/ssh'));
 });
 
 test('reruns reuse saved passwords without update or rotation and ignore unrelated item contents', async () => {
   const unrelated = { ...item(0), id: itemId(2), title: 'Unrelated', fields: [] };
   const f = fixture([item(0), item(1), unrelated]);
   const before = structuredClone(f.items);
-  await provision(f.adapters);
+  const receipt = await provision(f.adapters);
   await provision(f.adapters);
   assert.deepEqual(f.items, before);
-  assert.ok(!f.calls.some((call) => call.command === '/usr/bin/python3'));
-  assert.ok(f.calls.filter((call) => call.command === '/usr/local/bin/op').every((call) => ['get', 'list'].includes(call.args[1])));
+  assert.deepEqual(receipt.roles.map((role) => role.vaultItem), ['reused', 'reused']);
+  assert.ok(!f.calls.some((call) => call.command === '/bin/sh'));
+  assert.ok(f.calls.filter((call) => call.command === OP).every((call) => ['get', 'list'].includes(call.args[1])));
   assert.ok(f.calls.filter((call) => call.args[1] === 'get').every((call) => [itemId(0), itemId(1)].includes(call.args[2])));
 });
 
@@ -232,9 +220,16 @@ test('denied reads, malformed fields, wrong vault/title/id, and raw errors are r
     await assert.rejects(provision(f.adapters), { message: 'Vault credential read failed.' });
     assert.ok(!f.calls.some((call) => call.command === '/usr/bin/ssh'));
   }
+});
+
+test('a machine without a usable op stops before any vault or SSH call', async () => {
   const f = fixture();
-  f.adapters.readToken = () => { throw new Error(token); };
-  await assert.rejects(provision(f.adapters), { message: 'Credential delivery access failed.' });
+  f.adapters.resolve = (name) => { if (name === 'op') throw new Error(token); return tools[name]; };
+  await assert.rejects(provision(f.adapters), (error) => {
+    assert.match(error.message, /1Password CLI/);
+    assert.ok(!error.message.includes(token));
+    return true;
+  });
   assert.equal(f.calls.length, 0);
 });
 
@@ -243,7 +238,7 @@ test('inventory/create/SSH failures and hostile receipts never expose provider o
     const f = fixture();
     const execute = f.adapters.execute;
     f.adapters.execute = (...args) => {
-      if (args[1][1] === stage || (stage === 'create' && args[0] === '/usr/bin/python3')
+      if (args[1][1] === stage || (stage === 'create' && args[0] === '/bin/sh')
           || (stage === 'ssh' && args[0] === '/usr/bin/ssh')) {
         throw Object.assign(new Error(token), { stdout: syntheticPassword, stderr: syntheticPassword });
       }
@@ -284,59 +279,78 @@ test('create readback must match the saved password; malformed inventory fails b
   }
 });
 
-test('publisher loader only reads an existing exact publisher identity, never provisions', async () => {
+test('executables resolve on the running machine: op from PATH or override, system tools from fixed paths', () => {
+  const present = new Set(['/home/op-user/.local/bin/op', '/opt/homebrew/bin/op', '/bin/sh', '/usr/bin/cat', '/usr/bin/ssh',
+    '/tmp/evil/ssh', '/tmp/evil/sh']);
+  const check = (path) => (present.has(path) ? path : null);
+  const env = { PATH: 'relative/bin:/tmp/evil:/home/op-user/.local/bin:/opt/homebrew/bin' };
+  assert.equal(resolveExecutable('op', env, check), '/home/op-user/.local/bin/op');
+  assert.equal(resolveExecutable('op', { PATH: '/usr/bin' }, check), '/opt/homebrew/bin/op');
+  assert.equal(resolveExecutable('ssh', env, check), '/usr/bin/ssh', 'ssh never comes from PATH');
+  assert.equal(resolveExecutable('sh', env, check), '/bin/sh');
+  assert.equal(resolveExecutable('cat', env, check), '/usr/bin/cat');
+  assert.equal(resolveExecutable('op', { ...env, OPENVALLEY_OP_BIN: '/opt/homebrew/bin/op' }, check), '/opt/homebrew/bin/op');
+  for (const override of ['op', 'relative/op', '/missing/op']) {
+    assert.throws(() => resolveExecutable('op', { OPENVALLEY_OP_BIN: override }, check));
+  }
+  assert.throws(() => resolveExecutable('op', { PATH: '/usr/bin' }, () => null));
+  assert.throws(() => resolveExecutable('python3', env, check));
+});
+
+test('only owner-writable regular executables are accepted', (t) => {
+  const directory = mkdtempSync(join(process.env.RUNNER_TEMP || '/tmp/opencode', 'schools-exec-test-'));
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  const file = join(directory, 'op');
+  writeFileSync(file, '#!/bin/sh\n');
+  chmodSync(file, 0o755);
+  assert.ok(executablePath(file));
+  chmodSync(file, 0o775);
+  assert.equal(executablePath(file), null, 'group-writable');
+  chmodSync(file, 0o644);
+  assert.equal(executablePath(file), null, 'not executable');
+  assert.equal(executablePath(directory), null, 'directory');
+  assert.equal(executablePath(join(directory, 'missing')), null);
+});
+
+test('preflight reads no secret, writes nothing and reports what exists', async () => {
+  const f = fixture([item(0)]);
+  const receipt = await preflight(f.adapters);
+  assert.deepEqual(receipt.items.map((value) => value.state), ['present', 'absent']);
+  assert.deepEqual(receipt.vault, { id: vault, name: 'Squatch' });
+  assert.deepEqual(receipt.account, { url: 'https://starlingstrategy.1password.com', user_type: 'HUMAN' });
+  assert.equal(receipt.icculus_ssh, 'ok');
+  assert.ok(!f.calls.some((call) => (call.args[0] === 'item' && call.args[1] === 'get') || call.command === '/bin/sh'),
+    'no item read and no create');
+  const ssh = f.calls.filter((call) => call.command === '/usr/bin/ssh');
+  assert.equal(ssh.length, 1);
+  assert.equal(ssh[0].args.at(-1), 'true');
+  assert.equal(ssh[0].options.input, undefined);
+  assertPrivate(f.calls, receipt, [syntheticPassword]);
+  const hidden = fixture();
+  const execute = hidden.adapters.execute;
+  hidden.adapters.execute = (...args) => (args[1][0] === 'vault' ? (() => { throw new Error('403'); })() : execute(...args));
+  await assert.rejects(preflight(hidden.adapters), { message: 'Squatch vault is not visible to this 1Password sign-in.' });
+  assert.ok(!hidden.calls.some((call) => call.command === '/usr/bin/ssh'));
+});
+
+test('publisher password streams only into a pipe, from the existing item, and never creates one', async () => {
   const f = fixture([item(0), item(1, 'synthetic!password@with:reserved#characters')]);
-  const url = new URL(await loadPublisherUrl(f.adapters));
-  assert.equal(url.username, 'schools_publisher');
-  assert.equal(decodeURIComponent(url.password), 'synthetic!password@with:reserved#characters');
-  assert.equal(url.host, '100.75.27.44:5434');
-  assert.equal(url.pathname, '/openvalley');
-  assert.deepEqual(f.calls.map((call) => call.args.slice(0, 3)), [
-    ['item', 'list', '--vault'], ['item', 'get', itemId(1)],
-  ]);
-  const empty = fixture();
-  await assert.rejects(loadPublisherUrl(empty.adapters), /Vault identity selection failed/);
-  assert.equal(empty.calls.length, 1);
-});
+  const written = [];
+  const receipt = await streamPublisherPassword({ ...f.adapters, stdoutIsTTY: false, write: (text) => written.push(text) });
+  assert.deepEqual(written, ['synthetic!password@with:reserved#characters\n']);
+  assert.deepEqual(receipt, { operation: 'publisher-password', status: 'streamed' });
+  assert.deepEqual(f.calls.map((call) => call.args.slice(0, 3)), [['item', 'list', '--vault'], ['item', 'get', itemId(1)]]);
+  assertPrivate(f.calls, receipt, ['synthetic!password@with:reserved#characters']);
 
-test('only the two fixed publisher scripts receive a scoped URL; child output is discarded', async () => {
-  const hadPublisherEnv = Object.hasOwn(process.env, 'SCHOOLS_PUBLISHER_DATABASE_URL');
-  for (const [operation, args] of [
-    ['publish', ['--candidate', '/tmp/opencode/candidate', '--root', '/rocky/open-valley/school-board', '--expected-base', 'none']],
-    ['revoke', ['--root', '/rocky/open-valley/school-board']],
-  ]) {
-    const f = fixture([item(1)]);
-    const receipt = await runPublisher(operation, args, f.adapters);
-    const child = f.calls.at(-1);
-    assert.equal(child.command, process.execPath);
-    assert.equal(child.args[0], fileURLToPath(new URL(`./${operation}.mjs`, import.meta.url)));
-    assert.deepEqual(child.args.slice(1), args);
-    assertPrivate(f.calls, receipt, [syntheticPassword]);
-    assert.equal(Object.hasOwn(process.env, 'SCHOOLS_PUBLISHER_DATABASE_URL'), hadPublisherEnv);
-    assert.deepEqual(receipt, { operation, status: 'completed' });
-  }
-});
+  const terminal = fixture([item(1)]);
+  await assert.rejects(streamPublisherPassword({ ...terminal.adapters, stdoutIsTTY: true, write: () => assert.fail('no output') }),
+    /Refusing to write the publisher password to a terminal/);
+  assert.equal(terminal.calls.length, 0);
 
-test('publisher rejects arbitrary scripts/flags and redacts failing child output', async () => {
-  for (const [operation, args] of [
-    ['node', ['-e', 'console.log(process.env)']],
-    ['publish', ['--candidate', '/tmp/test', '--root', '/tmp/test', '--expected-base', 'none', '--eval', 'x']],
-    ['publish', ['--candidate', '/tmp/test']],
-    ['revoke', ['--root', 'postgresql://bad']],
-    ['revoke', ['--root', '/tmp/a', '--root', '/tmp/b']],
-  ]) {
-    const f = fixture();
-    await assert.rejects(runPublisher(operation, args, f.adapters), { message: 'Unsupported publisher invocation.' });
-    assert.equal(f.tokenReads(), 0);
-    assert.equal(f.calls.length, 0);
-  }
-  const f = fixture([item(1)]);
-  const execute = f.adapters.execute;
-  f.adapters.execute = (...args) => {
-    if (args[0] === process.execPath) throw new Error(`${token} ${syntheticPassword}`);
-    return execute(...args);
-  };
-  await assert.rejects(runPublisher('revoke', ['--root', '/tmp/test'], f.adapters), { message: 'Publisher command failed.' });
+  const missing = fixture([item(0)]);
+  await assert.rejects(streamPublisherPassword({ ...missing.adapters, stdoutIsTTY: false, write: () => assert.fail('no output') }),
+    /Vault identity selection failed/);
+  assert.ok(!missing.calls.some((call) => call.command === '/bin/sh'));
 });
 
 test('OpenRouter key travels only on SSH stdin and the receipt is reconstructed', async () => {
@@ -347,18 +361,19 @@ test('OpenRouter key travels only on SSH stdin and the receipt is reconstructed'
     assert.deepEqual(JSON.parse(options.input), { openrouter_api_key: key });
     return JSON.stringify({ delivery: 'created' });
   };
-  const receipt = await deliverOpenRouterKey({ readKey: () => key + '\n', execute });
+  const adapters = { env: operatorEnv, resolve: (name) => tools[name], execute };
+  const receipt = await deliverOpenRouterKey({ ...adapters, readKey: () => key + '\n' });
   assert.deepEqual(receipt, { operation: 'deliver-openrouter', delivery: 'created' });
   assert.equal(calls.length, 1);
   assert.equal(calls[0].command, '/usr/bin/ssh');
   assert.ok(calls[0].args.includes('StrictHostKeyChecking=yes'));
   assertPrivate(calls, receipt, [key]);
   for (const bad of ['short', 'has space in the synthetic key value', '']) {
-    await assert.rejects(deliverOpenRouterKey({ readKey: () => bad, execute: () => assert.fail('no SSH for a bad key') }),
+    await assert.rejects(deliverOpenRouterKey({ ...adapters, readKey: () => bad, execute: () => assert.fail('no SSH for a bad key') }),
       { message: 'OpenRouter key input failed.' });
   }
   for (const hostile of [JSON.stringify({ delivery: 'created', key }), JSON.stringify({ delivery: 'replaced' }), `oops ${key}`]) {
-    await assert.rejects(deliverOpenRouterKey({ readKey: () => key, execute: () => hostile }), (error) => {
+    await assert.rejects(deliverOpenRouterKey({ ...adapters, readKey: () => key, execute: () => hostile }), (error) => {
       assert.equal(error.message, 'Remote OpenRouter key delivery failed.');
       assert.ok(!JSON.stringify(error).includes(key));
       return true;
@@ -367,7 +382,8 @@ test('OpenRouter key travels only on SSH stdin and the receipt is reconstructed'
 });
 
 test('unsupported CLI never attempts credential access or prints an exception', () => {
-  for (const args of [[], ['url'], ['provision', '--print-secret'], ['run', 'env'], ['deliver-openrouter', '--print']]) {
+  for (const args of [[], ['url'], ['provision', '--print-secret'], ['run', 'env'], ['deliver-openrouter', '--print'],
+    ['publish', '--root', '/tmp'], ['publisher-password', '--to', 'file'], ['preflight', 'extra']]) {
     let result;
     try { execFileSync(process.execPath, [fileURLToPath(new URL('./credentials.mjs', import.meta.url)), ...args], { stdio: 'pipe' }); }
     catch (error) { result = error; }
@@ -376,6 +392,19 @@ test('unsupported CLI never attempts credential access or prints an exception', 
     assert.equal(result.stderr.toString(), 'Unsupported credential operation.\n');
   }
 });
+
+test('publisher-password from the CLI refuses a terminal before touching 1Password', () => {
+  // script(1) gives the child a real terminal on stdout; skip where it is unavailable.
+  const script = ['/usr/bin/script'].find((path) => executablePath(path));
+  if (!script) return;
+  const command = `${JSON.stringify(process.execPath)} ${JSON.stringify(fileURLToPath(new URL('./credentials.mjs', import.meta.url)))} publisher-password`;
+  let result;
+  try { execFileSync(script, ['-qec', command, '/dev/null'], { stdio: ['ignore', 'pipe', 'pipe'],
+    env: { PATH: '/nonexistent', HOME: '/nonexistent' } }); }
+  catch (error) { result = error; }
+  assert.equal(result?.status, 1, 'the operation must fail');
+  assert.match(String(result.stdout), /Refusing to write the publisher password to a terminal/);
+}, { skip: process.platform !== 'linux' });
 
 test('remote Python: additive transaction, saved-password authentication, safe delivery and redaction', () => {
   // Python imports only this repository's source; mocks replace every DB and host filesystem operation.
@@ -574,4 +603,36 @@ print('synthetic remote checks passed')
     assert.fail(`Synthetic remote checks failed:\n${error.stderr}`);
   }
   assert.equal(output, 'synthetic remote checks passed\n');
+});
+
+test('CLI chain: publisher-password pipes the saved password into the publication job reader, nothing else', (t) => {
+  const directory = mkdtempSync(join(process.env.RUNNER_TEMP || '/tmp/opencode', 'schools-chain-test-'));
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  const fakeOp = join(directory, 'op');
+  // A synthetic vault: list and get only, as a signed-in op would answer. No create path.
+  writeFileSync(fakeOp, `#!/usr/bin/python3
+import json, sys
+items = ${JSON.stringify([item(0), item(1)])}
+args = sys.argv[1:]
+if args[:2] == ['item', 'list']:
+    print(json.dumps([{k: v for k, v in i.items() if k != 'fields'} for i in items]))
+elif args[:2] == ['item', 'get']:
+    print(json.dumps(next(i for i in items if i['id'] == args[2])))
+else:
+    sys.exit(3)
+`);
+  chmodSync(fakeOp, 0o700);
+  const credentials = fileURLToPath(new URL('./credentials.mjs', import.meta.url));
+  const reader = `import { publisherPassword } from ${JSON.stringify(fileURLToPath(new URL('./publish_production.mjs', import.meta.url)))};
+const value = publisherPassword({ passwordFromStdin: true }, {});
+process.stdout.write(JSON.stringify({ received: value === process.env.EXPECTED }));`;
+  const output = execFileSync('/bin/sh', ['-c', '"$0" "$1" publisher-password 2>"$3" | "$0" --input-type=module -e "$2"',
+    process.execPath, credentials, reader, join(directory, 'stderr')], {
+    encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'],
+    env: { PATH: '/usr/bin:/bin', HOME: directory, OPENVALLEY_OP_BIN: fakeOp, EXPECTED: syntheticPassword },
+  });
+  assert.deepEqual(JSON.parse(output), { received: true });
+  const stderr = readFileSync(join(directory, 'stderr'), 'utf8');
+  assert.equal(stderr, '{"operation":"publisher-password","status":"streamed"}\n');
+  assert.ok(!stderr.includes(syntheticPassword));
 });

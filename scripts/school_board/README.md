@@ -328,6 +328,17 @@ Owner approval is required for every non-dry-run command. The
 node scripts/school_board/migrate_production.mjs --dry-run      # read-only inspection of Icculus
 node scripts/school_board/migrate_production.mjs --apply        # OWNER: 001+002, repeat, verify grants
 node scripts/school_board/publish_production.mjs --dry-run      # candidate + extraction stats only
-node scripts/school_board/publish_production.mjs --publish --expected-base none   # OWNER
 op read "op://…" | node scripts/school_board/credentials.mjs deliver-openrouter    # OWNER
+
+# OWNER, on a machine signed in to 1Password with Squatch access (the owner's Mac):
+node scripts/school_board/credentials.mjs preflight             # read-only
+node scripts/school_board/credentials.mjs provision             # items, roles, runtime URL
+node scripts/school_board/credentials.mjs publisher-password \
+  | ssh macon@rockefeller /srv/storage/projects/open-valley/scripts/school_board/publish_rockefeller.sh \
+      --publish --expected-base none --publisher-password-stdin   # or --revoke --publisher-password-stdin
 ```
+
+The publisher password only ever travels through that pipe: `credentials.mjs`
+refuses to write it to a terminal, and `publish_production.mjs` refuses a
+terminal or regular file as its source. See the
+[credential guide](../../docs/school-board/credentials.md#publisher-access-from-rockefeller).

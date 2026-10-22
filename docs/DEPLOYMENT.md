@@ -39,7 +39,7 @@ These checks ran from Rockefeller. They wrote nothing on Icculus, in the databas
 | Ingress files | See [Traefik cutover](#7-traefik-cutover-owner). No container labels route the hostname. |
 | Passages | Full-corpus extraction: 1,123 of 1,157 sources have text, giving 7,343 passages (94.8 MB of JSONL). There are 1,922 low-text pages, and 34 sources have no text (mostly scanned PDFs). |
 | Publication timing | A local measurement with the real 7,343-passage candidate: stage 11.9 s across 37 batches (worst batch 0.35 s), `publish` 0.2 s, `attach_passages` 2.0 s. The policy worker's passage verification takes 6.0 s. See [publication timing](#publication-from-rockefeller). |
-| Publisher credential on Rockefeller | **Gap.** Rockefeller's 1Password service account can see only the `brigade-opencode` vault. Reading the Squatch vault, which holds the Schools items, returns 403. `credentials.mjs publish` needs the managed coding runtime (`/opt/coding/guards.mjs`, `/usr/local/bin/op`), which Rockefeller does not have. |
+| Publisher credential on Rockefeller | Rockefeller's 1Password service account can see only `brigade-opencode`; Squatch answers 403. **Resolved October 22 in code:** the operator pipes the publisher password from a signed-in machine into the Rockefeller job's stdin (step 3). |
 | Container identity | **Resolved October 20.** The assistant image runs as UID/GID 1000, the same identity as the web image's `node` user. Both read the shared `1000:1000 0400` runtime file the credential consumer delivers, and the OpenRouter key file uses the same ownership. |
 | Collection registry | `school-board/reports/schools-publication-artifacts.json` already exists. It has 4 entries from the October 14 staging and rebuild runs (candidate paths only, 25 sources each). One entry has `verified_inputs: false`, but its inputs no longer exist, so it does not block publication or cleanup. |
 
@@ -65,13 +65,21 @@ Also recheck: `curl -sI https://openvalley.maconphillips.com/` (maintenance page
 
 The [credential guide](school-board/credentials.md) owns the mechanics. Secrets never pass through chat, argv, logs or ad hoc files.
 
-1. **Database roles and runtime URL (OWNER).** Confirm that the 1Password grant now allows item creation in Squatch, which was denied on October 4. Then run `node scripts/school_board/credentials.mjs provision` from the managed coding runtime. It creates `schools_runtime` and `schools_publisher` and delivers `/opt/openvalley-schools/credentials/runtime-database-url` (1000:1000, 0400). The web and assistant containers both mount this file.
-2. **OpenRouter key (OWNER).** Choose the key. A dedicated, spend-capped production key is recommended over the agent key in `brigade-opencode`. Deliver it with `op read "op://…" | node scripts/school_board/credentials.mjs deliver-openrouter`, which works from Rockefeller. This installs `/opt/openvalley-schools/credentials/openrouter-api-key` (1000:1000, 0400). **Status (October 20):** the agent key `OpenRouter API Key - opencode-rockefeller` is already delivered to that path and verified (`created`, then `reused`). Before public launch, consider rotating to a dedicated spend-capped key: remove the delivered file after host review, then re-deliver from the new item — a mismatching re-delivery is refused, not overwritten.
-3. **Publisher password on Rockefeller (OWNER decision).** Rockefeller cannot read Squatch. Choose one:
-   - Make the publisher item readable by Rockefeller's service account, through a vault it can read.
-   - Publish from the managed runtime instead, if the collection is reachable there.
+1. **Database roles and runtime URL (OWNER, operator Mac).** Run on the owner's Mac, whose 1Password CLI is signed in through the app with write access to Squatch. The Mac needs Node 20 or newer and Tailscale SSH to `root@100.75.27.44`. Take the three committed files the consumer uses from Rockefeller; no GitHub push or full checkout is needed:
 
-   Do not copy the password to disk on Rockefeller.
+   ```bash
+   mkdir -p ~/openvalley-credentials && cd ~/openvalley-credentials
+   ssh macon@rockefeller 'git -C /srv/storage/projects/open-valley archive <commit> \
+       scripts/school_board/credentials.mjs scripts/school_board/provision_credentials.py deploy/icculus-known-hosts' \
+     | tar -x
+   export OP_ACCOUNT=starlingstrategy.1password.com
+   node scripts/school_board/credentials.mjs preflight    # read-only: tools, sign-in, Squatch, items, SSH
+   node scripts/school_board/credentials.mjs provision
+   ```
+
+   `provision` creates or reuses the two exact Squatch items and verifies their readback. It then creates `schools_runtime` and `schools_publisher` on Icculus and delivers `/opt/openvalley-schools/credentials/runtime-database-url` (1000:1000, 0400) through the existing checked consumer. The web and assistant containers both mount that file. See the [credential guide](school-board/credentials.md#provision).
+2. **OpenRouter key (OWNER).** Choose the key. A dedicated, spend-capped production key is recommended. Deliver it with `op read "op://…" | node scripts/school_board/credentials.mjs deliver-openrouter`, which works from Rockefeller. This installs `/opt/openvalley-schools/credentials/openrouter-api-key` (1000:1000, 0400). **Status (October 20):** the `brigade-opencode` item `OpenRouter API Key - opencode-rockefeller` is delivered to that path and verified (`created`, then `reused`). It is not the key pasted into the October 20 working session; an October 22 digest comparison found them different. To rotate before launch, remove the delivered file after host review, then re-deliver from the new item. A mismatching re-delivery is refused, not overwritten.
+3. **Publisher password (no setup).** Rockefeller never stores it. The operator pipes it in at publication time (step 3).
 4. **Assistant data directory (OWNER, Icculus write).** Create `/opt/openvalley-schools/unanswered` (`1000:1000`, 0700). The compose file mounts it at `/var/lib/schools-assistant` for `SCHOOLS_UNANSWERED_LOG_PATH`. It holds redacted questions only. Include it in the privacy-cleanup inventory.
 
 ### 2. Migration (OWNER)
@@ -94,22 +102,32 @@ The SQL travels on SSH stdin into `docker exec -i openvalley-postgres psql`, whi
 
 Success is a JSON receipt with `"after": {"state": "001+002", "verified": true, …}`. Any other result exits 1. An error names only the failed step. The migrations are additive and repeatable. Rerunning `--dry-run` at any time re-verifies the grants.
 
-### 3. Publish the release with passages (OWNER, Rockefeller)
+### 3. Publish the release with passages (OWNER, operator Mac → Rockefeller)
+
+From the credential directory on the owner's Mac (step 1):
 
 ```bash
-export OPENVALLEY_DATA_ROOT=/srv/storage/files/coding-storage/open-valley
-SCHOOLS_PUBLISHER_PASSWORD_FILE=<(op read "op://<approved vault>/<publisher item>/password") \
-OPENROUTER_API_KEY_FILE=<(op read "op://<approved vault>/<key item>/credential") \
-  node scripts/school_board/publish_production.mjs --publish --expected-base none
+node scripts/school_board/credentials.mjs publisher-password \
+  | ssh macon@rockefeller /srv/storage/projects/open-valley/scripts/school_board/publish_rockefeller.sh \
+      --publish --expected-base none --publisher-password-stdin
 ```
 
-Process substitution keeps both secrets off disk and out of argv. The command:
+`publisher-password` reads the existing Squatch item and writes the password only into the pipe. It refuses a terminal. On Rockefeller, `publish_rockefeller.sh` passes stdin unchanged to `publish_production.mjs`. It supplies the embedding key from Rockefeller's own service account (`brigade-opencode`, `opencode-rockefeller`; override with `SCHOOLS_OPENROUTER_OP_REF`) as a process-substitution pipe. Neither secret is in argv or on disk. The job:
 
-1. Builds the candidate.
-2. Embeds passages with the cache under `$OPENVALLEY_DATA_ROOT/schools-publish/passage-cache`.
-3. Runs `publish.mjs` against `100.75.27.44:5434`.
+1. Reads the password first; a missing or malformed password stops it before any work.
+2. Builds the candidate.
+3. Embeds passages with the cache under `$OPENVALLEY_DATA_ROOT/schools-publish/passage-cache`.
+4. Runs `publish.mjs` against `100.75.27.44:5434`.
 
 It prints the release ID, passage count, rows digest and step timings. Record the receipt with the revision. Later releases pass the current release UUID as `--expected-base`. [Publication from Rockefeller](#publication-from-rockefeller) lists exactly what this writes.
+
+Withdrawal uses the same pipe and never needs the OpenRouter key or committed files:
+
+```bash
+node scripts/school_board/credentials.mjs publisher-password \
+  | ssh macon@rockefeller /srv/storage/projects/open-valley/scripts/school_board/publish_rockefeller.sh \
+      --revoke --publisher-password-stdin
+```
 
 ### 4. Image builds (OWNER, Icculus)
 
@@ -216,7 +234,7 @@ On any later `publish` or `revoke` where the policy excludes a source of a regis
 
 **Statement timeout.** Every publisher statement has a 15 s limit. The largest statements are a 200-row stage call (about 2.6 MB, worst 0.35 s locally) and `attach_passages` (2.0 s locally for all rows). That is more than 7× headroom, so the batch size stays at 200. `attach_passages` grows linearly with the corpus. Revisit the margin if passages exceed about 30,000.
 
-**Credential wrapper limit.** `credentials.mjs publish` bounds its child to 120 s. That is enough for the estimate above, but it only runs in the managed runtime (see the preflight gap).
+**Time limits.** `publish_production.mjs` bounds the candidate build to 5 minutes, embedding to 60 minutes, and `publish.mjs` or `revoke.mjs` to 15 minutes each.
 
 ## History and earlier evidence (October 4–14)
 

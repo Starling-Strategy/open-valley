@@ -136,6 +136,13 @@ Build on Icculus from the recorded, committed revision's allowlisted source arch
 - **Web:** `deploy/Dockerfile.web`. Its context is `web/`, the reviewed Warren export, and the Dockerfile with its ignore file.
 - **Assistant:** `deploy/Dockerfile.assistant` from the repository root, with its allowlisted context. It runs as UID/GID 1000, the same identity as the web image, listens on `0.0.0.0:8787`, and publishes no port.
 
+**Release images, October 22.** Built on Rockefeller from a clean `git archive` of `82b0d50` (Icculus has about 3 GB of free memory and hosts other services), smoke-tested there against a local test release, then streamed to Icculus with `docker save | ssh … docker load`. Identity is the image **config digest**; Rockefeller's containerd image store reports a different ID for the same image.
+
+| Image | Config digest | Size | User |
+|---|---|---|---|
+| `local/openvalley-web:82b0d50` | `sha256:b616e67c1963b219c08dff4b84231a69d241c372b3c511dbc91cccf717b6a71c` | 107 MB | `node` |
+| `local/openvalley-schools-assistant:82b0d50` | `sha256:2ea6382651f72821ee5242548cf0a5103352313d5c37e26788a892b830f66fea` | 94 MB | `1000:1000` |
+
 ### 5. Openship managed deploy (OWNER)
 
 Update the existing Openship project (`Open Valley Schools`, `proj_w_FjnF13GEZj0lxD`, workspace `org_c041dc79-0f1e-4e45-adc8-72bb1e9f58b1`) to match `deploy/compose.icculus.yml`, then invoke a managed deployment. A host-side `docker compose` run is not a managed deploy. In summary:

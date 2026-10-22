@@ -175,6 +175,16 @@ exactly and is then reused. Success prints only
 reads no vault itself and does not touch the database, so it also runs from
 Rockefeller.
 
+> **Replaced (October 22):** the file now holds the dedicated application key,
+> `brigade-opencode` item `OpenRouter API Key - open valley`
+> (`7dind5dojcfsvv3uzcj2fgokye`). Before removal, the previous file was confirmed
+> by SHA-256 comparison to hold exactly the `opencode-rockefeller` item below,
+> which remains in 1Password. The file was then removed under owner approval, the
+> new key delivered (`created`, then `reused` on a re-run), and a host check
+> confirmed `1000:1000 0400`, one link, and a digest matching the new item.
+> `/opt/openvalley-schools/unanswered` was created `1000:1000 0700` at the same
+> time.
+>
 > **Delivered (October 20, evening):** the key file exists on Icculus. The
 > delivered key is the `brigade-opencode` item `OpenRouter API Key -
 > opencode-rockefeller` (`kaf7gccsvqbv6ogodo6qbwuxr4`). It is **not** the key the

@@ -1,12 +1,5 @@
 # Open Valley: Data Architecture
 
-> **Historical housing/FPF architecture and design.** This is not the current
-> production model; use [deployment](../DEPLOYMENT.md). Schema examples mix
-> conceptual/Pydantic fields with historical ORM proposals. Verify actual names
-> in `src/schemas.py` and `src/models.py` before using them. Audit-trigger and
-> change-tracking proposals below are not proof that all changes are logged;
-> the document's future-work section still treats those triggers as unimplemented.
-
 
 
 ## Overview

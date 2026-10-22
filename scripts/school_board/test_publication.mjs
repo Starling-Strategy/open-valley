@@ -35,7 +35,8 @@ test('synthetic PostgreSQL publication lifecycle', async (t) => {
   const createdRoles = [];
   const clients = [];
   const scratch = await mkdtemp(join(cleanEnv.RUNNER_TEMP, 'schools-publication-test-'));
-  const migration = readFileSync(new URL('../../db/schools/001_publication.sql', import.meta.url), 'utf8');
+  const migration = ['001_publication.sql', '002_passages.sql']
+    .map((name) => readFileSync(new URL(`../../db/schools/${name}`, import.meta.url), 'utf8')).join('\n');
   let db;
   try {
     for (const role of ['schools_runtime', 'schools_publisher']) {
@@ -172,18 +173,23 @@ test('synthetic PostgreSQL publication lifecycle', async (t) => {
     await t.test('runtime has only active view SELECT; publisher has no owner membership or unrelated DDL', async () => {
       for (const query of ['SELECT * FROM schools.releases', 'SELECT * FROM schools.release_sources',
         'SELECT * FROM schools.exclusions', 'SELECT * FROM private_app.records',
+        'SELECT * FROM schools.release_passages', 'SELECT * FROM schools.release_retrieval',
+        'SELECT * FROM schools.passage_staging', "SELECT schools.stage_passages('', '[]')",
+        "SELECT schools.attach_passages(gen_random_uuid(), '{}')",
         'SELECT schools.policy_state()', 'SELECT schools.delete_revoked()',
         'DELETE FROM schools.active_release', 'CREATE TABLE private_app.attack(id int)', 'SET ROLE schools_owner']) {
         await assert.rejects(runtime.client.query(query), { code: '42501' });
       }
       for (const query of ['SELECT * FROM schools.releases', 'SELECT * FROM schools.current_publication',
+        'SELECT * FROM schools.current_passages', 'SELECT * FROM schools.current_retrieval',
+        'SELECT * FROM schools.release_passages', 'DELETE FROM schools.passage_staging',
         'SELECT * FROM private_app.records', 'CREATE TABLE public.attack(id int)',
         'ALTER TABLE private_app.records ADD COLUMN attack int', 'SET ROLE schools_owner',
         'GRANT schools_owner TO schools_publisher']) {
         await assert.rejects(publisher.client.query(query), { code: '42501' });
       }
       const functions = await db.query("SELECT proconfig, proacl::text FROM pg_proc JOIN pg_namespace n ON n.oid=pronamespace WHERE n.nspname='schools'");
-      assert.equal(functions.rowCount, 4);
+      assert.equal(functions.rowCount, 6);
       for (const fn of functions.rows) {
         assert.ok(fn.proconfig.includes('search_path=pg_catalog, schools'));
         assert.ok(!/[{,]=X\//.test(fn.proacl));
@@ -435,6 +441,95 @@ test('synthetic PostgreSQL publication lifecycle', async (t) => {
       assert.deepEqual(await cli('revoke', 'none', target), { revoked: true });
       assert.deepEqual((await json(registryFile)).artifacts, []);
       assert.equal((await db.query('SELECT count(*) FROM schools.releases')).rows[0].count, '0');
+    });
+    await t.test('passages publish with their release in one transaction and follow withdrawal', async () => {
+      await db.query('DELETE FROM schools.releases; DELETE FROM schools.exclusions');
+      const target = join(scratch, 'passages');
+      await python([join(scripts, 'publication-fixtures/generate.py'), target, '--passages']);
+      const candidate = await candidateAt(target);
+      const manifest = await json(join(target, 'candidate/passages.json'));
+      const rowsFile = join(target, 'candidate/passages.jsonl');
+      const rowsBytes = await readFile(rowsFile, 'utf8');
+      const rows = rowsBytes.trim().split('\n').map((line) => JSON.parse(line));
+      const count = async (table) => Number((await db.query(`SELECT count(*) FROM schools.${table}`)).rows[0].count);
+
+      const releaseId = (await cli('publish', 'none', target)).releaseId;
+      const retrieval = (await runtime.client.query('SELECT * FROM schools.current_retrieval')).rows;
+      assert.deepEqual(retrieval, [{ release_id: releaseId, embedding_model: 'baai/bge-m3', dims: 1024, passage_count: rows.length }]);
+      const passages = (await runtime.client.query('SELECT * FROM schools.current_passages ORDER BY passage_id')).rows;
+      assert.deepEqual(Object.keys(passages[0]).sort(),
+        ['embedding', 'ordinal', 'page_end', 'page_start', 'passage_id', 'release_id', 'source_id', 'text']);
+      assert.deepEqual(passages.map((p) => [p.passage_id, p.source_id, p.text, p.embedding.length]),
+        rows.map((r) => [r.passage_id, r.source_id, r.text, 1024]));
+      assert.ok(Math.abs(passages[0].embedding[0] - rows[0].embedding[0]) < 1e-6);
+      assert.equal(await count('passage_staging'), 0);
+
+      // Republishing the identical candidate re-attaches as a no-op.
+      assert.equal((await cli('publish', releaseId, target)).releaseId, releaseId);
+      assert.equal(await count('release_passages'), rows.length);
+
+      // Tampered rows never reach PostgreSQL and leave the active release intact.
+      await writeFile(rowsFile, rowsBytes.replace('"text":"', '"text":"Unreviewed '));
+      await assert.rejects(cli('publish', releaseId, target));
+      await writeFile(rowsFile, rowsBytes);
+      assert.equal((await runtime.client.query('SELECT release_id FROM schools.current_retrieval')).rows[0].release_id, releaseId);
+
+      // The database re-checks every row, the rows digest, and lineage membership.
+      async function attach(stagedRows, attachManifest, base = releaseId) {
+        await publisher.client.query('BEGIN');
+        try {
+          await publisher.client.query('SELECT schools.stage_passages($1,$2)', [attachManifest.content_digest, JSON.stringify(stagedRows)]);
+          const id = (await publishSQL(publisher.client, candidate, base)).rows[0].id;
+          await publisher.client.query('SELECT schools.attach_passages($1,$2)', [id, attachManifest]);
+          await publisher.client.query('COMMIT');
+        } catch (error) {
+          await publisher.client.query('ROLLBACK');
+          throw error;
+        }
+      }
+      const forgedText = { ...rows[0], text: rows[0].text + ' forged' };
+      const outside = { ...rows[0], sha256: 'a'.repeat(64) };
+      outside.passage_id = (await import('node:crypto')).createHash('sha256')
+        .update([outside.source_id, outside.sha256, outside.ordinal, outside.text_sha256].join('\n')).digest('hex').slice(0, 32);
+      for (const [label, stagedRows, attachManifest] of [
+        ['text hash', [forgedText], manifest],
+        ['short embedding', [{ ...rows[0], embedding: rows[0].embedding.slice(1) }], manifest],
+        ['rows digest', rows, { ...manifest, rows_digest: 'b'.repeat(64) }],
+        ['count', rows, { ...manifest, passage_count: rows.length + 1 }],
+        ['lineage membership', [outside], { ...manifest, passage_count: 1,
+          rows_digest: (await import('node:crypto')).createHash('sha256').update(`${outside.passage_id}:${outside.text_sha256}\n`).digest('hex') }],
+        ['changed identical release', rows, { ...manifest, passages_sha256: 'c'.repeat(64) }],
+      ]) {
+        await assert.rejects(attach(stagedRows, attachManifest), /Schools passages rejected/, label);
+      }
+      await assert.rejects(attach(rows, manifest, null), /base changed/);
+      assert.equal(await count('passage_staging'), 0);
+      assert.equal(await count('release_passages'), rows.length);
+      assert.equal(await count('releases'), 1);
+
+      // A candidate without passages still publishes; its release has no retrieval rows.
+      const plain = join(scratch, 'passages-plain');
+      await python([join(scripts, 'publication-fixtures/generate.py'), plain]);
+      const schools = join(plain, 'inputs/schools.json');
+      const register = await json(schools);
+      register.notes.push('Synthetic second release without passages.');
+      await writeFile(schools, JSON.stringify(register));
+      await python([join(scripts, 'build_public_snapshot.py'), '--root', join(plain, 'collection'), '--inputs', join(plain, 'inputs'), '--output', join(plain, 'candidate')]);
+      const plainId = (await cli('publish', releaseId, plain)).releaseId;
+      assert.notEqual(plainId, releaseId);
+      assert.equal((await readSchoolsPublication()).releaseId, plainId);
+      assert.equal((await runtime.client.query('SELECT * FROM schools.current_passages')).rowCount, 0);
+      assert.equal((await runtime.client.query('SELECT * FROM schools.current_retrieval')).rowCount, 0);
+      assert.equal((await cli('publish', plainId, target)).releaseId, releaseId);
+      assert.equal((await runtime.client.query('SELECT * FROM schools.current_passages')).rowCount, rows.length);
+
+      // Withdrawal hides passages immediately; delete_revoked removes them by cascade.
+      await writeFile(policyFile(target), JSON.stringify({ ...emptyRules, source_ids: ['report'] }));
+      await cli('revoke', 'none', target);
+      assert.equal((await runtime.client.query('SELECT * FROM schools.current_passages')).rowCount, 0);
+      assert.equal((await runtime.client.query('SELECT * FROM schools.current_retrieval')).rowCount, 0);
+      for (const table of ['releases', 'release_retrieval', 'release_passages', 'passage_staging']) assert.equal(await count(table), 0, table);
+      await assert.rejects(stat(rowsFile), { code: 'ENOENT' });
     });
   } finally {
     await Promise.all(clients.map((client) => client.end()));

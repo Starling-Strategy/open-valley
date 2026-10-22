@@ -2,14 +2,11 @@
 
 Purpose: Record the local privacy cleanup and its verification limits.
 Audience: Maintainers and reviewers.
-Status: Historical cleanup receipt, checked October 4, 2026; canonical policy remains AGENTS.md.
+Status: reference
 Owner: Open Valley
 Last updated: 2026-10-04
 
-The historical cleanup used `/rocky/open-valley/school-board`. Resolve the current
-host collection location from [AGENTS.md](../../AGENTS.md) before reproducing
-commands, and complete production exclusions through the
-[Rockefeller runbook](../../deploy/rockefeller/README.md).
+The local HUUSD collection is at `/rocky/open-valley/school-board`.
 This repository records the exclusion policy, reproducible tooling and minimal
 deletion metadata. It does not contain the reviewed transcripts or documents.
 

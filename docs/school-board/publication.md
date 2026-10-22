@@ -1,15 +1,10 @@
 # Schools publication and withdrawal
 
-Authority: authoritative Schools publication/withdrawal contract, reviewed October 15, 2026.
-
-The Schools reader serves one eligible PostgreSQL release at request time. It does
+The application serves one eligible PostgreSQL release at request time. It does
 not read the collection, reviewed inputs, or candidate files. Start with the
 [candidate interface](../../scripts/school_board/README.md#candidate-interface-for-the-publisher)
 for numerical/source validation and the [deployment guide](../DEPLOYMENT.md) for
-hosting. Production is public on Rockefeller; its
-[runbook](../../deploy/rockefeller/README.md) owns connections, deployment and
-coordinated exclusion handling. Other application readers use the eligible
-research collection independently of the Schools publication reader.
+hosting. Production credentials and live U8 verification remain deferred.
 
 ## Database boundary
 
@@ -20,9 +15,13 @@ without memberships, superuser, role/database creation, replication, or RLS-bypa
 privileges. The migration creates the NOLOGIN/NOINHERIT `schools_owner` if absent.
 It creates no passwords and changes no other schema or database-wide grants.
 `db/schools/migrate.mjs` accepts `SCHOOLS_ADMIN_DATABASE_URL` only for loopback
-synthetic databases. Production must run the SQL through its approved privileged
-administrative connection, separately from the app and publisher. Rockefeller's
-bootstrap uses the database container's local postgres identity and peer socket.
+synthetic databases. In production, `scripts/school_board/migrate_production.mjs`
+pipes both files over pinned SSH into `docker exec -i openvalley-postgres psql`. It
+uses the container's own administrator environment, separately from the app and
+publisher. `--dry-run` runs only a read-only inspection. `--apply` (owner-approved)
+refuses while any blocker remains, applies 001 and 002 twice, and then verifies
+the exact runtime, publisher and `PUBLIC` grants with the effective-privilege
+audit. See the [deployment runbook](../DEPLOYMENT.md#2-migration-owner).
 
 The preflight inspects effective privileges, including PUBLIC and column grants.
 It refuses private-table/sequence access, unrelated schema creation, and executable
@@ -32,11 +31,15 @@ SELECT on a non-extension sequence. A failed audit needs a private administrator
 review; the migration does not repair unrelated grants. Repeating the migration
 preserves school releases.
 
+`db/schools/002_passages.sql` adds assistant passages and runs after 001
+(`migrate.mjs` applies both). It requires 001's schema, owner and roles, and does
+not require pgvector. See [assistant retrieval](assistant.md#database-dbschools002_passagessql).
+
 | Identity | Granted school access |
 |---|---|
-| Runtime | USAGE on `schools`; SELECT on `schools.current_publication` only |
-| Publisher | USAGE; EXECUTE on four fixed lifecycle functions only |
-| Owner | Owns schema, tables, view and functions; cannot log in |
+| Runtime | USAGE on `schools`; SELECT on `current_publication`, `current_retrieval` and `current_passages` only |
+| Publisher | USAGE; EXECUTE on six fixed lifecycle functions only |
+| Owner | Owns schema, tables, views and functions; cannot log in |
 
 The private tables are `policy`, monotonic `exclusions`, `releases`,
 `release_sources`, and the singleton `active_release`. Payload/lineage hashes and
@@ -47,12 +50,11 @@ have explicit EXECUTE grants with PUBLIC revoked.
 
 ## Runtime
 
-Production supplies `SCHOOLS_DATABASE_URL` for `schools_runtime` over the mounted
-Unix socket using peer authentication, as configured in
-`deploy/rockefeller/compose.yml`. The reader also supports
-`SCHOOLS_DATABASE_URL_FILE`; the file takes precedence when set. Password-bearing
-credentials are neither printed nor put in command arguments. Restart the
-application after changing connection configuration.
+Mount the runtime URI in `/run/secrets/schools-database-url`, then set
+`SCHOOLS_DATABASE_URL_FILE` to that path. For synthetic local work,
+`SCHOOLS_DATABASE_URL` is also supported; the file takes precedence. The connection
+must authenticate as `schools_runtime`. Credentials are neither printed nor put
+in command arguments. Restart the application after changing its credential mount.
 
 `readSchoolsPublication()` in `web/src/lib/schools.server.ts` returns
 `{ releaseId, payload: SchoolsPayload } | null`. Its pool is created lazily on
@@ -83,11 +85,10 @@ node scripts/school_board/publish.mjs \
 ```
 
 Use the current release UUID instead of `none` when replacing or recovering a
-release. Supply `SCHOOLS_PUBLISHER_DATABASE_URL` as an operator-provided connection
-URL in the publisher child's environment. Rockefeller uses its restricted peer
-identity; password-bearing environments must use an approved private credential
-consumer. The application receives only the runtime identity. No production
-credential setup is part of the synthetic workflow below.
+release. Supply `SCHOOLS_PUBLISHER_DATABASE_URL` privately in the publisher child's
+environment through the approved credential consumer. The application receives
+only the runtime credential. No production credential setup is part of the local
+workflow below.
 
 Reviewed inputs default to `data/school-board/public/`. `SCHOOLS_PUBLIC_INPUTS`
 selects a dedicated absolute input directory for synthetic/local work. Under the
@@ -105,6 +106,19 @@ the publisher:
 4. Rechecks policy and expected base under the same database lock, inserts the
    immutable release and complete lineage, switches the pointer, and commits.
 
+A candidate may also carry `passages.json` and `passages.jsonl` from
+`build_passages.py`. The policy worker then verifies the manifest, file hash,
+rows digest, every row, and that each `(source_id, sha256)` is in lineage. Step 4
+becomes one transaction: stage the exact verified bytes in batches of 200 rows
+through `schools.stage_passages`, call `schools.publish`, then
+`schools.attach_passages`, which re-checks count, rows digest, text hashes,
+dimensions and `release_sources` membership. Either the release and its
+passages both become visible or neither does. Republishing an identical
+candidate is a no-op. Different passages for an existing release are rejected;
+a candidate without passages keeps any passages already attached to that release.
+Withdrawal hides passages with their release, and `delete_revoked()` removes them
+by cascade.
+
 A failure rolls back candidate activation. An unaffected eligible prior release
 remains visible; an exclusion or invalid policy cannot be rolled back by a failed
 replacement. Reimporting the same candidate with the current expected base returns
@@ -113,11 +127,20 @@ the same release ID. Concurrent publishers using one base cannot both win.
 Success prints only `{ "releaseId": "<uuid>" }`. Keep that non-sensitive receipt
 and verify readiness/public responses through the host's deployment process.
 
-## Withdraw, then finish deletion
+### Production publication
 
-For production, complete the coordinated policy operation in the
-[Rockefeller runbook](../../deploy/rockefeller/README.md). A standalone Schools
-revocation does not remove the research serving export or search projections.
+Publish from Rockefeller, where the collection lives, with
+`scripts/school_board/publish_production.mjs`. It builds the candidate, adds
+passages, and runs `publish.mjs` against `100.75.27.44:5434`. The server has
+`ssl=off`, so the path relies on Tailscale encryption; do not set `sslmode`.
+`--dry-run` builds the candidate and measures extraction only. The
+[deployment runbook](../DEPLOYMENT.md#publication-from-rockefeller) lists the
+exact registry and data-root writes, the measured timing, and the publisher
+credential gap on Rockefeller. With 7,343 passages, the worst 200-row stage call
+took 0.35 s and `attach_passages` took 2.0 s locally, well inside the 15 s
+statement timeout.
+
+## Withdraw, then finish deletion
 
 An exclusion change is an operational action: update the canonical manifest using
 the existing privacy tools and **immediately apply it to the serving database**:
@@ -238,8 +261,13 @@ if this preview created them and no other local database uses them.
 
 ```bash
 SCHOOLS_TEST_DATABASE_URL=postgresql://postgres@127.0.0.1:55432/postgres \
-node --test scripts/school_board/test_publication.mjs
+node --test --test-concurrency=1 scripts/school_board/test_publication.mjs scripts/school_board/test_migrate_production.mjs
+node --test scripts/school_board/test_publish_production.mjs scripts/school_board/test_credentials.mjs
 ```
+
+`test_migrate_production.mjs` runs the production migrator's SQL on a disposable
+database. It checks the read-only dry run, the block on a `PUBLIC` leak, the
+double apply with exact grant verification, and detection of widened grants.
 
 After `npm run build --prefix web` and installing Playwright Chromium, run:
 

@@ -1,10 +1,5 @@
 # School MVP verification — October 4, 2026
 
-> **Authority: historical local verification receipt.** Pending credentials,
-> Openship deployment and cutover below describe the October 4 checkpoint.
-> Current production evidence is in the
-> [Rockefeller runbook](../../deploy/rockefeller/README.md).
-
 The school application is implemented and locally verified. Production school
 publication and public cutover remain deferred by the owner until credential
 setup is confirmed. The public hostname still serves the earlier application.

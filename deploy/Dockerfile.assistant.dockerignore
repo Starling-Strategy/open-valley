@@ -1,0 +1,10 @@
+# Deny by default: only the assistant's package source and lockfile enter the build.
+# Tests, evals, data, credentials and the web app never do.
+**
+!services/schools-assistant/pyproject.toml
+!services/schools-assistant/uv.lock
+!services/schools-assistant/README.md
+!services/schools-assistant/src/
+!services/schools-assistant/src/**
+**/__pycache__
+**/*.pyc

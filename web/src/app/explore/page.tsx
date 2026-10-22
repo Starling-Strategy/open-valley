@@ -1,7 +1,6 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import Link from "next/link";
-import { PageLayout, PageHeader } from '@/components/PageLayout';
 
 export const metadata = {
   title: "Explore Warren property records | Open Valley",
@@ -43,8 +42,8 @@ export default async function ExplorePage({
   );
 
   return (
-    <PageLayout>
-      <PageHeader>
+    <div className="site-container">
+      <header className="editorial-hero">
         <p className="eyebrow"><Link href="/homes">Homes</Link> · Public records</p>
         <h1>Explore Warren properties.</h1>
         <p className="lede">Look up a location, parcel ID, or SPAN in the retained town assessment records.</p>
@@ -54,7 +53,7 @@ export default async function ExplorePage({
           not current sale prices or a count of occupied homes. Follow a property
           card link to check the town&apos;s record.
         </p>
-      </PageHeader>
+      </header>
 
       <aside className="availability" aria-labelledby="explore-availability">
         <h2 id="explore-availability">Map and live housing counts unavailable</h2>
@@ -104,6 +103,6 @@ export default async function ExplorePage({
           </div>
         )}
       </section>
-    </PageLayout>
+    </div>
   );
 }

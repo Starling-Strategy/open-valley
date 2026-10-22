@@ -64,13 +64,36 @@ export interface SchoolProgram {
   notes: string;
 }
 
+export type LibraryCollection = "core" | "building_use_visioning" | "historical_board" | "meetings" | "reviewed_report";
+
+export interface LibraryMeeting {
+  date: string;
+  body: string;
+  status: "held" | "scheduled" | "unverified";
+}
+
+/** Finding-aid metadata for the public library. It is not a citation locator. */
+export interface SourceLibrary {
+  category: string;
+  body: string;
+  kind: string;
+  /** `YYYY-YY` or "Unknown". */
+  school_year: string;
+  document_date: string | null;
+  meetings: LibraryMeeting[];
+  collections: LibraryCollection[];
+}
+
 export interface PublicSource {
   source_id: string;
   title: string;
   url: string;
   published_at: string | null;
+  /** Publisher bookkeeping. Most library records were not content-reviewed; never display it. */
   reviewed_at: string;
+  /** Empty for a library-only record, which establishes document availability only. */
   locators: string[];
+  library?: SourceLibrary;
 }
 
 interface ObservationFields extends SourceReference, EnrollmentReference {

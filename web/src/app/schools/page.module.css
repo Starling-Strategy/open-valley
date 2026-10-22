@@ -1,6 +1,8 @@
+.hero { padding-bottom: 3rem; }
+.hero :global(.availability) { margin-top: 2rem; }
 .dateline { color: var(--secondary-ink); font-size: .875rem; margin-top: 1.75rem; }
-.contents { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); gap: 1rem; padding: 1rem 0; }
-.contents a { display: flex; align-items: center; gap: .65rem; min-height: 44px; font-size: .9rem; text-decoration: none; }
+.contents { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); gap: 1rem; padding: 1rem 0; }
+.contents a { display: flex; flex-wrap: wrap; min-width: 0; max-width: 100%; overflow-wrap: anywhere; align-items: center; gap: .65rem; min-height: 44px; font-size: .9rem; text-decoration: none; }
 .contents a:hover { text-decoration: underline; }
 .contents span { color: var(--secondary-ink); font-size: .75rem; }
 .chapter { scroll-margin-top: 1.5rem; padding-block: 3rem; }

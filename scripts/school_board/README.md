@@ -1,17 +1,13 @@
 # Local school-board privacy tools
 
-Authority: authoritative collection-tool interface, reviewed October 15, 2026.
-
-Python 3.11 or newer is required. The authoritative working collection on
-Rockefeller is `/srv/storage/files/coding-storage/open-valley/school-board`.
-Set `SCHOOL_BOARD_ROOT` explicitly; `/rocky/open-valley/school-board` is the
-older coding-container path. The repository stores code, reviewed publication
-inputs, policy and minimal deletion metadata, not original source documents.
+Python 3.11 or newer is required. Source documents live at
+`/rocky/open-valley/school-board`; the repository stores code, policy and minimal
+deletion metadata. Set `SCHOOL_BOARD_ROOT` to use a different collection.
 
 ## Refresh and verify
 
 ```bash
-export SCHOOL_BOARD_ROOT=/srv/storage/files/coding-storage/open-valley/school-board
+export SCHOOL_BOARD_ROOT=/rocky/open-valley/school-board
 python3 scripts/school_board/build_catalog.py
 python3 scripts/school_board/build_meeting_guide.py
 python3 scripts/school_board/verify_collection.py
@@ -67,19 +63,13 @@ duplicate source identities, including archive-only formats. It does not create 
 python3 scripts/school_board/delete_records.py \
   --root "$SCHOOL_BOARD_ROOT" \
   --request docs/school-board/executive-review-deletion-request.json \
-  --archive /absolute/path/to/reviewed-input-archive.zip
+  --archive /rocky/open-valley/huusd-board.zip
 ```
 
 Rebuild and verify afterward. A collection lock serializes cleanup operations.
 On interruption, rerun the same request before
 rebuilding; exclusion metadata is written first to block reindexing. Verification
 must pass before treating the cleanup as complete. Remote sources are not altered.
-
-Supply the actual controlled input archive requiring sanitization. Immediately
-complete production withdrawal through the
-[Rockefeller runbook](../../deploy/rockefeller/README.md): collection deletion
-alone does not clear serving exports, database publications or research indexes.
-Rebuild the catalog, run coordinated withdrawal and verify serving state.
 
 ## Regression checks
 
@@ -91,6 +81,24 @@ Fixtures are synthetic. They cover duplicate deletion, archive sanitization,
 preservation of public minutes and archive permissions, retry behavior,
 traversal/symlink rejection, incomplete manifests, concurrent writers,
 cached source excerpts and content-hash aliases in the generated catalog.
+
+## Rebuild the public library register
+
+`build_public_library.py` deterministically updates `data/school-board/public/sources.json` from the 25 immutable core sources, the 7 reviewed staffing/class-size/facilities/budget reports, the Building Use & Visioning Committee supplement, the 104 meeting records, and the historical official Board & Workgroup manifest (`agenda`, `minute`, `packet`, `presentation`, `budget`, `polic`), screening every candidate against `privacy-exclusions.json`, transitive catalog aliases, and `build_public_snapshot.resolve_sources`:
+
+```bash
+python3 -B scripts/school_board/build_public_library.py --root "$SCHOOL_BOARD_ROOT"
+```
+
+Each source gets a structured `library` object: `category`, `body`, `kind`,
+`school_year` (`YYYY-YY` or `Unknown`), `document_date` (equal to `published_at`),
+sorted `meetings` (`date`, `body`, `status`) and ordered `collections` (`core`,
+`building_use_visioning`, `historical_board`, `meetings`, `reviewed_report`).
+Core categories come from the explicit `ENROLLMENT_REPORT_IDS` and
+`SCHOOL_REFERENCE_IDS` lists. `locators` hold only citation locations. Core
+locators are preserved verbatim, and library-only records have none. The snapshot
+builder validates the `library` object strictly and allows empty `locators` only
+when it is present.
 
 ## Build a public Schools candidate (U3)
 
@@ -124,7 +132,9 @@ withdrawal belongs to U8's database/ingress lifecycle.
 
 ### Candidate interface for the publisher
 
-Exactly three files appear together:
+The builder writes exactly three files together. `build_passages.py` may add
+`passages.json` and `passages.jsonl` afterwards (see
+[assistant passages](#add-assistant-passages)); the publisher accepts three or five files:
 
 | File | Visibility and contents |
 |---|---|
@@ -265,3 +275,70 @@ python3 -B -m unittest discover -s scripts/school_board -p test_public_snapshot.
 Fixtures use `RUNNER_TEMP` on CI or `/tmp/opencode` in the managed coding runtime.
 The authoritative host also runs the full privacy regression command above and
 the real-input build command. CI does not load or fabricate the shared archive.
+
+## Add assistant passages
+
+`build_passages.py` adds `passages.json` and `passages.jsonl` to a built candidate
+for the [schools assistant](../../docs/school-board/assistant.md). It reads only
+files listed in `lineage.json`, re-hashes each one, and rejects a source the
+current exclusion policy now covers. Measure coverage first; this mode makes no
+network call and writes nothing:
+
+```bash
+python3 -B scripts/school_board/build_passages.py --extract-only \
+  --candidate /absolute/path/to/candidate --root "$SCHOOL_BOARD_ROOT"
+```
+
+Then embed with OpenRouter (`baai/bge-m3`, provider data collection denied, no
+fallbacks). The key comes from `OPENROUTER_API_KEY` or `OPENROUTER_API_KEY_FILE`
+and is never printed. Use `--limit-sources N` for a smoke run.
+
+```bash
+python3 -B scripts/school_board/build_passages.py \
+  --candidate /absolute/path/to/candidate --root "$SCHOOL_BOARD_ROOT" \
+  --cache /absolute/private/passage-cache
+```
+
+Each payload source contributes one edition. Preference runs research-library
+`*.pages.json` page lists (PDF text and OCR), PDF (`pdftotext -layout`, one entry
+per physical page), DOCX, PPTX (slides as pages), text (reviewed `PDF page N`
+markers become pages), HTML, then XLSX. A later format wins only when an earlier
+one has under 80% of its words. Other JSON, images and archives are skipped.
+Pages under 3 words are dropped; pages under 25 words count as `low_text_pages`
+(likely scanned). Passages are about 320 words with a 50-word overlap and never
+cross sources.
+
+The cache (`embeddings.sqlite3`) holds vectors and source provenance, never text.
+Every run purges entries whose source ID, path or hash the current policy
+excludes. It is still derived data: delete it with the candidate during privacy
+cleanup. A warm-cache rebuild is byte-identical. Tests use
+`synthetic_embedder`; `publication-fixtures/generate.py BASE --passages` emits a
+synthetic five-file candidate.
+
+```bash
+python3 -B -m unittest discover -s scripts/school_board -p test_passages.py -v
+```
+
+## Production migration and publication
+
+Owner approval is required for every non-dry-run command. The
+[deployment runbook](../../docs/DEPLOYMENT.md) gives the order.
+
+```bash
+node scripts/school_board/migrate_production.mjs --dry-run      # read-only inspection of Icculus
+node scripts/school_board/migrate_production.mjs --apply        # OWNER: 001+002, repeat, verify grants
+node scripts/school_board/publish_production.mjs --dry-run      # candidate + extraction stats only
+op read "op://…" | node scripts/school_board/credentials.mjs deliver-openrouter    # OWNER
+
+# OWNER, on a machine signed in to 1Password with Squatch access (the owner's Mac):
+node scripts/school_board/credentials.mjs preflight             # read-only
+node scripts/school_board/credentials.mjs provision             # items, roles, runtime URL
+node scripts/school_board/credentials.mjs publisher-password \
+  | ssh macon@rockefeller /srv/storage/projects/open-valley/scripts/school_board/publish_rockefeller.sh \
+      --publish --expected-base none --publisher-password-stdin   # or --revoke --publisher-password-stdin
+```
+
+The publisher password only ever travels through that pipe: `credentials.mjs`
+refuses to write it to a terminal, and `publish_production.mjs` refuses a
+terminal or regular file as its source. See the
+[credential guide](../../docs/school-board/credentials.md#publisher-access-from-rockefeller).

@@ -2,10 +2,7 @@
 
 Updated: 2026-10-04
 
-Authority: historical — October 4, 2026 discussion notes, superseded by the dated
-[integrated delivery plan](plans/2026-10-04-0006-feat-huusd-schools-mvp-plan.md).
-Both preserve earlier decisions; current operations belong to the
-[Rockefeller runbook](../deploy/rockefeller/README.md).
+Superseded for execution by the [integrated Homes and Schools delivery plan](plans/2026-10-04-0006-feat-huusd-schools-mvp-plan.md). These notes preserve earlier discussion; the plan owns current scope, PostgreSQL publication, Icculus deployment, design, documentation, and release checks.
 
 ## Platform and scope
 

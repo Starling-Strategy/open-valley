@@ -1,11 +1,5 @@
 # Open Valley: Data State Assessment
 
-> **Historical January 2026 snapshot.** Counts, gaps, credentials and layout
-> examples reflect that assessment, not current runtime state. Legacy `api/`
-> paths no longer identify a repository directory. Do not use the example SQL
-> as a current schema contract; check the retained ORM and Pydantic definitions.
-> [Current deployment](../DEPLOYMENT.md) is the operational authority.
-
 **Current state after unified import and STR cleanup**
 
 *Updated: 2026-01-01*

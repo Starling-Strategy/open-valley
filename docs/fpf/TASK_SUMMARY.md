@@ -1,11 +1,5 @@
 # Task Summary: Front Porch Forum Email Extraction
 
-> **Historical task handoff.** This predates the retained per-message-file plus
-> `_index.json` arrangement; `data/fpf_emails.json` and `api/` references below
-> describe the old layout. The current fetch script's output-root calculation
-> still needs repair before repository-local output can be claimed. Do not run
-> this handoff as current ingestion instructions. See [current documentation](../README.md).
-
 ## Goal
 We are building a data extraction pipeline to download all emails labeled **"Front Porch Forum"** from your personal Gmail (`macon.phillips@gmail.com`) and save them as a structured JSON file. This data will be used to analyze community intelligence for the **Open Valley** project.
 

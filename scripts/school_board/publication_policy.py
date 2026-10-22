@@ -13,6 +13,7 @@ import shutil
 import sys
 import tempfile
 
+from build_passages import PASSAGE_FILES, verify_passages
 from build_public_snapshot import REPO, build_candidate, read_json
 from privacy_rules import canonical_id, load_rules, write_json
 
@@ -28,8 +29,9 @@ def plain_path(value):
 
 
 def read_candidate(path):
+    """Core files only. Passage files, when present, are verified separately."""
     path = plain_path(path)
-    if set(p.name for p in path.iterdir()) != set(FILES):
+    if set(p.name for p in path.iterdir()) not in (set(FILES), set(FILES) | set(PASSAGE_FILES)):
         raise ValueError()
     result = {}
     for name in FILES:
@@ -38,6 +40,22 @@ def read_candidate(path):
             raise ValueError()
         result[name] = item.read_bytes()
     return result
+
+
+def passages_state(path, manifest):
+    """Exact passage bytes identity: manifest bytes plus the rows-file hash."""
+    if manifest is None:
+        if any((path / name).exists() or (path / name).is_symlink() for name in PASSAGE_FILES):
+            raise ValueError()
+        return None
+    for name in PASSAGE_FILES:
+        if (path / name).is_symlink() or not (path / name).is_file():
+            raise ValueError()
+    with (path / 'passages.jsonl').open('rb') as stream:
+        rows = hashlib.file_digest(stream, 'sha256').hexdigest()
+    if rows != manifest['passages_sha256']:
+        raise ValueError()
+    return (path / 'passages.json').read_bytes(), rows
 
 
 def policy(root):
@@ -107,6 +125,8 @@ def validate(root, request):
         path = inputs / name
         if path.is_symlink() or (path.exists() and not path.is_file()):
             raise ValueError()
+    passages = verify_passages(candidate, json.loads(reviewed['payload.json']), json.loads(reviewed['lineage.json']))
+    reviewed_passages = passages_state(candidate, passages)
     scratch = os.environ.get('RUNNER_TEMP', '/tmp/opencode')
     with tempfile.TemporaryDirectory(prefix='schools-revalidate-', dir=scratch) as temporary:
         rebuilt = Path(temporary) / 'candidate'
@@ -114,7 +134,7 @@ def validate(root, request):
         if read_candidate(rebuilt) != reviewed:
             raise ValueError()  # Never replace reviewed bytes with a new build.
     # Catch changes during the rebuild, including independently changed policy.
-    if read_candidate(candidate) != reviewed:
+    if read_candidate(candidate) != reviewed or passages_state(candidate, passages) != reviewed_passages:
         raise ValueError()
     # Retained exports can still contain an earlier candidate's sources.
     if not entry['exports']:
@@ -122,7 +142,9 @@ def validate(root, request):
     entry['verified_inputs'] = True
     write_json(registry_path(root), artifacts)
     return {'manifest': json.loads(reviewed['candidate.json']),
-            'payload': reviewed['payload.json'].decode(), 'lineage': reviewed['lineage.json'].decode()}
+            'payload': reviewed['payload.json'].decode(), 'lineage': reviewed['lineage.json'].decode(),
+            # Rows stay on disk; publication.mjs streams them and re-checks this hash.
+            'passages': passages}
 
 
 def affected(entry, rules):

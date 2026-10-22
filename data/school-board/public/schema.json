@@ -95,7 +95,28 @@
         "url": {"type": "string", "pattern": "^https://"},
         "published_at": {"type": ["string", "null"], "format": "date"},
         "reviewed_at": {"$ref": "#/$defs/date"},
-        "locators": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/text"}}
+        "locators": {"type": "array", "description": "Citation locators. Empty only for a library-only record, which establishes document availability.", "items": {"$ref": "#/$defs/text"}},
+        "library": {"$ref": "#/$defs/library"}
+      }
+    },
+    "library": {
+      "type": "object", "additionalProperties": false,
+      "description": "Finding-aid metadata for the public library. Not a citation locator. document_date equals the source published_at.",
+      "required": ["category", "body", "kind", "school_year", "document_date", "meetings", "collections"],
+      "properties": {
+        "category": {"$ref": "#/$defs/text"}, "body": {"$ref": "#/$defs/text"}, "kind": {"$ref": "#/$defs/text"},
+        "school_year": {"type": "string", "pattern": "^([0-9]{4}-[0-9]{2}|Unknown)$"},
+        "document_date": {"type": ["string", "null"], "format": "date"},
+        "meetings": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/libraryMeeting"}},
+        "collections": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "enum": ["core", "building_use_visioning", "historical_board", "meetings", "reviewed_report"]}}
+      }
+    },
+    "libraryMeeting": {
+      "type": "object", "additionalProperties": false,
+      "required": ["date", "body", "status"],
+      "properties": {
+        "date": {"$ref": "#/$defs/date"}, "body": {"$ref": "#/$defs/text"},
+        "status": {"type": "string", "enum": ["held", "scheduled", "unverified"]}
       }
     },
     "observation": {

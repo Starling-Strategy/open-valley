@@ -1,6 +1,9 @@
 import { spawn } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { constants } from 'node:fs';
+import { open } from 'node:fs/promises';
 import { createRequire } from 'node:module';
-import { isAbsolute } from 'node:path';
+import { isAbsolute, join } from 'node:path';
 import { createInterface } from 'node:readline';
 import { fileURLToPath } from 'node:url';
 
@@ -45,6 +48,23 @@ function bridge(root) {
     },
     close() { child.stdin.end(); child.kill(); },
   };
+}
+
+const PASSAGE_BATCH = 200; // About 2.5 MB of JSON per call, well inside the statement timeout.
+
+// Stage the exact bytes the policy worker verified. The hash is checked on the
+// buffer that is sent, and PostgreSQL re-checks every row and the rows digest.
+async function stagePassages(client, candidate, manifest) {
+  const file = await open(join(candidate, 'passages.jsonl'), constants.O_RDONLY | constants.O_NOFOLLOW);
+  let bytes;
+  try { bytes = await file.readFile(); } finally { await file.close(); }
+  if (createHash('sha256').update(bytes).digest('hex') !== manifest.passages_sha256) throw new Error();
+  const lines = bytes.toString('utf8').split('\n');
+  if (lines.pop() !== '' || lines.length !== manifest.passage_count) throw new Error();
+  for (let i = 0; i < lines.length; i += PASSAGE_BATCH) {
+    await client.query('SELECT schools.stage_passages($1::text,$2::jsonb)',
+      [manifest.content_digest, `[${lines.slice(i, i + PASSAGE_BATCH).join(',')}]`]);
+  }
 }
 
 export async function runPublication(mode, args) {
@@ -99,10 +119,22 @@ export async function runPublication(mode, args) {
       await client.query('SELECT schools.apply_policy($1::jsonb,$2::text)', [current.rules, current.digest]);
       throw new Error();
     }
-    const result = await client.query('SELECT schools.publish($1::text,$2::text,$3::jsonb,$4::uuid) AS release_id',
+    const publish = () => client.query('SELECT schools.publish($1::text,$2::text,$3::jsonb,$4::uuid) AS release_id',
       [candidate.payload, candidate.lineage, candidate.manifest,
         options['--expected-base'] === 'none' ? null : options['--expected-base']]);
-    return { releaseId: result.rows[0].release_id };
+    if (!candidate.passages) return { releaseId: (await publish()).rows[0].release_id };
+    // Passages and the release become visible together or not at all.
+    await client.query('BEGIN');
+    try {
+      await stagePassages(client, options['--candidate'], candidate.passages);
+      const releaseId = (await publish()).rows[0].release_id;
+      await client.query('SELECT schools.attach_passages($1::uuid,$2::jsonb)', [releaseId, candidate.passages]);
+      await client.query('COMMIT');
+      return { releaseId };
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw error;
+    }
   } catch {
     throw new Error(FAILURE); // Never expose URI, PostgreSQL detail, payload or local paths.
   } finally {

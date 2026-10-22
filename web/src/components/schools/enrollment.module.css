@@ -119,6 +119,52 @@
 .sourceEntry { padding: 20px 0 8px; border-top: 1px solid var(--rule); scroll-margin-top: 96px; }
 .sourceEntry:target { border-top: 2px solid var(--ochre); }
 .sourceUrl { font-size: 0.875rem; overflow-wrap: anywhere; }
+.section :is(button, input, select, form, label, li, dl, dd, div) { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
+.section :is(button, input, select) { font: inherit; color: var(--ink); background: var(--paper); border: 1px solid var(--muted); border-radius: 0; padding: .65rem .8rem; min-height: 44px; }
+.section button { cursor: pointer; white-space: normal; text-align: left; }
+.section button:disabled { cursor: wait; opacity: .65; }
+.section button[aria-pressed="true"] { border: 2px solid var(--ink); font-weight: 650; }
+.section :is(button, input, select, a, summary, [tabindex]):focus-visible { outline: 3px solid var(--ochre); outline-offset: 4px; }
+.buttonRow { display: flex; flex-wrap: wrap; gap: .75rem; margin-block: 1rem 1.5rem; }
+.buttonRow > * { min-width: 0; max-width: 100%; }
+.askForm { display: grid; grid-template-columns: minmax(0, 1fr); gap: .75rem; max-width: 54rem; }
+.askForm p { margin: 0; }
+.controls input { width: 100%; }
+.askForm textarea { width: 100%; min-width: 0; min-height: 6rem; resize: vertical; font: inherit; color: var(--ink); background: var(--paper); border: 1px solid var(--muted); border-radius: 0; padding: .65rem .8rem; }
+.askForm textarea:focus-visible { outline: 3px solid var(--ochre); outline-offset: 4px; }
+.askForm button { justify-self: start; }
+.disclaimer { max-width: 66ch; padding-left: 14px; border-left: 3px solid var(--ochre); font-size: .875rem; }
+.transcript { list-style: none; max-width: 54rem; margin: 0; padding: 0; }
+.transcript:empty { display: none; }
+.transcript > li + li { margin-top: 0; }
+.userTurn, .assistantTurn { padding: 1rem 0; border-top: 1px solid var(--rule); }
+.userTurn > p:last-child { font-family: Georgia, "Times New Roman", serif; font-size: 1.25rem; }
+.turnLabel { color: var(--muted); font-size: .8125rem; font-weight: 650; letter-spacing: .08em; text-transform: uppercase; margin-bottom: .35rem !important; }
+.answerText { max-width: 70ch; margin-bottom: 1.5rem; }
+.answerText ul { padding-left: 1.25rem; list-style: disc; }
+.marker { line-height: 0; font-size: .75em; margin-left: 1px; }
+.marker a { text-decoration: none; padding-inline: 2px; }
+.badge { display: inline-block; border: 1px solid var(--muted); padding: .3rem .65rem; font-size: .875rem; font-weight: 650; }
+.citationsHeading { font-size: 1.25rem !important; margin-top: 1.5rem !important; }
+.citations { list-style: none; margin: 0; padding: 0; }
+.citationCard { padding: 1rem 0 0; border-top: 1px solid var(--rule); scroll-margin-top: 96px; }
+.citationCard:target { border-top: 2px solid var(--ochre); }
+.citationCard .buttonRow { margin-block: .5rem 1rem; }
+.citationTitle { font-weight: 650; margin-bottom: .25rem !important; }
+.citationNumber { color: var(--muted); font-variant-numeric: tabular-nums; }
+.quote { margin: .5rem 0; padding-left: 1rem; border-left: 3px solid var(--rule); font-family: Georgia, "Times New Roman", serif; font-size: 1rem; }
+.askStatus:empty { display: none; }
+.askStatus { margin-block: 1rem; }
+.notice { padding: .75rem 1rem; border: 2px solid var(--ochre); }
+.notice p { margin: 0 0 .75rem; }
+.notice p:last-child { margin: 0; }
+.libraryStats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; padding-block: 1.5rem; border-block: 1px solid var(--rule); margin-block: 2rem; }
+.libraryStats dt { font-size: .875rem; }
+.libraryStats dd { margin: .5rem 0 0; font: 2rem Georgia, serif; }
+.libraryHeading { margin-top: 2.5rem !important; }
+.proof { border: 2px solid var(--ink); padding: clamp(.75rem, 3vw, 2rem); margin-block: 2rem; scroll-margin-top: 2rem; }
+@media (max-width: 767px) { .libraryStats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (prefers-color-scheme: dark) { .section { --paper: #17251f; --ink: #eee9de; --muted: #c0cbc2; --ochre: #efb979; --rule: #69786e; } }
 
 @media (max-width: 767px) {
   .section { padding: 48px 0; }

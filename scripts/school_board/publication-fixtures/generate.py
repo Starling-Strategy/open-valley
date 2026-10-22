@@ -7,10 +7,11 @@ from pathlib import Path
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from build_passages import build_passages, synthetic_embedder
 from build_public_snapshot import build_candidate
 
 
-def generate(base, browser=False):
+def generate(base, browser=False, passages=False):
     base = base.resolve()
     root, inputs = base / 'collection', base / 'inputs'
     for directory in (root / 'files', root / 'catalog', root / 'reports', inputs):
@@ -110,12 +111,16 @@ def generate(base, browser=False):
             writer.writerows(data)
     write(inputs / 'derivations.json', {'schema_version': 1, 'derivations': [], 'reconciliations': []})
     build_candidate(inputs, root, base / 'candidate')
+    if passages:
+        # Offline hash vectors; never real embeddings of synthetic or archive text.
+        build_passages(base / 'candidate', root, base / 'passage-cache', embedder=synthetic_embedder)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('base', type=Path)
     parser.add_argument('--browser', action='store_true', help='Include shared-campus, history and forecast examples')
+    parser.add_argument('--passages', action='store_true', help='Add passages.json/.jsonl with synthetic vectors')
     args = parser.parse_args()
-    generate(args.base, browser=args.browser)
+    generate(args.base, browser=args.browser, passages=args.passages)
     print('Synthetic collection, reviewed inputs and candidate created.')

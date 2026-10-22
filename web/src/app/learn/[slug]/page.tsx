@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { PageLayout, PageHeader } from '@/components/PageLayout';
 import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
@@ -64,9 +63,9 @@ export default async function PostPage({ params }: PostPageProps) {
   }
 
   return (
-      <PageLayout width="reading">
+      <div className="site-container">
         <article>
-          <PageHeader>
+          <header className="editorial-hero reading-copy">
           <nav aria-label="Article navigation">
             <Link href="/learn" className="text-link">
               &larr; Back to Articles
@@ -103,7 +102,7 @@ export default async function PostPage({ params }: PostPageProps) {
               </div>
             )}
             <p className="note">Retained as originally written. Figures and policy descriptions reflect the article&apos;s date and have not been updated for this release.</p>
-          </PageHeader>
+          </header>
 
           <div className="prose article-content">
             <MDXRemote source={post.content} options={{ mdxOptions: { remarkPlugins: [remarkGfm] } }} components={{
@@ -111,6 +110,6 @@ export default async function PostPage({ params }: PostPageProps) {
             }} />
           </div>
         </article>
-      </PageLayout>
+      </div>
   );
 }

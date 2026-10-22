@@ -2,6 +2,8 @@
 
 import { memo, useMemo, useState } from "react";
 import type { SchoolsPayload } from "@/lib/schools";
+import { ROSTER_SOURCE_IDS } from "@/lib/schools-library";
+import { unpackClientPayload, type ClientPayload } from "@/lib/schools-pack";
 import SchoolMapLoader from "./SchoolMapLoader";
 import SchoolProfile, { SchoolEnrollment, SchoolSources } from "./SchoolProfile";
 import {
@@ -10,13 +12,14 @@ import {
 } from "./school-overview-utils";
 import styles from "./schools-overview.module.css";
 
-export const SchoolOverview = memo(function SchoolOverview({ payload }: { payload: SchoolsPayload; releaseId: string }) {
+export const SchoolOverview = memo(function SchoolOverview({ packed }: { packed: ClientPayload; releaseId: string }) {
+  const payload: SchoolsPayload = useMemo(() => unpackClientPayload(packed), [packed]);
   const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null);
   const groups = useMemo(() => groupCampuses(payload), [payload]);
   const selectedSchool = payload.schools.find((school) => school.school_id === selectedSchoolId);
   const sharedCampuses = groups.filter((group) => group.schools.length > 1);
   const towns = [...new Set(payload.campuses.map(campus => campus.physical_town))].sort();
-  const rosterSources = payload.sources.filter((source) => ["huusd-schools", "huusd-about"].includes(source.source_id))
+  const rosterSources = payload.sources.filter((source) => ROSTER_SOURCE_IDS.includes(source.source_id))
     .flatMap((source) => source.locators.map((source_locator) => ({ source_id: source.source_id, source_locator })));
 
   function selectFromProfile(schoolId: string) {

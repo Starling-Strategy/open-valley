@@ -1,12 +1,5 @@
 # STR Data Confidence Report
 
-> **Historical matching report with unresolved snapshot differences.** Counts of
-> 15 versus 247 validated links and 605 versus 618 bronze records refer to
-> inconsistent stages in this record; they have not been reconciled against a
-> current dataset. Removing unvalidated links or matching names does not prove
-> “no false positives.” Preserve these as historical claims, not a new confidence
-> certification. See [current documentation](../README.md).
-
 **How we identify short-term rentals and link them to Warren properties**
 
 *Last updated: 2026-01-01*

@@ -2,16 +2,11 @@
 
 Purpose: Establish the current register for U1 of the [Schools MVP plan](../plans/2026-10-04-0006-feat-huusd-schools-mvp-plan.md).
 Audience: Open Valley contributors and delivery agents.
-Status: Historical U1 register inventory; subsequent U2 evidence is linked below.
+Status: Research inventory; numerical publication belongs to U2.
 Owner: Open Valley
 Last updated: 2026-10-04
 
 Evidence checked: **2026-10-04**.
-
-This U1 inventory predates the U2 review. The
-[U2 receipt](enrollment-coverage.md#original-image-review-receipt) records Warren's
-E911 address/marker resolution and completed enrollment extraction. Remaining-work
-statements below describe U1, not the current public application.
 
 ## Register decision
 

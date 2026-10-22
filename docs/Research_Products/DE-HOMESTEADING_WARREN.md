@@ -1,14 +1,5 @@
 # De-Homesteading Warren
 
-> **Historical, superseded calculation.** The −24 result below uses an earlier
-> three-category classification. The [later methodology](TRANSITION_MAP_METHODOLOGY.md)
-> distinguishes transfers that stayed homesteads and reports −109; neither
-> measures verified occupancy changes. Original tables are retained as evidence,
-> including unresolved internal discrepancies: 166 stated gains versus component
-> counts totaling 169, and an incomplete breakdown of the “other” category.
-> Policy dates and legal claims have not been reverified. Do not use this as a
-> current findings report. See [current documentation](../README.md).
-
 **Tracking the flow of primary residences in a Vermont ski town**
 
 *Analysis of Vermont PTTR data, 2019-2025*

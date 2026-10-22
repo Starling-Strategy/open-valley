@@ -2,15 +2,11 @@
 
 Purpose: U1 source inventory and U2 numerical review for the [Schools MVP plan](../plans/2026-10-04-0006-feat-huusd-schools-mvp-plan.md).
 Audience: Open Valley contributors and delivery agents.
-Status: Historical U1/U2 evidence and reconciliation receipt, checked October 4, 2026. Later sections supersede earlier checkpoint-specific remaining-work statements.
+Status: Reviewed candidate inputs; catalog integration and U3 validation remain required before publication.
 Owner: Open Valley
 Last updated: 2026-10-04
 
 Evidence checked: **2026-10-04**. Target: **2016–17 through 2025–26**, with a separate 2026–27 update.
-
-Current activation and withdrawal procedures are maintained in the
-[publication guide](publication.md); source dates and definitions below remain
-part of the reviewed numerical evidence.
 
 **U2 result:** The four candidate files now contain all eight K–12 school reporting groups for each target year, five years of defined October attending counts, current grade detail, separate PK, and a distinct published forecast. Every retained numerical cell or derived-value contributor was checked against a rendered original PDF table. The [U2 receipt below](#u2-candidate-dataset-and-numerical-review) supersedes the remaining-work statements in the original U1 inventory. No continuous ten-year attending definition was established; older segments and consultant history are explicitly separate.
 

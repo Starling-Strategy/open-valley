@@ -1,12 +1,5 @@
 # Calibration Properties: Woods Road
 
-> **Historical calibration evidence for retained housing tools.** This does not
-> describe current production school data. Pydantic field names and conceptual
-> SQL below are not interchangeable with the ORM: verify `src/schemas.py` against
-> `src/models.py` before using an example. Preserve the positive-evidence rule
-> for dwelling inference and the documented corrections; do not infer dwellings
-> from missing records. See [current documentation](../README.md).
-
 These four properties serve as ground truth for testing and calibrating our dwelling inference model.
 
 See [GLOSSARY.md](../GLOSSARY.md) for DwellingUse definitions and data model.

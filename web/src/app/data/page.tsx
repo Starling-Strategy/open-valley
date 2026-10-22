@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { PageLayout, PageHeader } from '@/components/PageLayout';
 import DataModelDiagram from "@/components/DataModelDiagram";
 
 export const metadata = {
@@ -16,12 +15,12 @@ const dataSources = [
 
 export default function DataPage() {
   return (
-    <PageLayout>
-      <PageHeader>
+    <div className="site-container">
+      <header className="editorial-hero">
         <p className="eyebrow"><Link href="/homes">Homes</Link> · Sources &amp; methods</p>
         <h1>How the housing research fits together.</h1>
         <p className="lede">A parcel is land. A dwelling is a home. A listing is an offer to rent. They are related records, not interchangeable counts.</p>
-      </PageHeader>
+      </header>
       <section className="editorial-section" aria-labelledby="model-heading">
         <h2 id="model-heading">The research data model</h2>
         <p className="note reading-copy">This diagram explains the original research structure. Live entity counts are unavailable in this release. No cached counts are substituted.</p>
@@ -40,6 +39,6 @@ export default function DataPage() {
         </div>
         <p className="reading-copy">For definitions and the original policy context, see the <Link className="text-link" href="/learn/glossary">glossary</Link>. Article dates describe when the research was written, not when a live dataset was last updated.</p>
       </section>
-    </PageLayout>
+    </div>
   );
 }

@@ -1,4 +1,184 @@
 import { expect, test } from "@playwright/test";
+import { buildLibraryCatalog, isPinnedDocument, payloadReferences } from "../src/lib/schools-library";
+import type { AnswerKind, AskCitation, AskResponse } from "../src/lib/schools-ask";
+
+test("public library filters, meeting archive and proof inspector work", async ({ page }) => {
+  await page.goto("/schools");
+  const { payload } = await (await page.request.get("/api/schools")).json();
+  const catalog = buildLibraryCatalog(payload.sources, payloadReferences(payload));
+  const library = page.locator("#school-sources");
+  await expect(library.getByRole("heading", { name: "Public Library & Meeting Archive", exact: true })).toBeVisible();
+  await library.getByRole("button", { name: "Building Use & Visioning", exact: true }).click();
+  await expect(library.locator("[data-library-results] > li")).toHaveCount(Math.min(25, catalog.counts.buildingUse));
+  await library.getByRole("button", { name: "Meetings timeline", exact: true }).click();
+  await expect(library.getByLabel("Meeting body")).toBeVisible();
+  if (catalog.meetings.length) {
+    await library.getByLabel("Meeting body").selectOption(catalog.meetings[0].body);
+    await library.getByLabel("Meeting date").fill(catalog.meetings[0].date);
+    await expect(library).toContainText(catalog.meetings[0].body);
+  }
+  await library.getByRole("button", { name: "All library documents", exact: true }).click();
+  await expect(library.locator("[data-library-results] > li")).toHaveCount(Math.min(25, catalog.counts.total));
+  if (catalog.counts.total > 25) {
+    await library.getByRole("button", { name: "Show more documents" }).click();
+    await expect(library.locator("[data-library-results] > li")).toHaveCount(Math.min(50, catalog.counts.total));
+  }
+  await library.getByLabel("Body", { exact: true }).selectOption(catalog.documents[0].body);
+  await library.getByLabel("Kind", { exact: true }).selectOption(catalog.documents[0].kind);
+  await library.getByLabel("Category", { exact: true }).selectOption(catalog.documents[0].category);
+  await library.getByLabel("School Year", { exact: true }).selectOption(catalog.documents[0].school_year);
+  await library.getByLabel("Search library").fill(catalog.documents[0].title);
+  await expect(library.locator("[data-library-results]")).toContainText(catalog.documents[0].title);
+  await library.locator("[data-library-results]").getByRole("button", { name: "Inspect record" }).first().click();
+  await expect(library.getByRole("region", { name: "Source record" })).toContainText("Page locators");
+  await library.getByLabel("Search library").fill("no-matching-document-xyz");
+  await expect(library.getByText("No documents match these filters.")).toBeVisible();
+});
+
+test("the library API serves strict, release-bound pages and the inspector loads unpinned records", async ({ page, request }) => {
+  const { releaseId } = await schoolsPage(page);
+  const { payload } = await (await request.get("/api/schools")).json();
+  const catalog = buildLibraryCatalog(payload.sources, payloadReferences(payload));
+  const pageHtml = await (await request.get("/schools")).text();
+  const unpinned = catalog.documents.find(d => !isPinnedDocument(d));
+  if (unpinned) expect(pageHtml).not.toContain(`id="source-${unpinned.source_id}"`);
+  for (const bad of ["limit=51", "offset=-1", "q=a&q=b", "unknown=1", "collection=private", "view=meetings&q=x", "source_id=a&q=b"]) {
+    const response = await request.get(`/api/schools/library?${bad}`);
+    expect(response.status(), bad).toBe(400);
+    expect(response.headers()["cache-control"]).toContain("no-store");
+  }
+  const first = await request.get("/api/schools/library?limit=50");
+  expect(first.headers()["cache-control"]).toContain("no-store");
+  const body = await first.json();
+  expect(body.release_id).toBe(releaseId);
+  expect(body.total).toBe(catalog.counts.total);
+  expect(body.documents.length).toBe(Math.min(50, catalog.counts.total));
+  expect(Object.keys(body.documents[0]).sort()).toEqual(["body", "category", "kind", "published_at", "school_year", "source_id", "title", "url"]);
+  const meetings = await (await request.get("/api/schools/library?view=meetings&limit=5")).json();
+  expect(meetings.total).toBe(catalog.counts.meetings);
+  expect((await request.get("/api/schools/library?source_id=no-such-record")).status()).toBe(404);
+  const target = unpinned ?? catalog.documents[0];
+  const record = await (await request.get(`/api/schools/library?source_id=${target.source_id}`)).json();
+  expect(record.document.title).toBe(target.title);
+  await page.goto(`/schools#source-${target.source_id}`);
+  await expect(page.getByRole("region", { name: "Source record" })).toContainText(target.title);
+  await expect(page.locator(`[id="source-${target.source_id}"]`)).toHaveCount(1);
+});
+
+type Reply = { status: number; json: unknown };
+
+/** Serve contract-shaped replies from a queue; the assistant service is not started in browser tests. */
+async function mockAssistant(page: import("@playwright/test").Page, replies: Reply[]) {
+  const requests: Array<{ messages: Array<{ role: string; content: string }> }> = [];
+  await page.route("**/api/schools/ask", async route => {
+    requests.push(route.request().postDataJSON());
+    const reply = replies.shift() ?? { status: 503, json: { status: "unavailable" } };
+    await route.fulfill({ status: reply.status, json: reply.json, headers: { "Cache-Control": "no-store" } });
+  });
+  return requests;
+}
+
+async function schoolsPage(page: import("@playwright/test").Page) {
+  await page.goto("/schools");
+  const releaseId = (await page.locator("[data-release-id]").getAttribute("data-release-id"))!;
+  const { payload } = await (await page.request.get("/api/schools")).json();
+  return { releaseId, sources: payload.sources as Array<{ source_id: string; title: string; url: string }> };
+}
+
+function reply(releaseId: string, answer_kind: AnswerKind, text: string, citations: AskCitation[] = [], follow_up_suggestions: string[] = []): Reply {
+  const json: AskResponse = { release_id: releaseId, answer_kind, text, citations, follow_up_suggestions, unanswered_logged: false };
+  return { status: 200, json };
+}
+
+test("Ask the record renders a cited conversation from the assistant service", async ({ page }) => {
+  const { releaseId, sources } = await schoolsPage(page);
+  const [first, second] = [sources[0], sources[1] ?? sources[0]];
+  const citation = (marker: number, source: typeof first, pages: [number | null, number | null]): AskCitation => ({
+    marker, passage_id: `passage-${marker}`, source_id: source.source_id, title: source.title, url: source.url,
+    page_start: pages[0], page_end: pages[1], quote: `Synthetic quoted passage ${marker}.`, kind: "Report", body: "HUUSD Board", document_date: "2025-10-01" });
+  const requests = await mockAssistant(page, [
+    reply(releaseId, "answered", "Attending enrollment was **1,578** in 2025–26 [1].\n\n- Earlier counts use other definitions [2]\n- Forecasts are separate [9]",
+      [citation(1, first, [3, 4]), citation(2, second, [7, 7])], ["What does the NESDEC forecast say?"]),
+    reply(releaseId, "documents_found", "These records discuss the question [1].", [citation(1, second, [null, null])]),
+  ]);
+  const assistant = page.locator("#ask-the-record");
+  await expect(assistant).toContainText("Answers are written by AI from public records");
+  await expect(assistant).toContainText("Open Valley is independent of HUUSD");
+  await assistant.getByRole("button", { name: "How has district K–12 enrollment changed since 2021–22?", exact: true }).click();
+  await expect(assistant.getByText("Answer drawn from the cited records", { exact: true })).toBeVisible();
+  expect(requests[0]).toEqual({ messages: [{ role: "user", content: "How has district K–12 enrollment changed since 2021–22?" }] });
+  const transcript = assistant.getByRole("list", { name: "Conversation" });
+  await expect(transcript).toContainText("You asked");
+  await expect(transcript.locator("strong", { hasText: "1,578" })).toBeVisible();
+  await expect(transcript.locator("ul > li")).toHaveCount(2);
+  const marker = transcript.locator("sup a", { hasText: "[1]" });
+  await expect(marker).toHaveAttribute("href", "#answer-1-citation-1");
+  await expect(transcript.getByText("Forecasts are separate [9]")).toBeVisible();
+  const card = page.locator("#answer-1-citation-1");
+  await expect(card).toContainText(first.title);
+  await expect(card).toContainText("Report · HUUSD Board · ");
+  await expect(card).toContainText("pp. 3–4");
+  await expect(card.locator("blockquote")).toHaveText("Synthetic quoted passage 1.");
+  await expect(card.getByRole("link", { name: "Open original ↗" })).toHaveAttribute("href", first.url);
+  await expect(page.locator("#answer-1-citation-2")).toContainText("p. 7");
+  await marker.click();
+  await expect(page).toHaveURL(/#answer-1-citation-1$/);
+  await card.getByRole("link", { name: "Find in library" }).click();
+  await expect(page.getByRole("region", { name: "Source record" })).toContainText(first.title);
+
+  const question = assistant.getByLabel("Your question");
+  await question.fill("First line");
+  await question.press("Shift+Enter");
+  await question.pressSequentially("second line");
+  await expect(question).toHaveValue("First line\nsecond line");
+  expect(requests).toHaveLength(1);
+  await question.press("Enter");
+  await expect(assistant.getByText("Relevant records found — no written answer", { exact: true })).toBeVisible();
+  expect(requests[1].messages.map(m => m.role)).toEqual(["user", "assistant", "user"]);
+  expect(requests[1].messages[2].content).toBe("First line\nsecond line");
+  await expect(page.locator("#answer-3-citation-1")).not.toContainText(/p\. |pp\. /);
+  await expect(question).toHaveValue("");
+});
+
+test("Ask the record shows each answer status, errors and release changes", async ({ page }) => {
+  const { releaseId } = await schoolsPage(page);
+  await mockAssistant(page, [
+    reply(releaseId, "not_in_record", "The published record does not say."),
+    reply(releaseId, "declined", "This assistant does not discuss individual students."),
+    reply(releaseId, "homes_redirect", "Housing questions belong to the Homes research."),
+    { status: 429, json: { status: "rate_limited" } },
+    { status: 503, json: { status: "unavailable" } },
+    reply("a-newer-release", "answered", "Stale [1]."),
+  ]);
+  const assistant = page.locator("#ask-the-record");
+  const question = assistant.getByLabel("Your question");
+  const send = async (text: string) => { await question.fill(text); await assistant.getByRole("button", { name: "Ask the record", exact: true }).click(); };
+  for (const [text, label] of [["Cafeteria menu?", "The published record doesn't answer this"],
+    ["A student's records?", "Outside what this assistant covers"], ["Warren property assessments?", "Homes research is in progress"]]) {
+    await send(text);
+    await expect(assistant.getByText(label, { exact: true })).toBeVisible();
+  }
+  await expect(assistant.locator('a[href="/homes"]')).toBeVisible();
+  await send("Too many?");
+  await expect(assistant.getByRole("status")).toContainText("wait a minute");
+  await expect(question).toHaveValue("Too many?");
+  await send("Service down?");
+  await expect(assistant.getByRole("status")).toContainText("The assistant is unavailable right now.");
+  await send("Changed release?");
+  await expect(assistant.getByRole("status")).toContainText("The published record has changed since this page loaded.");
+  await expect(assistant.getByRole("button", { name: "Reload page" })).toBeVisible();
+  await expect(assistant.getByRole("button", { name: "Ask the record", exact: true })).toBeDisabled();
+  await expect(assistant).not.toContainText("Stale");
+});
+
+test("the ask endpoint fails closed without an assistant service and pages show no review dates", async ({ page, request }) => {
+  const response = await request.post("/api/schools/ask", { data: { messages: [{ role: "user", content: "How many students?" }] } });
+  expect([429, 503]).toContain(response.status());
+  expect(response.headers()["cache-control"]).toContain("no-store");
+  expect((await request.post("/api/schools/ask", { data: { question: "old shape" } })).status()).toBeGreaterThanOrEqual(400);
+  await page.goto("/schools");
+  await expect(page.locator("main, body").first()).not.toContainText(/Reviewed by Open Valley|Reviewed:/);
+});
 
 // Automated reflow checks use synthetic tiles; live basemap review is separate.
 test.beforeEach(async ({ page }) => {
@@ -11,8 +191,6 @@ test.beforeEach(async ({ page }) => {
 test("school-first navigation reaches the database-backed reading page", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("link", { name: /Start with our schools/ }).click();
-  await expect(page).toHaveURL(/\/district$/);
-  await page.getByRole("link", { name: /Explore the full enrollment history/ }).click();
   await expect(page).toHaveURL(/\/schools$/);
   await expect(page.getByRole("heading", { level: 1 })).toContainText(/schools/i);
   await expect(page.locator("#school-directory")).toBeVisible();
@@ -22,7 +200,7 @@ test("school-first navigation reaches the database-backed reading page", async (
 });
 
 test("school responses are request-time and private routes stay unavailable", async ({ request }) => {
-  for (const path of ["/schools", "/api/schools"]) {
+  for (const path of ["/schools", "/api/schools", "/api/schools/library"]) {
     const response = await request.get(path);
     expect(response.status()).toBe(200);
     expect(response.headers()["cache-control"]).toContain("no-store");
@@ -51,6 +229,10 @@ for (const width of [320, 390, 768, 1440]) {
     await expect(page.locator("#school-directory")).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
     await page.evaluate(() => { document.documentElement.style.fontSize = "200%"; });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    const library = page.locator("#school-sources");
+    await library.getByRole("button", { name: "All library documents", exact: true }).click();
+    await library.locator("[data-library-results]").getByRole("button", { name: "Inspect record" }).first().click();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   });
 }
@@ -95,6 +277,9 @@ test("keyboard focus, reduced motion and forced colors retain usable controls", 
   await expect(page.locator("#school-list details[open] [id^=school-profile-]")).toBeVisible();
   expect(await first.evaluate(el => getComputedStyle(el).outlineStyle)).not.toBe("none");
   await expect(first).toBeFocused();
+  const ask = page.locator("#schools-question");
+  await ask.focus();
+  expect(await ask.evaluate(el => getComputedStyle(el).outlineStyle)).not.toBe("none");
 });
 
 test("a failed map worker leaves school facts usable", async ({ page }) => {
@@ -106,15 +291,24 @@ test("a failed map worker leaves school facts usable", async ({ page }) => {
 });
 
 test("an unchanged eligibility refresh preserves the map and keyboard focus", async ({ page }) => {
+  const isRefresh = (response: { url(): string; headers(): Record<string, string> }) =>
+    response.url().includes("/schools?") && response.headers()["content-type"]?.includes("text/x-component");
+  // The router may stop reading a refresh stream it no longer needs, so `finished()` is not
+  // guaranteed; wait for the response, then give the stream a bounded time to settle.
+  const settled = (response: { finished(): Promise<unknown> }) =>
+    Promise.race([response.finished(), new Promise(resolve => setTimeout(resolve, 2_000))]);
+  // The page refreshes once on mount; a focus event during that request starts no second one.
+  const mountRefresh = page.waitForResponse(isRefresh);
   await page.goto("/schools");
+  await settled(await mountRefresh);
   const marker = page.getByRole("button", { name: /Campus 1:/ });
   await expect(marker).toBeVisible();
   await page.getByRole("button", { name: "Zoom in", exact: true }).click();
   await marker.focus();
   await page.locator("canvas.maplibregl-canvas").evaluate(canvas => { canvas.dataset.sameMap = "true"; });
-  const response = page.waitForResponse(response => response.url().includes("/schools?") && response.headers()["content-type"]?.includes("text/x-component"));
+  const response = page.waitForResponse(isRefresh);
   await page.evaluate(() => window.dispatchEvent(new Event("focus")));
-  await (await response).finished();
+  await settled(await response);
   await page.evaluate(() => new Promise(resolve => requestIdleCallback(() => requestAnimationFrame(() => requestAnimationFrame(resolve)))));
   await expect(page.locator("canvas.maplibregl-canvas")).toHaveAttribute("data-same-map", "true");
   await expect(marker).toBeFocused();
@@ -148,5 +342,13 @@ test("school facts and tables remain readable without JavaScript", async ({ brow
     await page.locator("#enrollment-history summary").filter({ hasText: "Enrollment data table" }).click();
     await expect(page.locator("#enrollment-history table")).toBeVisible();
     await expect(page.locator("#sources a").first()).toBeVisible();
+    const { payload } = await (await page.request.get("/api/schools")).json();
+    const catalog = buildLibraryCatalog(payload.sources, payloadReferences(payload));
+    for (const source of catalog.documents.filter(isPinnedDocument)) {
+      await expect(page.locator(`[id="source-${source.source_id}"]`)).toHaveCount(1);
+    }
+    if (catalog.counts.total > 100) {
+      expect(await page.locator("#school-sources [id^=source-]").count()).toBeLessThan(catalog.counts.total);
+    }
   } finally { await context.close(); }
 });

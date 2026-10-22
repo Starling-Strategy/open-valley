@@ -1,10 +1,15 @@
-"""Fixed Icculus consumer. Static source goes in SSH argv; secrets arrive only on stdin."""
+"""Fixed Icculus consumer. Static source goes in SSH argv; secrets arrive only on stdin.
+
+Two envelopes: role passwords (provision both roles and deliver the runtime URL), or
+{"openrouter_api_key": ...} (deliver only the assistant's OpenRouter key file).
+"""
 import base64
 import fcntl
 import hashlib
 import hmac
 import json
 import os
+import re
 import secrets
 import stat
 import subprocess
@@ -15,6 +20,8 @@ from urllib.parse import quote
 ROLES = ('schools_runtime', 'schools_publisher')
 DIRECTORY = '/opt/openvalley-schools/credentials'
 FILENAME = 'runtime-database-url'
+OPENROUTER = 'openrouter-api-key'
+MANAGED = (FILENAME, OPENROUTER)
 ENV = {'PATH': '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin', 'LANG': 'C.UTF-8'}
 ROLE_QUERY = """SELECT coalesce(json_agg(json_build_object(
     'username', rolname, 'login', rolcanlogin, 'inherit', rolinherit,
@@ -51,17 +58,44 @@ def scram_verifier(password):
     return f'SCRAM-SHA-256$4096:{encode(salt)}${encode(stored)}:{encode(server)}'
 
 
-def authenticate(role, password):
-    # psql is already in the DB container. Use the canonical TCP endpoint, not a trust-auth local socket.
+def database_image():
+    # The probe uses psql from the database container's own image, so no client is installed on the host.
+    result = subprocess.run(
+        ['docker', 'inspect', '--format', '{{.Config.Image}}', 'openvalley-postgres'],
+        text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=ENV, timeout=15, check=False,
+    )
+    image = result.stdout.strip()
+    if result.returncode != 0 or not re.fullmatch(r'[a-z0-9][a-z0-9._/-]*(:[A-Za-z0-9._-]+)?(@sha256:[0-9a-f]{64})?', image):
+        raise ValueError('Database image not found')
+    return image
+
+
+def probe_run(image, command, payload):
+    # Host network: the published Tailscale endpoint is not reachable from inside the database
+    # container itself, but it is from the host, as from the application containers.
+    return subprocess.run(
+        ['docker', 'run', '--rm', '-i', '--network', 'host', '--user', 'postgres', '--read-only',
+         '--cap-drop', 'ALL', '--entrypoint', 'sh', image, '-c', command],
+        input=payload, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        env=ENV, timeout=45, check=False,
+    )
+
+
+def authenticate(role, password, image):
+    # The canonical TCP endpoint the applications use, never a trust-auth local socket or loopback.
     command = (
         'IFS= read -r PGPASSWORD; export PGPASSWORD; export PGCONNECT_TIMEOUT=5; '
         f'exec psql -h 100.75.27.44 -p 5434 -U {role} -d openvalley '
         '-X -q -A -t -w -v ON_ERROR_STOP=1 -c "SELECT current_user, current_database()"'
     )
-    # A successful wrong-password probe would mean this path did not prove credential authentication.
-    if checked_run(command, secrets.token_urlsafe(32) + '\n').returncode == 0:
+    # A wrong password must be refused by PostgreSQL itself. Success would mean trust authentication;
+    # any other failure (timeout, refused connection) proves nothing about the password.
+    wrong = probe_run(image, command, secrets.token_urlsafe(32) + '\n')
+    if wrong.returncode == 0:
         raise ValueError('Password authentication required')
-    result = checked_run(command, password + '\n')
+    if f'password authentication failed for user "{role}"' not in wrong.stderr:
+        raise ValueError('Authentication endpoint unreachable')
+    result = probe_run(image, command, password + '\n')
     if result.returncode != 0 or result.stdout.strip() != f'{role}|openvalley':
         raise ValueError('Saved credential authentication failed')
 
@@ -120,17 +154,25 @@ def checked_directory(path, mode=None):
         raise ValueError('Unsafe delivery directory')
 
 
-def existing_delivery(fd, expected):
-    entries = os.listdir(fd)
-    if not entries:
-        return False
-    if entries != [FILENAME]:
-        raise ValueError('Unmanaged delivery contents')
-    info = os.lstat(FILENAME, dir_fd=fd)
+def safe_file(fd, name):
+    info = os.lstat(name, dir_fd=fd)
     if (not stat.S_ISREG(info.st_mode) or info.st_uid != 1000 or info.st_gid != 1000
-            or stat.S_IMODE(info.st_mode) != 0o400 or info.st_nlink != 1 or info.st_size != len(expected)):
+            or stat.S_IMODE(info.st_mode) != 0o400 or info.st_nlink != 1):
         raise ValueError('Unsafe delivery file')
-    child = os.open(FILENAME, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=fd)
+    return info
+
+
+def existing_delivery(fd, expected, name=FILENAME):
+    entries = os.listdir(fd)
+    if set(entries) - set(MANAGED):
+        raise ValueError('Unmanaged delivery contents')
+    for other in entries:
+        safe_file(fd, other)  # Every managed file keeps the same ownership and mode.
+    if name not in entries:
+        return False
+    if safe_file(fd, name).st_size != len(expected):
+        raise ValueError('Unsafe delivery file')
+    child = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=fd)
     try:
         opened = os.fstat(child)
         if (not stat.S_ISREG(opened.st_mode) or opened.st_uid != 1000 or opened.st_gid != 1000
@@ -142,7 +184,7 @@ def existing_delivery(fd, expected):
     return True
 
 
-def prepare_delivery(url):
+def prepare_delivery(url, name=FILENAME):
     checked_directory('/')
     checked_directory('/opt')
     for path in ('/opt/openvalley-schools', DIRECTORY):
@@ -158,20 +200,20 @@ def prepare_delivery(url):
         if (not stat.S_ISDIR(info.st_mode) or info.st_uid != 0 or info.st_gid != 0
                 or stat.S_IMODE(info.st_mode) != 0o700):
             raise ValueError('Unsafe delivery directory')
-        existing_delivery(fd, url.encode('ascii'))
+        existing_delivery(fd, url.encode('ascii'), name)
         return fd
     except BaseException:
         os.close(fd)
         raise
 
 
-def write_delivery(fd, url):
-    temporary = '.runtime-database-url.new'
+def write_delivery(fd, url, name=FILENAME):
+    temporary = f'.{name}.new'
     opened = None
     created = False
     try:
         expected = url.encode('ascii')
-        if existing_delivery(fd, expected):
+        if existing_delivery(fd, expected, name):
             return 'reused'
         opened = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600, dir_fd=fd)
         created = True
@@ -187,7 +229,7 @@ def write_delivery(fd, url):
         os.close(opened)
         opened = None
         # link is atomic and refuses an existing target, unlike a replacing rename.
-        os.link(temporary, FILENAME, src_dir_fd=fd, dst_dir_fd=fd, follow_symlinks=False)
+        os.link(temporary, name, src_dir_fd=fd, dst_dir_fd=fd, follow_symlinks=False)
         os.unlink(temporary, dir_fd=fd)
         created = False
         os.fsync(fd)
@@ -207,9 +249,10 @@ def provision(passwords):
            or any(not 33 <= ord(char) <= 126 for char in value) for value in passwords.values()):
         raise ValueError('Unsupported password')
     found = inspect_roles()
+    image = database_image()
     for role in ROLES:
         if role in found:
-            authenticate(role, passwords[role])
+            authenticate(role, passwords[role], image)
     url = f"postgresql://schools_runtime:{quote(passwords['schools_runtime'], safe='')}@100.75.27.44:5434/openvalley"
     handle = prepare_delivery(url)
     try:
@@ -218,11 +261,19 @@ def provision(passwords):
         if inspect_roles() != set(ROLES):
             raise ValueError('Missing schools role')
         for role in ROLES:
-            authenticate(role, passwords[role])
+            authenticate(role, passwords[role], image)
     except BaseException:
         os.close(handle)
         raise
     return {'created': missing, 'delivery': write_delivery(handle, url)}
+
+
+def deliver_openrouter(key):
+    # Assistant key only: no database access, same directory checks and atomic install.
+    if (os.geteuid() != 0 or not isinstance(key, str) or not 20 <= len(key) <= 512
+            or any(not 33 <= ord(char) <= 126 for char in key)):
+        raise ValueError('Unsupported key')
+    return {'delivery': write_delivery(prepare_delivery(key, OPENROUTER), key, OPENROUTER)}
 
 
 def main():
@@ -230,7 +281,11 @@ def main():
         payload = sys.stdin.read(8193)
         if len(payload) > 8192:
             raise ValueError('Oversized credentials')
-        receipt = provision(json.loads(payload))
+        envelope = json.loads(payload)
+        if isinstance(envelope, dict) and set(envelope) == {'openrouter_api_key'}:
+            receipt = deliver_openrouter(envelope['openrouter_api_key'])
+        else:
+            receipt = provision(envelope)
         sys.stdout.write(json.dumps(receipt) + '\n')
         return 0
     except BaseException:

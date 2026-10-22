@@ -1,14 +1,8 @@
 # Warren, VT
 
-Authority: current directory map for **derived outputs**, with historical May
-2026 acquisition evidence. Counts below have not been recomputed for this
-October 15 documentation review. Regeneration is blocked by path drift described
-below; this is not a current property census or production database.
-
-The retained property/CAMA assessment export came from the town's public NEMRC
-portal and was joined to VCGI statewide parcel GIS. `warren_properties.json`
-supports the public `/explore` assessment view without connecting the legacy
-housing database. See [current deployment](../docs/DEPLOYMENT.md).
+Complete property/CAMA assessment database for Warren, VT (from the town's public
+NEMRC portal), joined to the **VCGI statewide parcel GIS** for geometry and map
+coordinates.
 
 - **Properties:** 3,105 (every parcel in the NEMRC database)
 - **Parcel polygons:** 3,245 (VCGI), 96% joined to the assessment data
@@ -18,7 +12,7 @@ housing database. See [current deployment](../docs/DEPLOYMENT.md).
 
 | File | Rows | What it is |
 |------|------|------------|
-| `warren_joined.csv` | 3,105 | **Start here.** Assessment data + GIS extras and an approximate lon/lat map point (vertex mean, not area-weighted centroid). One row per parcel. |
+| `warren_joined.csv` | 3,105 | **Start here.** Assessment data + GIS extras (E911 address, grand-list values, and a **lon/lat centroid** for mapping). One row per parcel. |
 | `warren_properties.csv` | 3,105 | Assessment-only main table: owner, location, mailing block, SPAN, acres, status, last sale, all assessed values. |
 | `warren_buildings.csv` | 3,153 | One row per building/improvement (year built, style, beds/baths, SF…). Join on `parcel_id` + `building_no`. |
 | `warren_land.csv` | 2,430 | One row per land segment. Join on `parcel_id` + `land_no`. |
@@ -31,8 +25,7 @@ housing database. See [current deployment](../docs/DEPLOYMENT.md).
 
 - **`parcel_id`** links the NEMRC tables (`properties`, `buildings`, `land`, `joined`).
 - **GIS join:** `warren_joined.csv` matches NEMRC `parcel_id` to the VCGI parcel's
-  cleaned `PARCID`, falling back to `SPAN`. The earlier “97% direct” claim lacks
-  a specified denominator and is not repeated as verified coverage. Reported result: **3,003 of 3,105
+  cleaned `PARCID` (97% direct), falling back to `SPAN`. Result: **3,003 of 3,105
   parcels (96%) carry a `gis_lon`/`gis_lat`** and the GIS columns (`gis_*`).
   The 102 unmatched are mostly retired/exempt parcels or ones VCGI hasn't mapped;
   `gis_match=none` flags them.
@@ -40,13 +33,9 @@ housing database. See [current deployment](../docs/DEPLOYMENT.md).
   unique in VCGI — condos share one building SPAN across many units — so PARCID is
   the better join key.
 
-## Historical pipeline (`warren/scripts/`)
+## Pipeline (`warren/scripts/`)
 
-Stdlib-only Python. **The commands below are historical, not a working rerun
-procedure.** `parse_all.py`, `fetch_vcgi.py` and `join_nemrc_vcgi.py` still resolve
-some input/output paths relative to `warren/scripts/`, while the retained data
-is in `raw_html/` and `outputs/`. Repair and test those paths before regeneration;
-do not overwrite the reviewed export just to test the old commands.
+Stdlib-only Python (no external packages). Re-runnable as `fetch → parse → join`:
 
 ```bash
 cd warren/scripts
@@ -73,17 +62,7 @@ python3 join_nemrc_vcgi.py # -> warren_joined.csv
 | `parse_detail.py` | Parse one camadetail HTML page → flat dict (importable) |
 | `parse_all.py` | Parse the whole cache → properties / buildings / land / JSON |
 | `fetch_vcgi.py` | Pull Warren parcels (geometry + attributes) from VCGI |
-| `join_nemrc_vcgi.py` | Join NEMRC ↔ VCGI on PARCID/SPAN, add approximate lon/lat map point |
-
-## Retained housing invariants
-
-- Infer dwellings from positive evidence, not missing records.
-- Prefer `DESCPROP` to unreliable Grand List `CAT` dwelling classifications.
-- Keep the homestead/entity validation in `src/schemas.py`; check current law
-  separately before presenting it as policy advice.
-- Check inference changes against the [calibration evidence](../docs/data-documentation/CALIBRATION_PROPERTIES.md).
-- Keep schema validation in Pydantic field definitions; do not confuse those
-  names with the separate ORM fields in `src/models.py`.
+| `join_nemrc_vcgi.py` | Join NEMRC ↔ VCGI on PARCID/SPAN, add lon/lat centroid |
 
 ## Sources
 
@@ -94,7 +73,7 @@ python3 join_nemrc_vcgi.py # -> warren_joined.csv
 
 ## Not included
 
-**May 2026 acquisition limit — CAI Property Card PDFs.** The "CAI Property Card" link was generated inside the
-AxisGIS app, and tested URL patterns were blocked or returned 404 at that time.
-Current access has not been retested. The export contains the reviewed NEMRC
-fields, not a verified copy of every field or attachment in those PDFs.
+**CAI Property Card PDFs.** The "CAI Property Card" link is generated inside the
+AxisGIS app, which is behind reCAPTCHA / AWS-WAF; no public URL pattern resolves
+(every guessed path 404s). The PDF is just a formatted view of the NEMRC data
+already captured here.

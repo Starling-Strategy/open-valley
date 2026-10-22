@@ -1,12 +1,6 @@
 # School evidence and publication
 
-Authority: authoritative evidence navigation, reviewed October 15, 2026.
-
-The Schools application serves a reviewed PostgreSQL publication. The
-[publication guide](publication.md) owns candidate activation and withdrawal;
-the [Rockefeller runbook](../../deploy/rockefeller/README.md) owns production.
-The [October 4 delivery plan](../plans/2026-10-04-0006-feat-huusd-schools-mvp-plan.md)
-preserves the original implementation scope.
+The [integrated delivery plan](../plans/2026-10-04-0006-feat-huusd-schools-mvp-plan.md) defines the first school release: current HUUSD schools, enrollment history, a supported published outlook or explicit evidence gap, and public sources.
 
 ## Existing foundation
 
@@ -23,12 +17,10 @@ Resolve the shared collection location from `AGENTS.md`. Use its current generat
 - [Enrollment source coverage and definitions](enrollment-coverage.md).
 - [Staffing, class-size, and capacity coverage](staffing-class-size-coverage.md).
 
-The reviewed [JSON/CSV inputs](../../data/school-board/public/) cover ten school years with reporting breaks, a separate preliminary update, and published projections. Original-table checks and reconciliation are recorded in the coverage report. The [candidate builder](../../scripts/school_board/README.md#build-a-public-schools-candidate-u3) validates sources, exclusions, definitions and arithmetic, then writes separate public and publisher-only files outside the checkout. Database publication and withdrawal are implemented; use the current guides above.
+The reviewed [JSON/CSV inputs](../../data/school-board/public/) cover ten school years with reporting breaks, a separate preliminary update, published projections, and a 1,157-source public library (`sources.json`) built by `scripts/school_board/build_public_library.py`. The library holds the 25 core enrollment and directory sources, 7 reviewed staffing, class-size, facilities and budget reports, 55 Building Use & Visioning Committee records, documents linked from 104 meetings, and historical official Board & Workgroup agendas, minutes, packets, presentations, budgets and policies. Only the 32 core sources and reviewed reports were checked for their content. The other library records are hash-checked, privacy-screened public records: the builder confirms their official URL, file hash and privacy exclusions, not what they say. Each source carries a structured `library` object (category, body, kind, school year, document date, linked meetings and collections) for browsing. Its `locators` hold only citation locations and are empty for library-only records. Original-table checks and reconciliation are recorded in the coverage report. The [candidate builder](../../scripts/school_board/README.md#build-a-public-schools-candidate-u3) validates sources, exclusions, definitions and arithmetic, then writes separate public and publisher-only files outside the checkout.
 
-### Historical U3 candidate verification — October 4, 2026
+On October 20, all 52 synthetic privacy, publication and library tests passed. Host validation of the expanded real inputs produced 38 reconciliation receipts and 1,157 schema-valid public sources; a repeat build was byte-identical. Candidate content digest: `fd9c0f9d00eae8709c04a94b835c92ce57ce6a8b90d95d88d8e6fe0e9f98b3c3`.
 
-On October 4, all 40 synthetic privacy/publication tests passed. Host validation of the real inputs produced 38 reconciliation receipts; a repeat build was byte-identical. Candidate content digest: `59231c1b07d96a19e27aff1f38fa64c87d878cdebf97f5dcd14d7b6b50328f19`. This is a validated candidate, not a deployed release.
+Keep original source documents in the shared collection. Keep private lineage and working notes out of public payloads and application images. The [deployment runbook](../DEPLOYMENT.md) owns operational publication and recovery; the [publication guide](publication.md) owns database publication and withdrawal.
 
-Keep original source documents in the shared collection. Keep private lineage and working notes out of public payloads and application images. The [deployment guide](../DEPLOYMENT.md) routes to current operations; the tool and publication guides contain implemented commands.
-
-The [research assistant and library](../RESEARCH-ASSISTANT.md) now provide source-linked answers and browsable meeting records. Broader scenario modeling and a compiled staffing/classroom dataset remain follow-up work.
+The `/schools` page includes the browsable Public Library and "Ask the record". The page's initial HTML holds the cited, core and reviewed-report sources as `#source-<id>` anchors, which work without JavaScript. Other library views load in pages of at most 50 from `GET /api/schools/library`, which reads the active publication on every request, includes its `release_id`, and returns 503 when no publication is eligible. Client components receive only the sources the page cites, in a compact column encoding. On the real release this keeps `/schools` under 400 KB of HTML and each refresh under 100 KB. The web route `/api/schools/ask` is a rate-limited proxy. It validates the conversation and forwards it to the separate [schools assistant service](assistant.md) named by the server-only `SCHOOLS_ASSISTANT_URL`, with the visitor's address as `X-Forwarded-For` and no other client headers. Without that service, the route returns 503 and the rest of the page is unaffected. The service retrieves passages from the active publication and cites each answer to them. Scenario comparisons remain deferred.

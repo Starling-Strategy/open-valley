@@ -1,12 +1,5 @@
 # Warren, Vermont: Housing Research
 
-> **Historical summary.** The −24 classification is superseded by the
-> [later transition methodology](TRANSITION_MAP_METHODOLOGY.md); original figures
-> remain for provenance, not as current findings. The source set mixes public
-> government/property data with FPF material obtained through personal email,
-> so it must not be described as wholly public. Tax-policy dates and timelines
-> have not been reverified as current law. See [current documentation](../README.md).
-
 **What we know about Warren's housing from public data**
 
 *Generated from Vermont Grand List, PTTR, and Front Porch Forum - January 2026*

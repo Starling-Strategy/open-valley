@@ -1,43 +1,26 @@
 # Open Valley
 
-Open Valley makes Mad River Valley public information easier to understand and check.
+Open Valley makes local public information easier to understand and check.
 
-**Live:** https://openvalley.maconphillips.com
-
-The site brings together HUUSD schools and enrollment, a district map, public meeting links, a reviewed document library, source-linked assistant answers, and Macon's writing. Classroom-data answers distinguish class size, adult presence and staffing ratios, and identify missing evidence. Retained Warren housing research remains available; broader housing work is deferred.
+- **Schools:** explains today's Harwood Unified Union School District schools, about ten years of enrollment and projections, and a searchable library of 1,157 hash-checked, privacy-screened public board, Building Use & Visioning, and district records. "Ask the record" sends questions through `/api/schools/ask` to a separate [assistant service](docs/school-board/assistant.md) that answers only from those records, with citations.
+- **Homes:** existing Warren housing, parcel, homestead, and property-tax research. Detailed expansion is deferred.
 
 ## Start here
 
-| Need | Authoritative guide |
+| Need | Document |
 |---|---|
-| Contributor instructions and data-handling rules | [AGENTS.md](AGENTS.md) |
 | Run and test locally | [Local development](STARTUP.md) |
-| Current documentation and historical records | [Documentation index](docs/README.md) |
-| Public deployment and private staging | [Deployment](docs/DEPLOYMENT.md) |
-| Assistant, retrieval and live evaluation | [Research assistant](docs/RESEARCH-ASSISTANT.md) |
+| Review or update private staging | [Staging environment](docs/STAGING.md) |
+| Current release scope and execution plan | [Integrated Homes and Schools plan](docs/plans/2026-10-04-0006-feat-huusd-schools-mvp-plan.md) |
 | School evidence and collection tools | [School-board index](docs/school-board/README.md) |
-| Earlier housing methodology | [Warren housing research](WARREN_HOUSING_RESEARCH.md) |
+| Canonical data-handling rules | [AGENTS.md](AGENTS.md) |
+| Infrastructure facts and deployment direction | [Deployment](docs/DEPLOYMENT.md) |
+| Existing housing research | [Warren housing research](WARREN_HOUSING_RESEARCH.md) |
 
-## Repository map
+## Implementation state
 
-| Path | Purpose and authority |
-|---|---|
-| `web/` | Authoritative application source: Next.js, UI, server readers and assistant. |
-| `db/` | Authoritative publication schema and migrations. |
-| `scripts/` | Maintained collection/publication and repository checks, alongside retained housing tools. |
-| `deploy/rockefeller/` | Authoritative production configuration and runbook. |
-| `deploy/research/` | Private research-preview/indexer service definitions. |
-| `deploy/` other files | Local test setup and explicitly retained earlier deployment configurations. |
-| `docs/` | Current guides, coverage statements and labeled historical research/receipts. |
-| `data/` | Reviewed publication inputs and retained research material; generated candidates are derived, not source authority. |
-| `warren/` | Retained housing collection code and derived public assessment outputs. |
-| `src/` | Legacy housing/AI implementation; not required by the public web runtime. |
-| `.github/` | Verification workflows; no production deployment workflow. |
-| `.source/` | Historical generated Fumadocs scaffold; not part of the current app build. |
-| `artifacts/` | Historical enrollment prototype, derived aggregates and earlier screenshots; not a validated production dataset. |
+The public application uses Next.js in `web/`. The school directory, enrollment history, published outlook and database publication lifecycle are implemented and locally verified. See the [verification receipt](docs/school-board/mvp-verification.md) for evidence and remaining release gates. Icculus still runs an earlier internal shell preview; public cutover has not occurred.
 
-## Runtime boundary
+Production database credentials are deferred by the owner. Local verification proceeds with PostgreSQL 16 and synthetic test data. The legacy FastAPI application in `src/` is retained for earlier housing work and is not required by the public school runtime.
 
-Production runs in isolated containers on Rockefeller. Cloudflare Tunnel reaches the loopback web listener; PostgreSQL uses Unix sockets and restricted peer-authenticated roles. Staging has separate data and listeners. The deployed image is pinned independently of the Git branch; see the [host runbook](deploy/rockefeller/README.md) for the verified release and remaining recovery work.
-
-School source documents live outside this repository. Only eligible reviewed exports may serve the public site. Follow [AGENTS.md](AGENTS.md); the working research archive is not a public dataset.
+School source documents live outside this repository. Follow `AGENTS.md` and the [collection-tool instructions](scripts/school_board/README.md); the research archive is not a public dataset.

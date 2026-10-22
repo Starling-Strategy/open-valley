@@ -1,8 +1,0 @@
-[Unit]
-Description=Apply current exclusion policy to Open Valley production
-After=network-online.target
-
-[Service]
-Type=oneshot
-ExecStart=/bin/bash /srv/storage/projects/open-valley-rebuild/deploy/rockefeller/sync-production.sh
-UMask=0077

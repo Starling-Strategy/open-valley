@@ -14,7 +14,7 @@ Open Valley makes local public information easier to understand and check.
 | Review or update private staging | [Staging environment](docs/STAGING.md) |
 | Current release scope and execution plan | [Integrated Homes and Schools plan](docs/plans/2026-10-04-0006-feat-huusd-schools-mvp-plan.md) |
 | School evidence and collection tools | [School-board index](docs/school-board/README.md) |
-| Canonical data-handling rules | [AGENTS.md](AGENTS.md) |
+| Canonical repository and data rules | [AGENTS.md](AGENTS.md) |
 | Infrastructure facts and deployment direction | [Deployment](docs/DEPLOYMENT.md) |
 | Existing housing research | [Warren housing research](WARREN_HOUSING_RESEARCH.md) |
 

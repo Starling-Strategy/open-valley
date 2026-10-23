@@ -66,6 +66,10 @@ release `0dceef8b-d5f2-4765-8456-ea8aa969a96c` from Icculus. The
 follow-ups are environment retirement, the collection backup decision, the
 backup-copy inventory, and the editorial work in issue #8.
 
+GitHub Actions automation was removed on 2026-10-23. The CI references below
+describe the delivery-time setup; run the same checks locally from
+[STARTUP.md](../../STARTUP.md#checks).
+
 ---
 
 ## Product Contract

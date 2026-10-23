@@ -28,7 +28,9 @@ permissions:
 jobs:
   synthetic-publication:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    # Playwright's --with-deps apt install can stall on a slow mirror; the
+    # verification steps themselves take a few minutes.
+    timeout-minutes: 20
     services:
       postgres:
         image: postgres:16.4

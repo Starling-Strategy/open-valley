@@ -6,7 +6,7 @@ import { join, relative } from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 
-const root = '/rocky/open-valley/staging';
+const root = join(process.env.OPENVALLEY_DATA_ROOT || '/rocky/open-valley', 'staging');
 const origin = 'http://127.0.0.1:3457';
 
 test('staging is self-contained after its temporary build directory is removed', async () => {

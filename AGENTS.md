@@ -44,3 +44,9 @@ import tools:
 - Keep schema validation rules in the Pydantic field definitions.
 
 The public school runtime does not start the legacy Python application.
+
+## Verification
+
+This repository has no continuous integration. Run the checks in
+[STARTUP.md](STARTUP.md#checks) before you merge; a green pull request does not
+prove anything ran.

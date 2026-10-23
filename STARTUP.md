@@ -67,6 +67,9 @@ MapTiler key. The school list and profiles remain usable when the map fails.
 
 ## Checks
 
+GitHub Actions is not used. Nothing runs automatically on a push or pull
+request; run these checks locally before you merge.
+
 ```bash
 python3 -B -m unittest discover -s scripts/school_board -p 'test_*.py' -v
 node --test scripts/school_board/test_credentials.mjs

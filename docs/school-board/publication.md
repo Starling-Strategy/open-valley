@@ -282,15 +282,15 @@ forecasts. It starts the standalone app on port 3182, runs the browser acceptanc
 suite, then checks a warm database outage/recovery and source withdrawal through
 HTML, RSC/prefetch, JSON, focus refresh and cached client-side back navigation.
 It removes its database, server and fixtures afterward. Set `SCHOOLS_TEST_IMAGE`
-to a locally built image to use Docker with host networking instead; CI uses this
-path after building `deploy/Dockerfile.web` with its allowlisted context.
+to a locally built image to use Docker with host networking instead; build
+`deploy/Dockerfile.web` with its allowlisted context before using that path.
 
 The suite creates/drops ephemeral databases, creates synthetic roles if absent,
 builds temporary fixtures through U3, and cleans them afterward. It refuses a
 non-loopback test server. Python 3.11+ and `web`'s installed `pg` are required.
-CI installs Node 22 dependencies with `npm ci --include=dev`, starts PostgreSQL
-16.4, and runs this same archive-free suite. No real candidate or production
-credentials belong in CI.
+On a fresh machine, install Node 22 dependencies with `npm ci --include=dev` and
+start PostgreSQL 16.4, then run the same archive-free suite. No real candidate
+or production credentials belong in a test run.
 
 Local evidence covers migration/repeat, PUBLIC/column/membership/definer leakage,
 active-only privileges, atomic imports, optimistic concurrency, source-byte and

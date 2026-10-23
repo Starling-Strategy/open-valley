@@ -47,9 +47,9 @@ tiles used in automated reflow checks.
 The serving harness checks warm database loss/recovery, active-only reads,
 HTML/RSC/prefetch/JSON no-store responses, withdrawal on tab focus, and return to
 a previously eligible page through Next.js client-side history. Map controls and
-focus survive an unchanged-release refresh. It runs the standalone package;
-CI additionally builds and runs the Docker image. Docker is unavailable in the
-local coding runtime, so the image gate runs on GitHub.
+focus survive an unchanged-release refresh. It runs the standalone package.
+The Docker image gate ran through GitHub Actions at the time; that automation
+has since been removed, so build `deploy/Dockerfile.web` locally to recheck it.
 
 ## Review corrections
 

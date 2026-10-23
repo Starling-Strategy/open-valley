@@ -9,6 +9,7 @@ Open Valley makes local public information easier to understand and check.
 
 | Need | Document |
 |---|---|
+| Browse all documentation | [Documentation index](docs/README.md) |
 | Run and test locally | [Local development](STARTUP.md) |
 | Review or update private staging | [Staging environment](docs/STAGING.md) |
 | Current release scope and execution plan | [Integrated Homes and Schools plan](docs/plans/2026-10-04-0006-feat-huusd-schools-mvp-plan.md) |

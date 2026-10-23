@@ -1,6 +1,6 @@
 ---
 name: openvalley-editorial
-description: Use when managing Open Valley writing, Notion editorial ideas and drafts, or crossposting between Open Valley, Substack and Macon Phillips’s Ghost site. Includes Notion CLI authentication, schema editing and verification.
+description: Use when managing Open Valley writing, Notion editorial ideas and drafts, or crossposting between Open Valley, Substack and Macon Phillips's Ghost site. Includes Notion CLI authentication, schema editing and verification. Not for deployment, source collection, school-board publication, or sending newsletters.
 metadata:
   scope: repository-checkout
 ---
@@ -19,16 +19,21 @@ Manage short notes and essays from capture through verified publication. Notion 
 
 1. Read the repository's `AGENTS.md` for current public-site and privacy rules.
 2. Load [the connection reference](references/notion.md) for database identity, fields and tested commands.
-3. Read `docs/SUBSTACK.md` before authenticated Substack work and `web/README.md` before choosing a site-content path. Current implementation takes precedence over historical setup receipts.
+3. Read `web/README.md` before choosing a site-content path. The application has
+   no Substack feed or gateway code as of 2026-10-23, so treat Substack as
+   external distribution rather than a repository integration. Current
+   implementation takes precedence over historical setup receipts.
 4. Fetch the actual Notion database before editing; use its current schema and collection ID rather than assuming the reference is unchanged.
-5. Load the available Macon writing-voice skill before drafting prose he will publish as himself. Do not invent personal experiences or positions.
+5. Load the available `my-writing-style` skill before drafting prose Macon will publish as himself. If it is unavailable in the current session, say so and write in plain, source-grounded prose instead. Do not invent personal experiences or positions.
 
 ## Editorial direction
 
 - Make Open Valley the primary home for Macon's writing about the Mad River Valley and Vermont.
 - Make public policy accessible with checkable data, source links and clear explanations.
 - Include Macon's viewpoints, while distinguishing evidence, interpretation and genuine uncertainty.
-- Use Substack for subscriptions and distribution; verify how the current website consumes its feed before treating a Substack post as a native site article.
+- Use Substack for subscriptions and distribution. The site does not consume its
+  feed, so a Substack post is not a native Open Valley article and needs separate
+  site publication.
 - Keep maconphillips.com available for other subjects and historical originals. Connect it to Open Valley with reciprocal announcement links.
 - Support short notes (links with a take, sourced facts, observations) and longer essays without requiring every captured idea to become an essay.
 

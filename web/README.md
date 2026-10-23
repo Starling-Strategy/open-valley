@@ -8,4 +8,4 @@ records the Icculus/Openship setup.
 School data is read server-side from the active PostgreSQL publication. No
 school source archive or snapshot belongs in this application's build context.
 The root layout supplies the shared navigation and footer. Articles live in
-`src/content/posts/`; see [article conventions](../CLAUDE.md#articles).
+`src/content/posts/`; see [article conventions](../AGENTS.md#articles).

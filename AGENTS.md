@@ -1,10 +1,10 @@
-# Open Valley data handling
+# Open Valley contributor instructions
 
-Purpose: Keep prohibited closed-session content out of the school-board collection.
+Purpose: Give contributors and coding agents the repository's operating rules for school-board data, articles and retained housing work.
 Audience: Contributors and coding agents.
 Status: canonical
 Owner: Open Valley
-Last updated: 2026-10-22
+Last updated: 2026-10-23
 
 School-board materials are stored on Rockefeller at `/srv/storage/files/coding-storage/open-valley/school-board` (`/rocky/open-valley/school-board` inside the older coding container). Production runs on Icculus; see [Deployment](docs/DEPLOYMENT.md), which also owns the withdrawal procedure.
 
@@ -21,3 +21,26 @@ For writing, Notion editorial management and crossposting, read the repository's
 - Apply `school-board/reports/privacy-exclusions.json` when rebuilding or importing the shared collection. Do not restore excluded content from an older export or remote source. Use the current generated catalog rather than treating historical acquisition receipts as an inclusion list.
 
 These rules do not prohibit general school-choice policy discussion or public procedural references in agendas and minutes.
+
+## Articles
+
+Articles live in `web/src/content/posts/`. A file named `my-article.mdx` becomes
+`/learn/my-article`. Supply frontmatter with `title`, `date`, `description`,
+`tags`, and `author`. The page renders the title, so start article sections at
+H2 rather than adding an H1. Articles use `gray-matter` and `next-mdx-remote`;
+Markdown tables use `remark-gfm`.
+
+## Retained housing methodology
+
+[Warren housing research](WARREN_HOUSING_RESEARCH.md) and the
+[calibration properties](docs/data-documentation/CALIBRATION_PROPERTIES.md) hold
+the historical research. Keep these constraints when working on its legacy
+import tools:
+
+- Infer dwellings from positive evidence, not from missing records.
+- Prefer `DESCPROP` to unreliable Grand List `CAT` dwelling classifications.
+- Apply the legal homestead/entity rules in `src/schemas.py`.
+- Check inference changes against the documented Woods Road examples.
+- Keep schema validation rules in the Pydantic field definitions.
+
+The public school runtime does not start the legacy Python application.

@@ -1,0 +1,46 @@
+name: Repository checks
+
+on:
+  pull_request:
+    paths:
+      - 'skills/**'
+      - 'scripts/*.mjs'
+      - '.github/workflows/repository-checks.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'skills/**'
+      - 'scripts/*.mjs'
+      - '.github/workflows/repository-checks.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  agent-skills:
+    runs-on: ubuntu-latest
+    name: Agent Skills specification
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate every skill
+        run: |
+          pip install --quiet skills-ref==0.1.1
+          for skill in skills/*/; do
+            agentskills validate "${skill%/}"
+          done
+
+  staging-storage:
+    runs-on: ubuntu-latest
+    name: Native staging storage validation
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test scripts/test_native_staging_storage.mjs

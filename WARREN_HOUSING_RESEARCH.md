@@ -83,7 +83,7 @@ We use four properties on Woods Road as calibration points for data quality. The
 | 200 Woods Rd S | Schulthess | NHS_RESIDENTIAL (+ ADU) | Swiss owner, long-term renter in ADU |
 | 94 Woods Rd N | Mad River LLC | NHS_RESIDENTIAL | Brooklyn LLC operating STR |
 
-**See**: [`/docs/CALIBRATION_PROPERTIES.md`](docs/CALIBRATION_PROPERTIES.md) for detailed analysis.
+**See**: [`/docs/data-documentation/CALIBRATION_PROPERTIES.md`](docs/data-documentation/CALIBRATION_PROPERTIES.md) for detailed analysis.
 
 ### Data Quality Lessons Learned
 

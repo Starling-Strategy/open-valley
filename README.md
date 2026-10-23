@@ -19,8 +19,8 @@ Open Valley makes local public information easier to understand and check.
 
 ## Implementation state
 
-The public application uses Next.js in `web/`. The school directory, enrollment history, published outlook and database publication lifecycle are implemented and locally verified. See the [verification receipt](docs/school-board/mvp-verification.md) for evidence and remaining release gates. Icculus still runs an earlier internal shell preview; public cutover has not occurred.
+The public application uses Next.js in `web/` and runs on Icculus with Docker Compose. The school directory, enrollment history, published outlook, public library, "Ask the record" assistant and database publication lifecycle are live at **https://openvalley.maconphillips.com** as of 2026-10-22. The [deployment runbook](docs/DEPLOYMENT.md) owns the release, rollback and withdrawal procedure; the [release receipt](docs/releases/schools-mvp.md) records the delivered revision and release ID.
 
-Production database credentials are deferred by the owner. Local verification proceeds with PostgreSQL 16 and synthetic test data. The legacy FastAPI application in `src/` is retained for earlier housing work and is not required by the public school runtime.
+The disposable private review environment runs natively on Rockefeller. See [Staging environment](docs/STAGING.md). The legacy FastAPI application in `src/` is retained for earlier housing work and is not part of the public runtime.
 
 School source documents live outside this repository. Follow `AGENTS.md` and the [collection-tool instructions](scripts/school_board/README.md); the research archive is not a public dataset.

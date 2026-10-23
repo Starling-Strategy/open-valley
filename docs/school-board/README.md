@@ -9,6 +9,11 @@ The [integrated delivery plan](../plans/2026-10-04-0006-feat-huusd-schools-mvp-p
 - [Completed privacy review and its limits](privacy-cleanup.md).
 - [Versioned exclusion metadata](../../data/school-board/privacy-exclusions.json).
 
+Scenario maps, typical school weeks and the board meeting timeline remain an
+editorial proposal in [editorial/](editorial/) and
+[issue #8](https://github.com/Starling-Strategy/open-valley/issues/8). They are
+not part of the delivered release.
+
 Resolve the shared collection location from `AGENTS.md`. Use its current generated catalog for discovery and apply the exclusions when importing or rebuilding. A retained record still needs public-use and numerical verification before publication.
 
 ## Evidence preparation

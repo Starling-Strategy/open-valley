@@ -91,8 +91,10 @@ withdrawal through HTML, RSC, JSON, browser focus, and back navigation. It start
 its own standalone server on port 3182 and removes its database and fixtures
 afterward. CI runs the same checks inside the allowlisted Docker image.
 
-The managed coding runtime stores browser downloads and local PostgreSQL tooling
-under `/rocky/open-valley/cache/` and `/rocky/open-valley/tmp/`. These caches are
+On Rockefeller the managed runtime stores browser downloads and local PostgreSQL
+tooling under `/srv/storage/files/coding-storage/open-valley/cache/` and
+`/srv/storage/files/coding-storage/open-valley/tmp/`. In the retired coding
+container the same paths appeared as `/rocky/open-valley/...`. These caches are
 not repository dependencies or backups. A normal workstation or CI runner uses
 its own PostgreSQL and Playwright installation.
 

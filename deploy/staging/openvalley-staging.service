@@ -1,0 +1,22 @@
+[Unit]
+Description=OpenValley private staging on native Rockefeller
+
+[Service]
+Type=forking
+WorkingDirectory=/srv/storage/projects/open-valley
+Environment=PATH=/home/macon/.local/share/mise/installs/node/24/bin:/usr/bin:/bin
+Environment=OPENVALLEY_DATA_ROOT=/srv/storage/files/coding-storage/open-valley
+Environment=CODING_STORAGE_UUID=37481efc-4e6b-4479-b1fe-75457c13332b
+Environment=PM2_HOME=/srv/storage/files/coding-storage/open-valley/staging/pm2-native
+PIDFile=/srv/storage/files/coding-storage/open-valley/staging/pm2-native/pm2.pid
+ExecStart=/home/macon/.local/share/mise/installs/node/24/bin/node scripts/staging.mjs start
+ExecStop=/home/macon/.local/share/mise/installs/node/24/bin/node scripts/staging.mjs stop
+ExecStop=/home/macon/.local/share/mise/installs/node/24/bin/node deploy/staging/node_modules/pm2/bin/pm2 kill
+Restart=on-failure
+TimeoutStartSec=120
+TimeoutStopSec=60
+StandardOutput=null
+StandardError=journal
+
+[Install]
+WantedBy=default.target

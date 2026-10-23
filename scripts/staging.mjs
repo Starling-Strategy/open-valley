@@ -11,7 +11,8 @@ import { setTimeout as delay } from 'node:timers/promises';
 
 const execute = promisify(execFile);
 const repo = fileURLToPath(new URL('../', import.meta.url));
-const root = '/rocky/open-valley/staging';
+const dataRoot = process.env.OPENVALLEY_DATA_ROOT || '/rocky/open-valley';
+const root = join(dataRoot, 'staging');
 const socket = join(root, 'socket');
 const tools = join(repo, 'deploy/staging');
 const pm2 = join(tools, 'node_modules/pm2/bin/pm2');
@@ -20,12 +21,13 @@ const appName = 'openvalley-staging-web';
 const dbName = 'openvalley-staging-db';
 const port = 3457;
 const origin = 'https://rockefeller.tail7a94dc.ts.net:10005';
-const pgBin = process.env.PG_BIN || '/rocky/open-valley/tmp/postgres-tooling/node_modules/@embedded-postgres/linux-x64/native/bin';
-const collection = '/rocky/open-valley/school-board';
+const pgBin = process.env.PG_BIN || join(dataRoot, 'tmp/postgres-tooling/node_modules/@embedded-postgres/linux-x64/native/bin');
+const collection = join(dataRoot, 'school-board');
 // Do not persist the coding agent's credentials in PM2 or child environments.
 const environment = {
   PATH: process.env.PATH, HOME: process.env.HOME, LANG: 'C.UTF-8',
-  PM2_HOME: join(root, 'pm2'), npm_config_cache: '/rocky/open-valley/cache/npm',
+  PM2_HOME: join(root, process.env.OPENVALLEY_DATA_ROOT ? 'pm2-native' : 'pm2'),
+  npm_config_cache: join(dataRoot, 'cache/npm'),
   NEXT_TELEMETRY_DISABLED: '1',
   PM2_SILENT: 'true', PM2_DISCRETE_MODE: 'true',
 };
@@ -197,8 +199,13 @@ async function main() {
   if (!['setup', 'deploy', 'start', 'stop', 'status', 'withdraw', 'rollback'].includes(command) ||
       process.argv.length !== (command === 'rollback' ? 4 : 3))
     throw new Error('Usage: node scripts/staging.mjs setup|deploy|start|stop|status|withdraw|rollback <code-sha>');
-  const { assertCodingStorage } = await import('/opt/coding/storage.mjs');
-  assertCodingStorage(process.env.CODING_STORAGE_UUID);
+  if (process.env.OPENVALLEY_DATA_ROOT) {
+    const { assertNativeStorage } = await import('./native_staging_storage.mjs');
+    assertNativeStorage(dataRoot, process.env.CODING_STORAGE_UUID);
+  } else {
+    const { assertCodingStorage } = await import('/opt/coding/storage.mjs');
+    assertCodingStorage(process.env.CODING_STORAGE_UUID);
+  }
   await mkdir(root, { recursive: true, mode: 0o700 });
   if (await realpath(root) !== root) throw new Error('Staging root must not be a symlink.');
   if (command === 'status') { await status(); return; }

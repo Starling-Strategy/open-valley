@@ -1,10 +1,60 @@
 # Private staging
 
+Purpose: Run and recover the disposable private review environment for Schools.
+Audience: Maintainers and delivery agents.
+Status: current; native Rockefeller profile in service since 2026-10-13.
+Owner: Open Valley
+Last updated: 2026-10-23
+
+## Native Rockefeller profile
+
 The review environment is **https://rockefeller.tail7a94dc.ts.net:10005/schools**.
-It uses the existing operator-deployed Rockefeller preview slot: coding-container
-loopback 3457 → host socket 23457 → private tailnet HTTPS 10005. Use Tailscale on
-an authorized device. The app contains reviewed public evidence and has no login
-or browser-side publishing controls.
+Tailscale Serve points 10005 directly at the runner's loopback listener on 3457.
+Use Tailscale on an authorized device. The app contains reviewed public evidence
+and has no login or browser-side publishing controls.
+
+The native operator profile sets `OPENVALLEY_DATA_ROOT` to the real SSD path
+`/srv/storage/files/coding-storage/open-valley` and `CODING_STORAGE_UUID` to
+the enrolled filesystem UUID. The runner checks the filesystem with `findmnt`
+before starting or changing state. Without this profile it retains the original
+coding-container mount validation.
+
+Native staging uses a separate `staging/pm2-native` manager. Stop the container's
+two staging processes before handing ownership of `staging/` to `macon`; never
+start two PostgreSQL processes against the same cluster. Preserve the deployed
+code revision and current publication rather than rebuilding or republishing
+during a host migration. Native startup still applies current privacy exclusions.
+
+The operator's `openvalley-staging.service` user unit
+([`deploy/staging/openvalley-staging.service`](../deploy/staging/openvalley-staging.service))
+starts the existing runner. Test storage validation with
+`node --test scripts/test_native_staging_storage.mjs`, then run the existing
+live acceptance test with the native profile variables set.
+
+Rollback must stop native staging first, restore recorded filesystem ownership,
+start the container runner, and restore the previous route. Reuse the current
+cluster and publication; do not restore historical excluded content.
+
+Before native startup, retarget the collection's canonical tools and privacy
+manifest symlinks from `/home/coder/open-valley` to the native checkout. Rewrite
+only retained artifact location fields in `schools-publication-artifacts.json`;
+do not alter lineage source IDs, hashes, reviewed inputs, or exclusions. Hand off
+the collection cleanup lock along with its files. A missing privacy manifest
+deliberately withdraws the publication; repair the canonical path and revalidate
+current evidence through the publisher rather than restoring historical data.
+
+Observed 2026-10-13: native staging passed its live standalone acceptance test
+and a service restart. Code revision `42f295add525f0c56e2b0a2f4a6234c3e8fffe35`
+and publication `0c8a5e2d-1174-4c0b-afd0-a1cd487a4c89` were preserved. The user
+unit is enabled, but a host reboot and separate-device browser acceptance have
+not been tested. The profile was merged to `main` on 2026-10-23.
+
+## Original coding-container profile (historical)
+
+Until 2026-10-13 the container profile served
+**https://rockefeller.tail7a94dc.ts.net:10005/schools** through the operator's
+Rockefeller preview slot: coding-container loopback 3457 → host socket 23457 →
+private tailnet HTTPS 10005.
 
 ## Ownership and storage
 
@@ -13,7 +63,9 @@ or browser-side publishing controls.
 host services or changes ingress. The original Homey housing trial and Icculus
 production services are separate.
 
-Staging files live under `/rocky/open-valley/staging/`:
+Staging files live under `$OPENVALLEY_DATA_ROOT/staging/`
+(`/srv/storage/files/coding-storage/open-valley/staging/` on Rockefeller, or
+`/rocky/open-valley/staging/` in the retired coding container):
 
 - `postgres/`: dedicated PostgreSQL 16 cluster; no TCP listener.
 - `socket/`: owner-only local database socket. Local trust authentication is
@@ -28,17 +80,19 @@ Staging files live under `/rocky/open-valley/staging/`:
   discarded to avoid accumulating data-bearing logs. PM2 retains lifecycle
   information; `status` exposes only names, PIDs, restart counts and release IDs.
 
-Rocky persists across coding-container replacement; it is not a backup. PM2
-restarts crashed app/database processes while its daemon runs. **A full coding
-container replacement requires the `start` command below.** Host startup hooks
-belong to the operator deployment and are not installed by this application.
+The storage survives coding-container replacement and host restarts; it is not a
+backup. PM2 restarts crashed app/database processes while its daemon runs. On
+native Rockefeller the enabled `openvalley-staging.service` user unit runs
+`start`; without it a host reboot requires the `start` command below. Host
+startup hooks belong to the operator and are not installed by this application.
 
 ## Commands
 
 Run from the repository with Node.js 22, Python 3.11+, installed `web` dependencies,
-and PostgreSQL 16 binaries. In this runtime the existing PostgreSQL tooling is
-under `/rocky/open-valley/tmp/postgres-tooling/`. Set `PG_BIN` for another approved
-binary installation. The runner checks the managed Rocky mount before writing.
+and PostgreSQL 16 binaries. On Rockefeller the existing PostgreSQL tooling is
+under `$OPENVALLEY_DATA_ROOT/tmp/postgres-tooling/`. Set `PG_BIN` for another
+approved binary installation. The runner checks the managed storage mount before
+writing.
 
 ```bash
 # First installation; repeatable. Installs pinned process-management tools and

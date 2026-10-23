@@ -1,8 +1,9 @@
 # School MVP verification — October 4, 2026
 
-The school application is implemented and locally verified. Production school
-publication and public cutover remain deferred by the owner until credential
-setup is confirmed. The public hostname still serves the earlier application.
+Status: local-verification receipt for the pre-cutover build. The release was
+published and cut over to Icculus on 2026-10-22; the [deployment runbook](../DEPLOYMENT.md)
+and [release receipt](../releases/schools-mvp.md) own the production record.
+The checks below describe what was verified before that cutover.
 
 The [integrated plan](../plans/2026-10-04-0006-feat-huusd-schools-mvp-plan.md)
 owns scope; [deployment](../DEPLOYMENT.md) owns the live infrastructure and
@@ -84,15 +85,18 @@ into the application or treated as publication inputs.
 
 ## Remaining delivery work
 
-- Confirm production credential setup, then provision the restricted identities
-  and mount through the documented approved consumer.
-- Apply the additive schema, activate the reviewed release, deploy the recorded
-  image through Openship, verify live grants/readiness/HTTPS/cache behavior, and
-  retire superseded apps after cutover.
+Completed 2026-10-22: restricted identities and credential delivery, additive
+schema, release activation, the pinned Docker Compose deployment on Icculus, and
+live grants/readiness/HTTPS/cache verification. Superseded-instance retirement
+remains tracked in [issue #14](https://github.com/Starling-Strategy/open-valley/issues/14).
+
+Still open:
+
 - Complete the owner-deferred backup/recovery-copy inventory in
   [issue #11](https://github.com/Starling-Strategy/open-valley/issues/11).
-- Open the tested Openship repair upstream when GitHub permits fork/write access;
-  the current token denied fork creation. The pinned repair remains documented.
+- Run the owner revoke no-op drill in [deployment step 8.1](../DEPLOYMENT.md#81-owner-revoke-no-op-drill--pending).
+- The Openship repair is retired from the delivery path: production is plain
+  Docker Compose, so the pinned workaround is historical evidence only.
 
 Evidence gaps remain in older 12+/Early College definitions, final certification,
 the exact September 2026 reference day, current preschool/HCLC headcounts, and

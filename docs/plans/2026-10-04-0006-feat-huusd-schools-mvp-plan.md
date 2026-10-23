@@ -3,6 +3,7 @@ title: Open Valley Homes and Schools - Integrated Delivery Plan
 type: feat
 date: 2026-10-04
 updated: 2026-10-05
+status: delivered
 artifact_contract: ce-unified-plan/v1
 product_contract_source: ce-plan-bootstrap
 origin: docs/openvalley-mvp-working-notes.md
@@ -53,6 +54,17 @@ fallback, and the school/Homes browser flows were verified. A full coding-runtim
 replacement needs manual recovery; no host restart was used for acceptance.
 Production credential setup, Icculus publication and public cutover remain at the
 deferred execution boundary above.
+
+### October 22 delivery checkpoint
+
+The deferred boundary was cleared. Restricted roles and credential delivery,
+schema migration, publication with passages, the pinned web and assistant images,
+and the Cloudflare Tunnel cutover completed on 2026-10-22. The public site serves
+release `0dceef8b-d5f2-4765-8456-ea8aa969a96c` from Icculus. The
+[release receipt](../releases/schools-mvp.md) records identities and checks;
+[DEPLOYMENT.md](../DEPLOYMENT.md) owns operations. U1–U10 are delivered. Remaining
+follow-ups are environment retirement, the collection backup decision, the
+backup-copy inventory, and the editorial work in issue #8.
 
 ---
 

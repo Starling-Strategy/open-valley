@@ -43,7 +43,9 @@ import tools:
 - Check inference changes against the documented Woods Road examples.
 - Keep schema validation rules in the Pydantic field definitions.
 
-The public school runtime does not start the legacy Python application.
+The public school runtime does not start the legacy Python application. That
+application is data-rebuild tooling; [docs/housing-baseline.md](docs/housing-baseline.md)
+records its boundary and the housing decisions.
 
 ## Verification
 

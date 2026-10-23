@@ -1,4 +1,8 @@
 # Use official pgvector image which includes PostGIS
+# Legacy Warren housing database image (pgvector + PostGIS).
+# Retained for data rebuilds; the schools runtime does not use this file.
+# See docs/housing-baseline.md.
+
 FROM pgvector/pgvector:pg16
 
 # The pgvector image is based on postgres:16

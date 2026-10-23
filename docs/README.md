@@ -38,10 +38,14 @@ supporting material.
 
 ## Homes (retained research)
 
-Open Valley's housing section is preserved, not under active expansion.
+Open Valley's housing section is preserved. [housing-baseline.md](housing-baseline.md)
+records the issue #19 decisions: the next housing question, the parcel map
+components, the legacy application, publishable fields and the refresh rule. No
+expansion is under way until that question is approved.
 
 | Document | Status | What it owns |
 |---|---|---|
+| [housing-baseline.md](housing-baseline.md) | current decision record | Next housing question and the retained boundaries. |
 | [../WARREN_HOUSING_RESEARCH.md](../WARREN_HOUSING_RESEARCH.md) | retained research | Warren housing, homestead and property-tax findings. |
 | [../DATA_SOURCES.md](../DATA_SOURCES.md) | retained reference | Data sources and their limits. |
 | [Research_Products/](Research_Products/) | retained research | Homesteading, transition-map and key-stat products. |

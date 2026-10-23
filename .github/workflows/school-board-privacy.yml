@@ -11,6 +11,12 @@ on:
       - 'web/src/lib/schools*.ts'
       - 'db/schools/**'
       - 'AGENTS.md'
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/school_board/**'
+      - 'data/school-board/**'
+      - 'db/schools/**'
   workflow_dispatch:
 
 permissions:

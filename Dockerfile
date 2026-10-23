@@ -1,6 +1,8 @@
 # =============================================================================
-# Open Valley - Production Dockerfile
-# Multi-stage build for FastAPI + Next.js
+# Open Valley - legacy Warren housing application
+#
+# Retained for data rebuilds, not part of the public runtime. The live site
+# builds from deploy/Dockerfile.web. See docs/housing-baseline.md.
 # =============================================================================
 
 # -----------------------------------------------------------------------------

@@ -3,6 +3,7 @@
 Read [AGENTS.md](AGENTS.md) first. It owns the school-board data-handling policy.
 
 - [README](README.md): product and repository entry points.
+- [Documentation index](docs/README.md): maintained docs by area and status.
 - [Local development](STARTUP.md): supported commands and runtime inputs.
 - [Integrated plan](docs/plans/2026-10-04-0006-feat-huusd-schools-mvp-plan.md): scope and settled decisions.
 - [Deployment](docs/DEPLOYMENT.md): observed infrastructure and operations.
